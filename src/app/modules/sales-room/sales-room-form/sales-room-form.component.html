@@ -1,0 +1,86 @@
+<div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
+    <div class="text-lg font-medium">Sales Room Details</div>
+    <button mat-icon-button (click)="discard()" [tabIndex]="-1">
+            <mat-icon
+                class="text-current"
+                [svgIcon]="'heroicons_outline:x'"></mat-icon>
+        </button>
+</div>
+<!-- Content -->
+<div class="hotelCaption" *ngIf="item">
+    Hotel Name: <span style="font-weight: bold;">{{item.name}}</span> Start Date: <span style="font-weight: bold;">{{item.startDate | date: 'dd/MM/yyyy'}}</span> End Date: <span style="font-weight: bold;">{{item.endDate | date: 'dd/MM/yyyy'}}</span> Cancelation
+    To: <span style="font-weight: bold;">{{item.cancellationTo | date: 'dd/MM/yyyy'}}</span>
+</div>
+<mat-dialog-content>
+    <div class="flex" style="justify-content: space-evenly;margin-top: 10px;margin-bottom: 10px;">
+        <div class="flex flex-col ">
+            <div class="m-8">
+                <div class="text-2xl font-semibold leading-tight">New Order</div>
+                <div *ngIf="newOrder">
+                    <div class="mt-4">Zenith Order Number: <span style="font-weight: bold;">{{newOrder.id}}</span></div>
+                    <div class="mt-4">Date Insert: <span style="font-weight: bold;">{{newOrder.dateInsert | date: 'dd/MM/yyyy'}}</span></div>
+                    <div class="mt-4">Hotel Code: <span style="font-weight: bold;">{{newOrder.hotelCode}}</span></div>
+                    <div class="mt-4">Hotel Code (Zenith): <span style="font-weight: bold;">{{newOrder.hotelCodeZenith}}</span></div>
+                    <div class="mt-4">
+                        Guest One: <span style="font-weight: bold;">{{newOrder.namePrefix}} {{newOrder.surname}} {{newOrder.givenName}}</span>
+                    </div>
+                    <div class="mt-4">
+                        Guest Two: <span style="font-weight: bold;">{{newOrder.namePrefix2}} {{newOrder.surname2}} {{newOrder.givenName2}}</span>
+                    </div>
+                    <div class="mt-4">Country Name: <span style="font-weight: bold;">{{newOrder.countryName}}</span></div>
+                    <div class="mt-4">Email: <span style="font-weight: bold;">{{newOrder.email}}</span></div>
+                    <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>
+                    <div class="mt-4">
+                        &nbsp;
+                    </div>
+                    <div class="mt-4">Agency: <span style="font-weight: bold;">{{item.refAgency}} {{item.refEmail}}</span></div>
+                    <div class="mt-4">Board: <span style="font-weight: bold;">{{newOrder.comments}}</span></div>
+                </div>
+
+            </div>
+        </div>
+        <div class="flex flex-col ">
+            <div class="m-8">
+                <div class="text-2xl font-semibold leading-tight">Old Order</div>
+                <div *ngIf="oldOrder">
+                    <div class="mt-4">Pre Book Id: <span style="font-weight: bold;">{{oldOrder.id}}</span></div>
+                    <div class="mt-4">Date Insert: <span style="font-weight: bold;">{{oldOrder.dateInsert | date: 'dd/MM/yyyy'}}</span></div>
+                    <div class="mt-4">Hotel Code: <span style="font-weight: bold;">{{newOrder.hotelCode}}</span></div>
+                    <div class="mt-4">
+                        &nbsp;
+                    </div>
+                    <div class="mt-4">Person: <span style="font-weight: bold;">{{oldOrder.namePrefix}} {{oldOrder.surname}} {{oldOrder.givenName}}</span></div>
+                    <div class="mt-4">
+                        &nbsp;
+                    </div>
+                    <div class="mt-4">Country Name: <span style="font-weight: bold;">{{oldOrder.countryName}}</span></div>
+                    <div class="mt-4">Email: <span style="font-weight: bold;">{{oldOrder.email}}</span></div>
+                    <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>
+                    <div class="mt-4">Provider Reference: <span style="font-weight: bold;">{{item.supplierReference}}</span></div>
+                    <div class="mt-4">Agency: <span style="font-weight: bold;">{{item.refAgency}} {{item.refEmail}}</span></div>
+                    <div class="mt-4">Board: <span style="font-weight: bold;">{{item.board}}</span></div>
+                    <div class="mt-4">Content Booking Id: <span style="font-weight: bold;">{{oldOrder.comments}}</span></div>
+                    <div class="mt-4">Source: <span style="font-weight: bold;">{{oldOrder.source}}</span></div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</mat-dialog-content>
+<!-- Actions -->
+<div>
+    <mat-form-field appearance="fill" style="width: 300px;">
+        <mat-label>Select an option</mat-label>
+        <mat-select [(value)]="selected">
+            <mat-option *ngFor="let option of options" [value]="option.value">
+                {{ option.text }}
+            </mat-option>
+        </mat-select>
+    </mat-form-field>
+    <button mat-flat-button class="btnUpdate" *ngIf="showBtnUpdateName" (click)="updateName()" [color]="'primary'">Update Name
+    </button>
+    <span *ngIf="showError" class="errorMessage">
+        {{errorMessage}}
+    </span>
+    <button mat-button mat-dialog-close [color]="'primary'" style="float: right;margin-top: 30px;">Close</button>
+</div>

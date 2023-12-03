@@ -1,0 +1,19 @@
+<h2 mat-dialog-title>Cancel Room Details</h2>
+<mat-dialog-content *ngIf="canceledRoom" class="mat-typography">
+    <span>Date Insert: {{canceledRoom.dateInsert | date: 'dd/MM/yyyy'}}</span>
+    <span>PreBook Id: {{canceledRoom.preBookId}}</span>
+    <span>ContentBooking Id: {{canceledRoom.contentBookingId }}</span>
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <h3>Request</h3>
+            <textarea [innerHTML]="canceledRoom.bookingdetailsJson" style="width: 100%; height: 50vh;"></textarea>
+        </div>
+        <div>
+            <h3>Response</h3>
+            <textarea [innerHTML]="canceledRoom.responseJson" style="width: 100%; height: 50vh;"></textarea>
+        </div>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close [color]="'primary'">Close</button>
+</mat-dialog-actions>

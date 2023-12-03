@@ -1,0 +1,41 @@
+<div style="display: inline-block; width: 400px;height: 70px;">
+    <div
+      style="padding: 10px; background-color: #d3d3d3; text-align: center;"
+    >
+      Please select a value
+    </div>
+    <label>
+        <span style="color:green"><i class="material-icons">arrow_upward</i></span>
+        <span style="color:red"><i class="material-icons">arrow_downward</i></span>
+      <input
+        type="radio"
+        name="price"
+        [(ngModel)]="price"
+        (ngModelChange)="updateFilter()"
+        [value]="'all'"
+      />
+      All
+    </label>
+    <label style="margin-left: 20px;">
+      <span style="color:green"><i class="material-icons">arrow_upward</i></span>
+      <input
+        type="radio"
+        name="price"
+        [(ngModel)]="price"
+        (ngModelChange)="updateFilter()"
+        [value]="'up'"
+      />
+      Up
+    </label>
+    <label style="margin-left: 20px;">
+        <span style="color:red"><i class="material-icons">arrow_downward</i></span>
+      <input
+        type="radio"
+        name="price"
+        [(ngModel)]="price"
+        (ngModelChange)="updateFilter()"
+        [value]="'down'"
+      />
+      Down
+    </label>
+</div>

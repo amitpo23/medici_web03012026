@@ -1,0 +1,74 @@
+<h2 mat-dialog-title>Active Room</h2>
+<div mat-dialog-content>
+    <form [formGroup]="composeForm">
+        <div class="flex gap-5">
+            <!-- PreBook ID -->
+            <div>
+                <mat-form-field appearance="fill">
+                    <mat-label>PreBook ID</mat-label>
+                    <input matInput type="number" readonly placeholder="PreBook ID" [formControlName]="'preBookId'">
+                </mat-form-field>
+                <!-- validators -->
+                <div *ngIf="preBookId!.errors?.['min']" class="errorMsg">
+                    Could not be less then 1
+                </div>
+                <div *ngIf="preBookId!.errors?.['max']" class="errorMsg">
+                    Could not be more then 1 000 000
+                </div>
+            </div>
+
+            <!-- Buy Price -->
+            <div>
+                <mat-form-field appearance="fill">
+                    <mat-label>Buy Price</mat-label>
+                    <input matInput type="number" readonly placeholder="Buy Price" [formControlName]="'buyPrice'">
+                </mat-form-field>
+
+                <!-- validators -->
+                <div *ngIf="buyPrice!.errors?.['min']" class="errorMsg">
+                    Could not be less then 1
+                </div>
+                <div *ngIf="buyPrice!.errors?.['max']" class="errorMsg">
+                    Could not be more then 10 000
+                </div>
+            </div>
+
+            <!-- Last Price -->
+            <!-- <mat-form-field appearance="fill">
+            <mat-label>Last Price</mat-label>
+            $<input 
+            matInput     
+            type="number"  
+            readonly         
+            placeholder="Last Price" [formControlName]="'lastPrice'">   
+        </mat-form-field> -->
+            <!-- validators -->
+            <!-- <div *ngIf="lastPrice.errors?.['min']" class="errorMsg">
+            Could not be less then 1
+        </div> 
+        <div *ngIf="lastPrice.errors?.['max']" class="errorMsg">
+            Could not be more then 10 000
+        </div>       -->
+
+            <!-- Current Price -->
+            <mat-form-field appearance="fill">
+                <mat-label>Current Price</mat-label>
+                <input matInput type="number" placeholder="Current Price" [formControlName]="'currentPrice'">
+            </mat-form-field>
+            <!-- validators -->
+            <div *ngIf="currentPrice!.errors?.['min']" class="errorMsg">
+                Could not be less then 1
+            </div>
+            <div *ngIf="currentPrice!.errors?.['max']" class="errorMsg">
+                Could not be more then 10 000
+            </div>
+            <div *ngIf="otherValidationError" class="errorTxt">
+                {{validationErrorText}}
+            </div>
+        </div>
+    </form>
+</div>
+<div mat-dialog-actions>
+    <button type="button" class="ml-auto sm:ml-0" mat-stroked-button (click)="discard()">Cancel</button>
+    <button [disabled]="!composeForm.valid" type="button" class="order-first sm:order-last" mat-flat-button [color]="'primary'" (click)="save()">Update</button>
+</div>

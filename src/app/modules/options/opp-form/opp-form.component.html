@@ -1,0 +1,164 @@
+<h1 mat-dialog-title>New Opportunity</h1>
+
+<!-- <div class="flex flex-col max-w-240 md:min-w-160 max-h-screen -m-6"> -->
+<!-- Compose form -->
+<div class="max-h-screen">
+    <form [formGroup]="composeForm">
+        <div mat-dialog-content>
+            <div class="flex gap-5">
+                <div class="flex flex-col gap-5">
+                    <!-- Hotel -->
+                    <mat-form-field>
+                        <mat-label>Hotel</mat-label>
+                        <input type="text" placeholder="Start typing..." aria-label="Hotel" matInput formControlName="hotel" [matAutocomplete]="auto">
+                        <mat-autocomplete [displayWith]="displayFn" autoActiveFirstOption #auto="matAutocomplete">
+                            <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+                                {{option.name}}
+                            </mat-option>
+                        </mat-autocomplete>
+                    </mat-form-field>
+
+                    <!-- Start date -->
+                    <div>
+                        <mat-label>Start Date</mat-label>
+                        <div class="dtInput">
+                            <input (ngModelChange)="fromChanged($event)" type="date" [ngModel]="selectedDateFromInput  | date:'yyyy-MM-dd'" [ngModelOptions]="{standalone: true}" />
+                        </div>
+                    </div>
+
+                    <!-- <mat-form-field appearance="fill">
+            <mat-label>Start Date</mat-label>             
+      
+            <input matInput             
+            [matDatepicker]="pickerStartDate" 
+            [formControlName]="'dateFrom'"
+            >           
+            <mat-datepicker-toggle matIconSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
+            <mat-datepicker #pickerStartDate></mat-datepicker>
+        </mat-form-field> -->
+
+                    <!-- End date -->
+                    <div>
+                        <mat-label>End Date</mat-label>
+                        <div class="dtInput">
+                            <input (ngModelChange)="toChanged($event)" type="date" [ngModel]="selectedDateToInput  | date:'yyyy-MM-dd'" [ngModelOptions]="{standalone: true}" />
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-5">
+                    <!-- <mat-form-field appearance="fill">
+            <mat-label>End Date</mat-label>
+            <input matInput 
+            [matDatepicker]="pickerEndDate" 
+            [formControlName]="'dateTo'"
+            >           
+            <mat-datepicker-toggle matIconSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
+            <mat-datepicker #pickerEndDate></mat-datepicker>
+        </mat-form-field> -->
+
+                    <!-- Category -->
+                    <mat-form-field appearance="fill">
+                        <mat-label>Category</mat-label>
+                        <mat-select [formControlName]="'category'">
+                            <mat-option *ngFor="let cat of categories" [value]="cat">
+                                {{cat.name}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <!-- Board -->
+                    <mat-form-field appearance="fill">
+                        <mat-label>Board</mat-label>
+                        <mat-select [formControlName]="'board'">
+                            <mat-option *ngFor="let brd of boards" [value]="brd">
+                                {{brd.description}}
+                            </mat-option>
+                        </mat-select>
+                    </mat-form-field>
+
+                    <!-- RatePlanCode -->
+                    <mat-form-field appearance="fill">
+                        <mat-label>Rate Plan Code</mat-label>
+                        <input matInput [readonly]="true" placeholder="RatePlanCode" [formControlName]="'ratePlanCode'">
+                    </mat-form-field>
+                </div>
+                <div class="flex flex-col gap-5">
+                    <!-- InvTypeCode -->
+                    <mat-form-field appearance="fill">
+                        <mat-label>Inv Type Code</mat-label>
+                        <input matInput [readonly]="true" placeholder="RatePlanCode" [formControlName]="'invTypeCode'">
+                    </mat-form-field>
+
+                    <!-- Buy Price -->
+                    <div>
+                        <mat-form-field appearance="fill">
+                            <mat-label>Buy Price</mat-label>
+                            <input matInput type="number" placeholder="Buy Price" [formControlName]="'buyPrice'">
+                        </mat-form-field>
+                        <div *ngIf="buyPrice?.errors?.['min']" class="errorMsg">
+                            Could not be less then 1
+                        </div>
+                        <div *ngIf="buyPrice?.errors?.['max']" class="errorMsg">
+                            Could not be more then 10 000
+                        </div>
+                    </div>
+
+                    <!-- Push Price -->
+                    <div>
+                        <mat-form-field appearance="fill">
+                            <mat-label>Push Price</mat-label>
+                            <input matInput type="number" readonly="true" placeholder="Push Price" [formControlName]="'pushPrice'">
+                        </mat-form-field>
+                        <div *ngIf="pushPrice?.errors?.['min']" class="errorMsg">
+                            Could not be less then 1
+                        </div>
+                        <div *ngIf="pushPrice?.errors?.['max']" class="errorMsg">
+                            Could not be more then 10 000
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-5">
+                    <div>
+                        <!-- Max Rooms Per Night -->
+                        <mat-form-field appearance="fill">
+                            <mat-label>Max Rooms Per Night</mat-label>
+                            <input matInput type="number" placeholder="Max Rooms Per Night" [formControlName]="'maxRoomsPerNight'">
+                        </mat-form-field>
+                        <div *ngIf="maxRoomsPerNight?.errors?.['min']" class="errorMsg">
+                            Count can not be less then 1
+                        </div>
+                        <div *ngIf="maxRoomsPerNight?.errors?.['max']" class="errorMsg">
+                            Could not be more then 30
+                        </div>
+                    </div>
+
+                    <!-- Reservation Full Name -->
+                    <mat-form-field appearance="fill">
+                        <mat-label>Reservation Full Name</mat-label>
+                        <input matInput placeholder="Reservation Full Name" [formControlName]="'reservationFullName'">
+                    </mat-form-field>
+                </div>
+            </div>
+
+
+            <div *ngIf="reservationFullName?.errors?.['fullName']" class="errorTxt">
+                Full name must be two words
+            </div>
+            <div *ngIf="otherValidationError" class="errorTxt">
+                {{validationErrorText}}
+            </div>
+        </div>
+        <!-- Actions -->
+        <div mat-dialog-actions>
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mt-4 sm:mt-6 gap-5">
+                <!-- Discard -->
+                <button type="button" class="ml-auto sm:ml-0" mat-stroked-button (click)="discard()">Discard</button>
+                <!-- Save -->
+                <button [disabled]="!composeForm.valid" type="button" class="order-first sm:order-last" mat-flat-button [color]="'primary'" (click)="save()">Save</button>
+            </div>
+        </div>
+    </form>
+</div>
+<code>
+    {{composeForm.value | json}}
+</code>

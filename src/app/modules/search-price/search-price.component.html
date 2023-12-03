@@ -1,0 +1,53 @@
+<div class="flex flex-col gap-3">
+    <mat-toolbar>
+        <span>Search Price</span>
+        <span class="example-spacer"></span>
+    </mat-toolbar>
+
+    <form [formGroup]="composeForm" (submit)="search()">
+        <div class="flex gap-5 items-end">
+            <!-- Hotel -->
+            <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Hotel</mat-label>
+                <input type="text" placeholder="Start typing..." aria-label="Hotel" matInput [formControlName]="'hotel'" [matAutocomplete]="auto">
+                <mat-autocomplete [displayWith]="displayFn" autoActiveFirstOption #auto="matAutocomplete">
+                    <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+                        {{option.name}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+            <div>
+                <mat-label>Start Date</mat-label>
+                <div class="dtInput">
+                    <input (ngModelChange)="fromChanged($event)" type="date" [ngModel]="selectedDateFromInput  | date:'yyyy-MM-dd'" [ngModelOptions]="{standalone: true}" />
+                </div>
+            </div>
+            <div>
+                <mat-label>End Date</mat-label>
+                <div class="dtInput">
+                    <input (ngModelChange)="toChanged($event)" type="date" [ngModel]="selectedDateToInput  | date:'yyyy-MM-dd'" [ngModelOptions]="{standalone: true}" />
+                </div>
+            </div>
+            <div>
+                <button [disabled]="!composeForm.valid || composeForm.disabled" type="submit" class="order-first sm:order-last" mat-flat-button style="width: 250px;" [color]="'primary'">
+                        Search
+                    </button>
+            </div>
+            <div *ngIf="isLoading">
+                <mat-spinner diameter="30"></mat-spinner>
+            </div>
+        </div>
+    </form>
+
+    <ag-grid-angular [rowHeight]="200" style="width: 100%; height: 75vh;" class="ag-theme-alpine" [columnDefs]="columnDefs" rowSelection='single' [defaultColDef]="defaultColDef" [rowData]="rowData" [animateRows]="true" [pagination]="true" [paginationPageSize]="paginationPageSize"
+        [enableCellTextSelection]="true" (selectionChanged)="onSelectionChanged($event)" (gridReady)="onGridReady($event)" (firstDataRendered)="onFirstDataRendered($event)"></ag-grid-angular>
+    <div class="grid-page-lenght-selector">
+        Page Size:
+        <select (change)="onPageSizeChanged()" id="page-size">
+                <option value="10" >10</option>
+                <option value="50" selected="">50</option>
+                <option value="100">100</option>
+                <option value="500">500</option>
+            </select>
+    </div>
+</div>

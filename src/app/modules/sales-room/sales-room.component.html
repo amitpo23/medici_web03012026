@@ -1,0 +1,46 @@
+<div class="flex flex-col gap-3">
+    <mat-toolbar>
+        <span>Sales Room</span>
+        <span class="example-spacer"></span>
+        <form [formGroup]="composeForm">
+            <mat-form-field appearance="fill" subscriptSizing="dynamic" [style.width.px]="250">
+                <input type="text" placeholder="Search hotel..." aria-label="Hotel" matInput [formControlName]="'hotel'" FuseLoadingBarComponent_Template [matAutocomplete]="auto">
+                <mat-autocomplete [displayWith]="displayFn" autoActiveFirstOption #auto="matAutocomplete">
+                    <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+                        {{option.name}}
+                    </mat-option>
+                </mat-autocomplete>
+            </mat-form-field>
+            <button mat-button color="primary" class="btnClearInput" (click)="clearInput()">
+                <span class="material-icons">clear</span>
+            </button>
+        </form>
+        <button mat-icon-button (click)="refreshData(true)">
+            <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button (click)="resetAllFilters()">
+            <mat-icon>filter_alt_off</mat-icon>
+        </button>
+        <button mat-icon-button (click)="resetColumns()">
+            <mat-icon>view_week</mat-icon>
+        </button>
+        <button mat-icon-button (click)="onBtnExport()">
+            <mat-icon>download</mat-icon>
+        </button>
+    </mat-toolbar>
+
+    <div class="sm:p-3">
+        <ag-grid-angular style="width: 100%; height: 73vh;" class="ag-theme-alpine" [columnDefs]="columnDefs" [defaultColDef]="defaultColDef" [rowData]="rowData$ | async" [animateRows]="true" [pagination]="true" [paginationPageSize]="paginationPageSize" [enableCellTextSelection]="true"
+            (gridReady)="onGridReady($event)" (cellClicked)="onCellClicked($event)" (firstDataRendered)="onFirstDataRendered($event)" (columnMoved)="onColumnMoved($event)" (filterChanged)="onFilterChanged($event)"></ag-grid-angular>
+
+        <div class="grid-page-lenght-selector">
+            Page Size:
+            <select (change)="onPageSizeChanged()" id="page-size">
+            <option value="10" >10</option>
+            <option value="50" selected="">50</option>
+            <option value="100">100</option>
+            <option value="500">500</option>
+        </select>
+        </div>
+    </div>
+</div>

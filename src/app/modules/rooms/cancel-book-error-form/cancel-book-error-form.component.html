@@ -1,0 +1,23 @@
+<div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
+    <div class="text-lg font-medium">Cancel Book Error</div>
+    <button mat-icon-button (click)="discard()" [tabIndex]="-1">
+        <mat-icon
+            class="text-current"
+            [svgIcon]="'heroicons_outline:x'"></mat-icon>
+    </button>
+</div>
+<mat-dialog-content>
+    <div *ngIf="error" class="m-8">
+        <div class="mt-4">Id: <span style="font-weight: bold;">{{error.id}}</span></div>
+        <div class="mt-4">Content Booking Id: <span style="font-weight: bold;">{{error.contentBookingId}}</span></div>
+        <div class="mt-4">Pre Book Id: <span style="font-weight: bold;">{{error.preBookId}}</span></div>
+        <div class="mt-4">Date Insert: <span style="font-weight: bold;">{{error.dateInsert | date: 'dd/MM/yyyy'}}</span></div>
+        <div class="mt-4">Error: <span style="font-weight: bold;">{{error.error}}</span></div>
+        <div class="mt-4">Request Json: <span style="font-weight: bold;">{{error.requestJson}}</span></div>
+        <div class="mt-4">Response Json: <span style="font-weight: bold;">{{error.responseJson}}</span></div>
+    </div>
+</mat-dialog-content>
+<!-- Actions -->
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close [color]="'primary'">Close</button>
+</mat-dialog-actions>

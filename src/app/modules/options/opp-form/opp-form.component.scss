@@ -1,0 +1,28 @@
+.rowInput {
+    display: flex;
+    justify-content:space-evenly;
+}
+.errorMsg {
+    position: relative;
+    color:red;
+    font-size: 10px;
+    top: 70px;
+    left: -140px;
+}
+.errorTxt {
+    position: relative;
+    color:red;
+    font-size: 10px;
+    top: -10px;
+    left: 0px;
+}
+.dtInput {
+    border: solid 1px lightgrey;
+    border-radius: 8px;
+    padding: 5px;
+    height: 50px;
+    margin-bottom: 10px;
+}
+.dtInput input {
+    width: 100%;
+}
