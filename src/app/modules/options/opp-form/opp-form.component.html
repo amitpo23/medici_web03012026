@@ -27,12 +27,12 @@
                     </div>
 
                     <!-- <mat-form-field appearance="fill">
-            <mat-label>Start Date</mat-label>             
-      
-            <input matInput             
-            [matDatepicker]="pickerStartDate" 
+            <mat-label>Start Date</mat-label>
+
+            <input matInput
+            [matDatepicker]="pickerStartDate"
             [formControlName]="'dateFrom'"
-            >           
+            >
             <mat-datepicker-toggle matIconSuffix [for]="pickerStartDate"></mat-datepicker-toggle>
             <mat-datepicker #pickerStartDate></mat-datepicker>
         </mat-form-field> -->
@@ -48,10 +48,10 @@
                 <div class="flex flex-col gap-5">
                     <!-- <mat-form-field appearance="fill">
             <mat-label>End Date</mat-label>
-            <input matInput 
-            [matDatepicker]="pickerEndDate" 
+            <input matInput
+            [matDatepicker]="pickerEndDate"
             [formControlName]="'dateTo'"
-            >           
+            >
             <mat-datepicker-toggle matIconSuffix [for]="pickerEndDate"></mat-datepicker-toggle>
             <mat-datepicker #pickerEndDate></mat-datepicker>
         </mat-form-field> -->
@@ -96,10 +96,10 @@
                             <input matInput type="number" placeholder="Buy Price" [formControlName]="'buyPrice'">
                         </mat-form-field>
                         <div *ngIf="buyPrice?.errors?.['min']" class="errorMsg">
-                            Could not be less then 1
+                            Could not be less than 1
                         </div>
                         <div *ngIf="buyPrice?.errors?.['max']" class="errorMsg">
-                            Could not be more then 10 000
+                            Could not be more than 10 000
                         </div>
                     </div>
 
@@ -110,10 +110,10 @@
                             <input matInput type="number" readonly="true" placeholder="Push Price" [formControlName]="'pushPrice'">
                         </mat-form-field>
                         <div *ngIf="pushPrice?.errors?.['min']" class="errorMsg">
-                            Could not be less then 1
+                            Could not be less than 1
                         </div>
                         <div *ngIf="pushPrice?.errors?.['max']" class="errorMsg">
-                            Could not be more then 10 000
+                            Could not be more than 10 000
                         </div>
                     </div>
                 </div>
@@ -125,10 +125,10 @@
                             <input matInput type="number" placeholder="Max Rooms Per Night" [formControlName]="'maxRoomsPerNight'">
                         </mat-form-field>
                         <div *ngIf="maxRoomsPerNight?.errors?.['min']" class="errorMsg">
-                            Count can not be less then 1
+                            Count can not be less than 1
                         </div>
                         <div *ngIf="maxRoomsPerNight?.errors?.['max']" class="errorMsg">
-                            Could not be more then 30
+                            Could not be more than 30
                         </div>
                     </div>
 

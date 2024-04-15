@@ -1,10 +1,10 @@
 <div class="flex flex-0 items-center justify-between h-16 pr-3 sm:pr-5 pl-6 sm:pl-8 bg-primary text-on-primary">
     <div class="text-lg font-medium">Reservation Details</div>
     <button mat-icon-button (click)="discard()" [tabIndex]="-1">
-            <mat-icon
-                class="text-current"
-                [svgIcon]="'heroicons_outline:x'"></mat-icon>
-        </button>
+      <img
+        class="text-current"
+        src="assets/img/heroicons/x-mark-outline.svg" alt="" />
+    </button>
 </div>
 <!-- Content -->
 <div class="hotelCaption" *ngIf="item">
@@ -31,7 +31,7 @@
                     </div>
                     <div class="mt-4">Country Name: <span style="font-weight: bold;">{{newOrder.countryName}}</span></div>
                     <div class="mt-4">Email: <span style="font-weight: bold;">{{newOrder.email}}</span></div>
-                    <!-- <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>   
+                    <!-- <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>
                     <div class="mt-4">
                         &nbsp;
                     </div>  -->
@@ -57,7 +57,7 @@
                     </div>
                     <div class="mt-4">Country Name: <span style="font-weight: bold;">{{oldOrder.countryName}}</span></div>
                     <div class="mt-4">Email: <span style="font-weight: bold;">{{oldOrder.email}}</span></div>
-                    <!-- <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>   
+                    <!-- <div class="mt-4">Provider: <span style="font-weight: bold;">{{item.provider}}</span></div>
                     <div class="mt-4">Provider Reference: <span style="font-weight: bold;">{{item.supplierReference}}</span></div>    -->
                     <div class="mt-4">Agency: <span style="font-weight: bold;">{{item.refAgency}} {{item.refEmail}}</span></div>
                     <div class="mt-4">Board: <span style="font-weight: bold;">{{item.board}}</span></div>

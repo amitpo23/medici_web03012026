@@ -3,7 +3,7 @@
     "version": 1,
     "newProjectRoot": "projects",
     "projects": {
-        "medici-app": {
+        "only-night-app": {
             "projectType": "application",
             "schematics": {
                 "@schematics/angular:component": {
@@ -17,7 +17,7 @@
                 "build": {
                     "builder": "@angular-devkit/build-angular:browser",
                     "options": {
-                        "outputPath": "dist/medici-app",
+                        "outputPath": "dist/only-night-app",
                         "index": "src/index.html",
                         "main": "src/main.ts",
                         "polyfills": [
@@ -68,10 +68,10 @@
                     "builder": "@angular-devkit/build-angular:dev-server",
                     "configurations": {
                         "production": {
-                            "browserTarget": "medici-app:build:production"
+                            "browserTarget": "only-night-app:build:production"
                         },
                         "development": {
-                            "browserTarget": "medici-app:build:development"
+                            "browserTarget": "only-night-app:build:development"
                         }
                     },
                     "defaultConfiguration": "development"
@@ -79,7 +79,7 @@
                 "extract-i18n": {
                     "builder": "@angular-devkit/build-angular:extract-i18n",
                     "options": {
-                        "browserTarget": "medici-app:build"
+                        "browserTarget": "only-night-app:build"
                     }
                 },
                 "test": {
@@ -103,5 +103,8 @@
                 }
             }
         }
+    },
+    "cli": {
+      "analytics": false
     }
 }

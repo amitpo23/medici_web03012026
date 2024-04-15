@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-5">
     <div class="py-6">
-        <img class="logo" src="assets/img/logo.png" />
+        <img class="logo" src="assets/logo/logo.svg" />
     </div>
     <mat-card>
         <mat-card-title>
@@ -25,14 +25,12 @@
                     <mat-label>Password</mat-label>
                     <input id="password" matInput type="password" [formControlName]="'password'" #passwordField>
                     <button mat-icon-button type="button" (click)="passwordField.type === 'password' ? passwordField.type = 'text' : passwordField.type = 'password'" matSuffix>
-                        <mat-icon
-                            class="icon-size-5"
+                        <img
                             *ngIf="passwordField.type === 'password'"
-                            [svgIcon]="'heroicons_solid:eye'"></mat-icon>
-                        <mat-icon
-                            class="icon-size-5"
+                            src="assets/img/heroicons/eye-solid.svg" alt="" />
+                        <img
                             *ngIf="passwordField.type === 'text'"
-                            [svgIcon]="'heroicons_solid:eye-off'"></mat-icon>
+                            src="assets/img/heroicons/eye-off-solid.svg" alt="" />
                     </button>
                     <mat-error>
                         Password is required
