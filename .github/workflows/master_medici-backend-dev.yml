@@ -8,6 +8,7 @@ on:
     branches:
       - master
   workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,7 +31,8 @@ jobs:
         run: zip release.zip medici-backend-node/* -r
 
       - name: Upload artifact for deployment job
-      uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4
+        with:
           name: node-app
           path: release.zip
 
@@ -40,23 +42,15 @@ jobs:
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
-      uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v4
+        with:
           name: node-app
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
-      
-      - name: Login to Azure
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_20C8FC4E6C5B4F0FA1FAA25DECF39C7A }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C4DABE8A1AB64AC89AF26D43CA00A9AE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E0D8B7FC44474D55BEA6AF3FD76A7D4E }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -64,6 +58,5 @@ jobs:
         with:
           app-name: 'medici-backend-dev'
           slot-name: 'Production'
-          package: medici-backend-node
-
-
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_28C8FC4E6C584F0FA1FAA25DECF39C7A }}
+          package: .
