@@ -19,22 +19,20 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '24'
 
       - name: npm install, build, and test
         run: |
           cd medici-backend-node
           npm install
           npm run build --if-present
-
-      - name: Zip artifact for deployment
-        run: zip release.zip medici-backend-node/* -r
+          npm run test --if-present
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: release.zip
+          path: medici-backend-node/
 
   deploy:
     runs-on: ubuntu-latest
@@ -49,8 +47,16 @@ jobs:
         with:
           name: node-app
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
+      - name: 'Login to Azure'
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -58,5 +64,4 @@ jobs:
         with:
           app-name: 'medici-backend-dev'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_28C8FC4E6C584F0FA1FAA25DECF39C7A }}
           package: .
