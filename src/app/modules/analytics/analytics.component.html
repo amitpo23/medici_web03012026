@@ -1,0 +1,26 @@
+<div class="analytics-container">
+  <div class="analytics-header">
+    <h1>🤖 Analytics & AI - אנליטיקה וחיזויים</h1>
+    <p class="subtitle">המלצות חכמות ו חיזוי מחירים מבוסס AI</p>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="selectedTab" class="analytics-tabs">
+    <mat-tab label="🎯 חיזוי מחירים">
+      <div class="tab-content">
+        <app-price-predictor></app-price-predictor>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="🔔 התראות והמלצות">
+      <div class="tab-content">
+        <app-buy-sell-alerts></app-buy-sell-alerts>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="💰 מחשבון ROI">
+      <div class="tab-content">
+        <app-roi-calculator></app-roi-calculator>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

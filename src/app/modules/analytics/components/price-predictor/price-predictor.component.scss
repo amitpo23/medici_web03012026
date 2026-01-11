@@ -1,0 +1,233 @@
+.predictor-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.prediction-form-card {
+  .prediction-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: start;
+
+    mat-form-field {
+      width: 100%;
+    }
+
+    button {
+      height: 56px;
+      font-size: 16px;
+    }
+  }
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px;
+
+  p {
+    margin-top: 16px;
+    color: #666;
+  }
+}
+
+.prediction-result-card {
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.prediction-results {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  .result-row {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 24px;
+    background: #f9f9f9;
+    border-radius: 12px;
+
+    .result-item {
+      text-align: center;
+
+      label {
+        display: block;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 8px;
+      }
+
+      .value {
+        font-size: 32px;
+        font-weight: 700;
+
+        &.current-price {
+          color: #666;
+        }
+
+        &.predicted-price {
+          &.trend-up { color: #4caf50; }
+          &.trend-down { color: #f44336; }
+          &.trend-stable { color: #ff9800; }
+        }
+      }
+    }
+
+    .arrow-icon {
+      font-size: 48px;
+      
+      &.trend-up { color: #4caf50; }
+      &.trend-down { color: #f44336; }
+      &.trend-stable { color: #ff9800; }
+    }
+  }
+
+  .confidence-section {
+    label {
+      display: block;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    mat-progress-bar {
+      height: 24px;
+      border-radius: 12px;
+
+      &.high-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+        border-color: #4caf50 !important;
+      }
+
+      &.medium-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+        border-color: #ff9800 !important;
+      }
+
+      &.low-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+        border-color: #f44336 !important;
+      }
+    }
+
+    .confidence-value {
+      display: block;
+      text-align: center;
+      margin-top: 8px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+
+  .recommendation-section {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    border-radius: 12px;
+    border-right: 4px solid;
+
+    &.trend-up {
+      background: rgba(76, 175, 80, 0.1);
+      border-right-color: #4caf50;
+    }
+
+    &.trend-down {
+      background: rgba(244, 67, 54, 0.1);
+      border-right-color: #f44336;
+    }
+
+    &.trend-stable {
+      background: rgba(255, 152, 0, 0.1);
+      border-right-color: #ff9800;
+    }
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .recommendation-text {
+      flex: 1;
+
+      strong {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      p {
+        margin: 0;
+        font-size: 16px;
+        color: #666;
+      }
+    }
+  }
+
+  .trend-info {
+    mat-chip-set {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    mat-chip {
+      &.trend-up {
+        background: rgba(76, 175, 80, 0.2);
+        color: #2e7d32;
+      }
+
+      &.trend-down {
+        background: rgba(244, 67, 54, 0.2);
+        color: #c62828;
+      }
+
+      &.trend-stable {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ef6c00;
+      }
+
+      &.high-confidence {
+        background: rgba(76, 175, 80, 0.2);
+        color: #2e7d32;
+      }
+
+      &.medium-confidence {
+        background: rgba(255, 152, 0, 0.2);
+        color: #ef6c00;
+      }
+
+      &.low-confidence {
+        background: rgba(244, 67, 54, 0.2);
+        color: #c62828;
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .prediction-form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .result-row {
+    flex-direction: column;
+    gap: 16px;
+
+    .arrow-icon {
+      transform: rotate(90deg);
+    }
+  }
+}

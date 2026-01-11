@@ -1,0 +1,11 @@
+{
+    "/api": {
+        "target": "https://medici-backend-dev.azurewebsites.net",
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug",
+        "pathRewrite": {
+            "^/api": ""
+        }
+    }
+}

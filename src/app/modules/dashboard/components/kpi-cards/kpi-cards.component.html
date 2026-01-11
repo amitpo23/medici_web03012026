@@ -1,0 +1,46 @@
+<div class="kpi-cards-container">
+  <mat-card class="kpi-card revenue">
+    <div class="kpi-icon">💰</div>
+    <div class="kpi-content">
+      <h3>סה"כ הכנסות</h3>
+      <p class="kpi-value">₪{{ kpiData.totalRevenue | number:'1.0-0' }}</p>
+      <span class="kpi-label">Total Revenue</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="kpi-card profit">
+    <div class="kpi-icon">📈</div>
+    <div class="kpi-content">
+      <h3>רווח נקי</h3>
+      <p class="kpi-value">₪{{ kpiData.totalProfit | number:'1.0-0' }}</p>
+      <span class="kpi-label">{{ kpiData.profitMargin | number:'1.1-1' }}% Margin</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="kpi-card bookings">
+    <div class="kpi-icon">📅</div>
+    <div class="kpi-content">
+      <h3>הזמנות פעילות</h3>
+      <p class="kpi-value">{{ kpiData.activeBookings }}</p>
+      <span class="kpi-label">Active Bookings</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="kpi-card occupancy">
+    <div class="kpi-icon">🏨</div>
+    <div class="kpi-content">
+      <h3>תפוסה ממוצעת</h3>
+      <p class="kpi-value">{{ kpiData.averageOccupancy }}%</p>
+      <span class="kpi-label">Average Occupancy</span>
+    </div>
+  </mat-card>
+
+  <mat-card class="kpi-card today">
+    <div class="kpi-icon">⚡</div>
+    <div class="kpi-content">
+      <h3>הכנסות היום</h3>
+      <p class="kpi-value">₪{{ kpiData.todayRevenue | number:'1.0-0' }}</p>
+      <span class="kpi-label">Today's Revenue</span>
+    </div>
+  </mat-card>
+</div>

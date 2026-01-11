@@ -1,0 +1,33 @@
+<div class="hotels-container" *ngIf="!loading">
+  <div class="hotel-item" *ngFor="let hotel of topHotels; let i = index">
+    <div class="rank">{{ i + 1 }}</div>
+    <div class="hotel-info">
+      <h4>{{ hotel.hotelName }}</h4>
+      <span class="bookings-count">{{ hotel.bookings }} הזמנות</span>
+    </div>
+    <div class="hotel-stats">
+      <div class="stat">
+        <label>הכנסות</label>
+        <span class="value revenue">₪{{ hotel.revenue | number:'1.0-0' }}</span>
+      </div>
+      <div class="stat">
+        <label>רווח</label>
+        <span class="value profit">₪{{ hotel.profit | number:'1.0-0' }}</span>
+      </div>
+      <div class="stat">
+        <label>מרווח</label>
+        <span class="value margin" [ngClass]="getProfitColor(hotel.profitMargin)">
+          {{ hotel.profitMargin | number:'1.1-1' }}%
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="topHotels.length === 0" class="no-data">
+    <p>אין נתונים להצגה</p>
+  </div>
+</div>
+
+<div *ngIf="loading" class="loading">
+  <mat-spinner diameter="40"></mat-spinner>
+</div>

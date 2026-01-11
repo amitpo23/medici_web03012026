@@ -4,8 +4,11 @@
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
+        "dev": "ng serve --configuration development --proxy-config proxy.conf.dev.json",
         "build": "ng build",
+        "build:dev": "ng build --configuration development",
         "prod": "ng build --configuration production --build-optimizer=true --aot=true --source-map=false --base-href /",
+        "vercel-build": "ng build --configuration production",
         "watch": "ng build --watch --configuration development",
         "test": "ng test"
     },
@@ -27,7 +30,9 @@
         "ag-grid-angular": "^30.2.1",
         "ag-grid-community": "^30.2.1",
         "ag-grid-enterprise": "^30.2.1",
+        "chart.js": "^4.5.1",
         "crypto-js": "^4.2.0",
+        "ng2-charts": "^6.0.1",
         "ngx-device-detector": "^6.0.2",
         "rxjs": "~7.8.1",
         "tslib": "^2.6.2",

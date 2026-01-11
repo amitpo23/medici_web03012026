@@ -1,0 +1,106 @@
+<div class="calculator-container">
+  <mat-card class="calculator-card">
+    <mat-card-header>
+      <mat-card-title>💰 מחשבון ROI - תשואה על השקעה</mat-card-title>
+      <mat-card-subtitle>חשב את התשואה הצפויה על ההשקעה שלך</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="calculatorForm" class="calculator-form">
+        <mat-form-field appearance="outline">
+          <mat-label>השקעה (עלות)</mat-label>
+          <input matInput type="number" formControlName="investment" placeholder="0">
+          <span matPrefix>₪&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>הכנסה צפויה</mat-label>
+          <input matInput type="number" formControlName="expectedRevenue" placeholder="0">
+          <span matPrefix>₪&nbsp;</span>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>משך ימים</mat-label>
+          <input matInput type="number" formControlName="days" placeholder="0">
+          <mat-hint>מספר הימים של ההזמנה</mat-hint>
+        </mat-form-field>
+
+        <div class="button-group">
+          <button mat-raised-button color="primary" 
+                  [disabled]="calculatorForm.invalid"
+                  (click)="calculate()">
+            <mat-icon>calculate</mat-icon>
+            חשב ROI
+          </button>
+          <button mat-button (click)="reset()">
+            <mat-icon>refresh</mat-icon>
+            אפס
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card *ngIf="result" class="result-card" [@fadeIn]>
+    <mat-card-header>
+      <mat-card-title>📊 תוצאות</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="results-grid">
+        <div class="result-item main-result" [ngClass]="getROIColor(parseFloat(result.roi))">
+          <label>ROI - תשואה על השקעה</label>
+          <div class="value">{{ result.roi }}%</div>
+          <span class="indicator" *ngIf="parseFloat(result.roi) >= 20">🔥 מעולה!</span>
+          <span class="indicator" *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20">👍 טוב!</span>
+          <span class="indicator" *ngIf="parseFloat(result.roi) < 10 && parseFloat(result.roi) >= 5">⚠️ בינוני</span>
+          <span class="indicator" *ngIf="parseFloat(result.roi) < 5">📉 נמוך</span>
+        </div>
+
+        <div class="result-item">
+          <label>רווח נקי</label>
+          <div class="value profit">₪{{ result.profit | number:'1.0-0' }}</div>
+        </div>
+
+        <div class="result-item">
+          <label>מרווח רווח</label>
+          <div class="value">{{ result.profitMargin }}%</div>
+        </div>
+
+        <div class="result-item">
+          <label>ROI יומי</label>
+          <div class="value">{{ result.dailyROI }}%</div>
+        </div>
+
+        <div class="result-item">
+          <label>ROI שנתי (מוערך)</label>
+          <div class="value annual">{{ result.annualizedROI }}%</div>
+        </div>
+      </div>
+
+      <div class="insights-section">
+        <h3>💡 תובנות והמלצות</h3>
+        <ul>
+          <li *ngIf="parseFloat(result.roi) >= 20">
+            <mat-icon class="success">check_circle</mat-icon>
+            תשואה מעולה! זו עסקה משתלמת מאוד.
+          </li>
+          <li *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20">
+            <mat-icon class="good">check_circle</mat-icon>
+            תשואה טובה. כדאי לשקול את העסקה.
+          </li>
+          <li *ngIf="parseFloat(result.roi) < 10">
+            <mat-icon class="warning">warning</mat-icon>
+            תשואה נמוכה יחסית. שקול אלטרנטיבות.
+          </li>
+          <li *ngIf="parseFloat(result.dailyROI) > 1">
+            <mat-icon class="success">trending_up</mat-icon>
+            ROI יומי גבוה - עסקה מהירה ורווחית!
+          </li>
+          <li *ngIf="parseFloat(result.profitMargin) >= 30">
+            <mat-icon class="success">attach_money</mat-icon>
+            מרווח רווח מצוין ({{ result.profitMargin }}%)
+          </li>
+        </ul>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

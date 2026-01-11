@@ -1,0 +1,80 @@
+<!-- Patient Table Component -->
+<div class="patient-table-container">
+  <!-- Header with search -->
+  <div class="table-header">
+    <h2>Patients</h2>
+    <div class="search-box">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (input)="searchPatients()"
+        placeholder="Search patients by name or condition..."
+        class="search-input"
+      />
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading">
+    <p>Loading patients...</p>
+  </div>
+
+  <!-- Error state -->
+  <div *ngIf="error" class="error">
+    <p>{{ error }}</p>
+    <button (click)="loadPatients()" class="retry-btn">Retry</button>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading && !error && paginatedPatients.length === 0" class="empty-state">
+    <p>No patients found</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="!loading && !error && paginatedPatients.length > 0" class="table-wrapper">
+    <table class="patients-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Condition</th>
+          <th>Last Visit</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let patient of paginatedPatients" class="patient-row">
+          <td class="patient-name">
+            <div class="avatar">{{ patient.name.charAt(0) }}</div>
+            <span>{{ patient.name }}</span>
+          </td>
+          <td>{{ patient.age }}</td>
+          <td>{{ patient.condition }}</td>
+          <td>{{ patient.lastVisit }}</td>
+          <td>
+            <span class="status-badge" [ngStyle]="{'background-color': getStatusColor(patient.status)}">
+              {{ patient.status }}
+            </span>
+          </td>
+          <td class="actions">
+            <button (click)="viewPatient(patient)" class="action-btn">View</button>
+            <button (click)="editPatient(patient)" class="action-btn">Edit</button>
+            <button (click)="viewHistory(patient)" class="action-btn">History</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <button (click)="previousPage()" [disabled]="currentPage === 1" class="page-btn">
+        Previous
+      </button>
+      <span class="page-info">Page {{ currentPage }} of {{ totalPages }}</span>
+      <button (click)="nextPage()" [disabled]="currentPage === totalPages" class="page-btn">
+        Next
+      </button>
+    </div>
+  </div>
+</div>

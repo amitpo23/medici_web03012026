@@ -1,0 +1,7 @@
+node_modules
+.angular
+.vscode
+*.log
+.git
+.github
+medici-backend-node

@@ -7,6 +7,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthService } from './core/auth/auth.service';
 import { AuthModule } from './core/auth/auth.module';
 import { MaterialModule } from './modules/material/material.module';
+import { DashboardComponent } from './dashboard/dashboard.component';
+import { StatsCardsComponent } from './components/dashboard/stats-cards.component';
+import { PatientTableComponent } from './components/dashboard/patient-table.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TableCommunicationService } from './services/table-communication-service';
 import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
@@ -14,10 +17,14 @@ import { LOADING_BAR_CONFIG } from '@ngx-loading-bar/core';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    DashboardComponent,
+    StatsCardsComponent,
+    PatientTableComponent
   ],
   imports: [
     BrowserModule,
+        HttpClientModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     AuthModule,

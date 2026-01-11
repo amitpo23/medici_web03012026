@@ -90,6 +90,7 @@ JWT_SECRET=O2R_SECRET_FOR_SIGNING_JWT_TOKENS!!!
 # Server Configuration
 PORT=8080
 NODE_ENV=development
+
 ```
 
 ### Step 4: Create config/database.js

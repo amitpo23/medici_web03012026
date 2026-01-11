@@ -1,0 +1,17 @@
+<div class="stats-grid">
+  <div class="stat-card" *ngFor="let stat of stats">
+    <div class="card-content">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <h3 class="card-title">{{ stat.title }}</h3>
+      </div>
+      <div class="card-body">
+        <div class="stat-value">{{ stat.value }}</div>
+        <div class="stat-change" [ngClass]="{'positive': stat.change.includes('+'), 'negative': stat.change.includes('-')}">
+          {{ stat.change }}
+        </div>
+      </div>
+      <p class="stat-description">{{ stat.description }}</p>
+    </div>
+  </div>
+</div>
