@@ -98,6 +98,97 @@ body {
     // background-color: #212f52;
 }
 
+/* ============================================
+   Dark Mode Global Styles
+   ============================================ */
+
+// Light Mode Variables
+:root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f7fa;
+    --bg-tertiary: #e2e8f0;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --border-color: #e2e8f0;
+    --shadow: rgba(0, 0, 0, 0.1);
+    --card-bg: #ffffff;
+}
+
+// Dark Mode Variables
+.dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --border-color: #334155;
+    --shadow: rgba(0, 0, 0, 0.3);
+    --card-bg: #1e293b;
+}
+
+// Apply dark mode styles
+.dark {
+    body {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    // Angular Material dark theme
+    .mat-mdc-card {
+        background-color: var(--card-bg);
+        color: var(--text-primary);
+    }
+
+    .mat-mdc-card-title,
+    .mat-card-title {
+        color: var(--text-primary);
+    }
+
+    .mat-toolbar {
+        background-color: var(--bg-secondary);
+        color: var(--text-primary);
+    }
+
+    .mat-drawer-container {
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+    }
+
+    .mat-drawer {
+        background-color: var(--bg-secondary);
+    }
+
+    // AG Grid dark theme
+    .ag-theme-alpine {
+        --ag-background-color: var(--bg-secondary);
+        --ag-header-background-color: var(--bg-tertiary);
+        --ag-odd-row-background-color: var(--bg-primary);
+        --ag-foreground-color: var(--text-primary);
+        --ag-header-foreground-color: var(--text-primary);
+        --ag-border-color: var(--border-color);
+    }
+
+    // Forms
+    .mat-mdc-form-field {
+        .mat-mdc-input-element {
+            color: var(--text-primary);
+        }
+    }
+
+    // Buttons
+    .mat-mdc-raised-button.mat-primary {
+        background-color: #2196f3;
+    }
+}
+
+// Smooth transitions for theme switching
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+
 .logo {
     max-width: 300px;
     max-height: 100px;

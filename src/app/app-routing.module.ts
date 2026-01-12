@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { DashboardComponent } from './dashboard/dashboard.component';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/auth/guards/auth.guard';
 
@@ -15,7 +14,7 @@ const routes: Routes = [
   { path: 'signed-in-redirect', pathMatch: 'full', redirectTo: 'options' },
 
   { path: 'options', canActivate: [AuthGuard], canActivateChild: [AuthGuard], loadChildren: () => import('./modules/options/options.module').then(m => m.OptionsModule) },
-    { path: 'dashboard', component: DashboardComponent },
+  { path: 'dashboard', canActivate: [AuthGuard], canActivateChild: [AuthGuard], loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule) },
   { path: 'analytics', canActivate: [AuthGuard], canActivateChild: [AuthGuard], loadChildren: () => import('./modules/analytics/analytics.module').then(m => m.AnalyticsModule) },
   { path: 'rooms', canActivate: [AuthGuard], canActivateChild: [AuthGuard], loadChildren: () => import('./modules/rooms/rooms.module').then(m => m.RoomsModule) },
   { path: 'sales-room', canActivate: [AuthGuard], canActivateChild: [AuthGuard], loadChildren: () => import('./modules/sales-room/sales-room.module').then(m => m.SalesRoomModule) },

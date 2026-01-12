@@ -3,6 +3,11 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { ChartConfiguration, ChartType } from 'chart.js';
 
+interface Period {
+  label: string;
+  value: number;
+}
+
 @Component({
   selector: 'app-revenue-chart',
   templateUrl: './revenue-chart.component.html',
@@ -10,6 +15,19 @@ import { ChartConfiguration, ChartType } from 'chart.js';
 })
 export class RevenueChartComponent implements OnInit {
   baseUrl = environment.baseUrl;
+  
+  // Period options
+  periods: Period[] = [
+    { label: '3 חודשים', value: 3 },
+    { label: '6 חודשים', value: 6 },
+    { label: 'שנה', value: 12 }
+  ];
+  selectedPeriod: number = 12;
+  
+  // Stats
+  totalRevenue: number = 0;
+  totalProfit: number = 0;
+  averageMonthly: number = 0;
 
   // Chart configuration
   public lineChartData: ChartConfiguration['data'] = {
@@ -48,11 +66,29 @@ export class RevenueChartComponent implements OnInit {
     plugins: {
       legend: {
         display: true,
-        position: 'top'
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 15,
+          font: {
+            size: 13,
+            weight: '600'
+          }
+        }
       },
       tooltip: {
         mode: 'index',
         intersect: false,
+        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+        padding: 12,
+        borderRadius: 8,
+        titleFont: {
+          size: 14,
+          weight: 'bold'
+        },
+        bodyFont: {
+          size: 13
+        },
         callbacks: {
           label: function(context) {
             let label = context.dataset.label || '';
@@ -72,12 +108,21 @@ export class RevenueChartComponent implements OnInit {
           callback: function(value) {
             return '₪' + value.toLocaleString();
           }
+        },
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
+        }
+      },
+      x: {
+        grid: {
+          display: false
         }
       }
     }
   };
 
   public lineChartType: ChartType = 'line';
+  private allBookings: any[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -88,10 +133,20 @@ export class RevenueChartComponent implements OnInit {
   loadChartData(): void {
     this.http.get<any[]>(this.baseUrl + 'Book/Bookings').subscribe({
       next: (bookings) => {
+        this.allBookings = bookings;
         this.processChartData(bookings);
       },
       error: (err) => console.error('Error loading chart data:', err)
     });
+  }
+
+  selectPeriod(months: number): void {
+    this.selectedPeriod = months;
+    this.processChartData(this.allBookings);
+  }
+
+  changeChartType(type: 'line' | 'bar'): void {
+    this.lineChartType = type as ChartType;
   }
 
   processChartData(bookings: any[]): void {
@@ -117,10 +172,10 @@ export class RevenueChartComponent implements OnInit {
       data.profit += profit;
     });
 
-    // Sort by date and take last 12 months
+    // Sort by date and take selected period
     const sortedMonths = Array.from(monthlyData.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(-12);
+      .slice(-this.selectedPeriod);
 
     const labels = sortedMonths.map(([key]) => {
       const [year, month] = key.split('-');
@@ -130,6 +185,11 @@ export class RevenueChartComponent implements OnInit {
 
     const revenueData = sortedMonths.map(([_, data]) => data.revenue);
     const profitData = sortedMonths.map(([_, data]) => data.profit);
+
+    // Calculate stats
+    this.totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+    this.totalProfit = profitData.reduce((sum, val) => sum + val, 0);
+    this.averageMonthly = this.totalRevenue / revenueData.length;
 
     this.lineChartData = {
       labels: labels,
