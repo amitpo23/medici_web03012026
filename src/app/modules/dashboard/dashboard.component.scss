@@ -1,6 +1,6 @@
 .dashboard-container {
-  padding: 32px;
-  background: var(--bg-secondary, #f5f7fa);
+  padding: 24px;
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
@@ -8,170 +8,51 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding: 24px;
-  background: var(--card-bg, white);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px var(--shadow, rgba(0, 0, 0, 0.1));
-}
+  margin-bottom: 24px;
 
-.header-content {
-  .dashboard-title {
+  h1 {
     margin: 0;
-    font-size: 32px;
-    font-weight: 700;
-    color: var(--text-primary, #1e293b);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .title-icon {
-      font-size: 36px;
-    }
-  }
-
-  .dashboard-subtitle {
-    margin: 8px 0 0 0;
-    color: var(--text-secondary, #64748b);
-    font-size: 16px;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-
-  .theme-toggle {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: var(--bg-secondary, #f1f5f9);
-      transform: scale(1.1);
-    }
-
-    mat-icon {
-      color: var(--text-primary, #1e293b);
-    }
-  }
-
-  .refresh-btn {
-    padding: 12px 24px;
-    border-radius: 12px;
+    color: #1976d2;
+    font-size: 28px;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
-
-    mat-icon {
-      margin-left: 8px;
-    }
   }
 }
 
-.loading-container {
+.loading-spinner {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
-  background: var(--card-bg, white);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px var(--shadow, rgba(0, 0, 0, 0.1));
+  padding: 60px;
 
-  .loading-text {
-    margin-top: 24px;
-    color: var(--text-secondary, #666);
-    font-size: 18px;
-    font-weight: 500;
+  p {
+    margin-top: 16px;
+    color: #666;
   }
 }
 
 .dashboard-content {
   display: flex;
   flex-direction: column;
-  gap: 32px;
-}
-
-.kpi-section {
-  margin-bottom: 0;
-}
-
-.charts-section {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
   gap: 24px;
 }
 
-.chart-card,
-.section-card {
-  background: var(--card-bg, white);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px var(--shadow, rgba(0, 0, 0, 0.1));
-  overflow: hidden;
-  transition: all 0.3s ease;
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 24px;
+}
 
-  &:hover {
-    box-shadow: 0 8px 24px var(--shadow, rgba(0, 0, 0, 0.15));
-    transform: translateY(-4px);
+.chart-card {
+  mat-card-content {
+    padding: 16px 0;
+    min-height: 300px;
   }
 }
 
-.card-header {
-  padding: 24px 24px 16px 24px;
-  border-bottom: 2px solid var(--bg-secondary, #f1f5f9);
-
-  .card-title {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary, #1e293b);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    .title-icon {
-      font-size: 24px;
-    }
-  }
-}
-
-.card-body {
-  padding: 24px;
-  min-height: 400px;
-}
-
-.hotels-section {
-  .section-card {
-    .card-body {
-      min-height: auto;
-    }
-  }
-}
-
-// Dark Mode Enhancements
-.dark {
-  .dashboard-container {
-    background: var(--bg-primary);
-  }
-
-  .dashboard-header,
-  .chart-card,
-  .section-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-  }
-
-  .card-header {
-    border-bottom-color: var(--border-color);
-  }
-}
-
-// Responsive Design
-@media (max-width: 1200px) {
-  .charts-section {
-    grid-template-columns: 1fr;
+.full-width-card {
+  mat-card-content {
+    padding: 16px 0;
   }
 }
 
@@ -180,42 +61,17 @@
     padding: 16px;
   }
 
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
   .dashboard-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 20px;
-
-    .header-content {
-      .dashboard-title {
-        font-size: 24px;
-
-        .title-icon {
-          font-size: 28px;
-        }
-      }
-
-      .dashboard-subtitle {
-        font-size: 14px;
-      }
-    }
-
-    .header-actions {
-      width: 100%;
-      justify-content: space-between;
-
-      .refresh-btn {
-        flex: 1;
-      }
-    }
-  }
-
-  .charts-section {
     gap: 16px;
-  }
 
-  .card-body {
-    padding: 16px;
-    min-height: 300px;
+    button {
+      width: 100%;
+    }
   }
 }
-

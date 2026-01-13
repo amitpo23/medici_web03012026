@@ -1,32 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { ThemeService } from '../../services/theme.service';
-import { trigger, state, style, transition, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss'],
-  animations: [
-    trigger('fadeIn', [
-      transition(':enter', [
-        style({ opacity: 0 }),
-        animate('500ms ease-in', style({ opacity: 1 }))
-      ])
-    ]),
-    trigger('slideUp', [
-      transition(':enter', [
-        style({ transform: 'translateY(20px)', opacity: 0 }),
-        animate('500ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
-      ])
-    ])
-  ]
+  styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit {
   baseUrl = environment.baseUrl;
   loading = true;
-  isDarkMode = false;
 
   // KPI Data
   kpiData = {
@@ -38,24 +21,10 @@ export class DashboardComponent implements OnInit {
     todayRevenue: 0
   };
 
-  constructor(
-    private http: HttpClient,
-    private themeService: ThemeService
-  ) {
-    this.isDarkMode = this.themeService.getCurrentTheme() === 'dark';
-  }
+  constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
-    
-    // Subscribe to theme changes
-    this.themeService.theme$.subscribe(theme => {
-      this.isDarkMode = theme === 'dark';
-    });
-  }
-
-  toggleTheme(): void {
-    this.themeService.toggleTheme();
   }
 
   loadDashboardData(): void {
