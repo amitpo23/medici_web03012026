@@ -1,14 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { ChartConfiguration, ChartType } from 'chart.js';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-occupancy-trend',
   templateUrl: './occupancy-trend.component.html',
   styleUrls: ['./occupancy-trend.component.scss']
 })
-export class OccupancyTrendComponent implements OnInit {
+export class OccupancyTrendComponent implements OnInit, AfterViewInit, OnDestroy {
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  private chart?: Chart;
   baseUrl = environment.baseUrl;
 
   public barChartData: ChartConfiguration['data'] = {
@@ -25,7 +29,7 @@ export class OccupancyTrendComponent implements OnInit {
     labels: []
   };
 
-  public barChartOptions: ChartConfiguration['options'] = {
+  public barChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -35,7 +39,7 @@ export class OccupancyTrendComponent implements OnInit {
       },
       tooltip: {
         callbacks: {
-          label: function(context) {
+          label: function(context: any) {
             return context.dataset.label + ': ' + context.parsed.y + '%';
           }
         }
@@ -46,7 +50,7 @@ export class OccupancyTrendComponent implements OnInit {
         beginAtZero: true,
         max: 100,
         ticks: {
-          callback: function(value) {
+          callback: function(value: any) {
             return value + '%';
           }
         }
@@ -108,5 +112,37 @@ export class OccupancyTrendComponent implements OnInit {
         data: occupancyData
       }]
     };
+    
+    this.updateChart();
+  }
+
+  ngAfterViewInit(): void {
+    this.initChart();
+  }
+
+  private initChart(): void {
+    if (this.chartCanvas && this.chartCanvas.nativeElement) {
+      const ctx = this.chartCanvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.chart = new Chart(ctx, {
+          type: 'bar',
+          data: this.barChartData,
+          options: this.barChartOptions as any
+        });
+      }
+    }
+  }
+
+  private updateChart(): void {
+    if (this.chart) {
+      this.chart.data = this.barChartData;
+      this.chart.update();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.destroy();
+    }
   }
 }

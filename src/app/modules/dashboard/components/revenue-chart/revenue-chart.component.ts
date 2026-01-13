@@ -1,14 +1,18 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { ChartConfiguration, ChartType } from 'chart.js';
+import { Chart, ChartConfiguration, registerables } from 'chart.js';
+
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-revenue-chart',
   templateUrl: './revenue-chart.component.html',
   styleUrls: ['./revenue-chart.component.scss']
 })
-export class RevenueChartComponent implements OnInit {
+export class RevenueChartComponent implements OnInit, AfterViewInit {
+  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  private chart?: Chart;
   baseUrl = environment.baseUrl;
 
   // Chart configuration
@@ -42,7 +46,7 @@ export class RevenueChartComponent implements OnInit {
     labels: []
   };
 
-  public lineChartOptions: ChartConfiguration['options'] = {
+  public lineChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -54,12 +58,14 @@ export class RevenueChartComponent implements OnInit {
         mode: 'index',
         intersect: false,
         callbacks: {
-          label: function(context) {
+          label: function(context: any) {
             let label = context.dataset.label || '';
             if (label) {
               label += ': ';
             }
-            label += '₪' + context.parsed.y.toLocaleString();
+            if (context.parsed && context.parsed.y !== null) {
+              label += '₪' + context.parsed.y.toLocaleString();
+            }
             return label;
           }
         }
@@ -69,7 +75,7 @@ export class RevenueChartComponent implements OnInit {
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value) {
+          callback: function(value: any) {
             return '₪' + value.toLocaleString();
           }
         }
@@ -144,5 +150,37 @@ export class RevenueChartComponent implements OnInit {
         }
       ]
     };
+    
+    this.updateChart();
+  }
+
+  ngAfterViewInit(): void {
+    this.initChart();
+  }
+
+  private initChart(): void {
+    if (this.chartCanvas && this.chartCanvas.nativeElement) {
+      const ctx = this.chartCanvas.nativeElement.getContext('2d');
+      if (ctx) {
+        this.chart = new Chart(ctx, {
+          type: 'line',
+          data: this.lineChartData,
+          options: this.lineChartOptions as any
+        });
+      }
+    }
+  }
+
+  private updateChart(): void {
+    if (this.chart) {
+      this.chart.data = this.lineChartData;
+      this.chart.update();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.chart) {
+      this.chart.destroy();
+    }
   }
 }
