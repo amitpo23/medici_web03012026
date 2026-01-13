@@ -10,17 +10,17 @@
       <button mat-button 
               [class.active]="filterType === 'buy'" 
               (click)="filterType = 'buy'">
-        🟢 קנה ({{ (alerts | filter:'type':'buy').length }})
+        🟢 קנה ({{ getAlertCountByType('buy') }})
       </button>
       <button mat-button 
               [class.active]="filterType === 'sell'" 
               (click)="filterType = 'sell'">
-        🔴 מכור ({{ (alerts | filter:'type':'sell').length }})
+        🔴 מכור ({{ getAlertCountByType('sell') }})
       </button>
       <button mat-button 
               [class.active]="filterType === 'warning'" 
               (click)="filterType = 'warning'">
-        ⚠️ אזהרה ({{ (alerts | filter:'type':'warning').length }})
+        ⚠️ אזהרה ({{ getAlertCountByType('warning') }})
       </button>
     </div>
     <button mat-icon-button (click)="loadAlerts()" matTooltip="רענן">

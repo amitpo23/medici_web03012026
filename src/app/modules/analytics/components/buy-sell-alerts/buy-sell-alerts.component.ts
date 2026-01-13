@@ -36,6 +36,10 @@ export class BuySellAlertsComponent implements OnInit {
     return this.alerts.filter(a => a.type === this.filterType);
   }
 
+  getAlertCountByType(type: string): number {
+    return this.alerts.filter(a => a.type === type).length;
+  }
+
   getAlertIcon(type: string): string {
     switch (type) {
       case 'buy': return '🟢';

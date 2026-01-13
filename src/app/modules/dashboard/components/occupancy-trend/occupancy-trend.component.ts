@@ -58,7 +58,7 @@ export class OccupancyTrendComponent implements OnInit, AfterViewInit, OnDestroy
     }
   };
 
-  public barChartType: ChartType = 'bar';
+  public barChartType: string = 'bar';
 
   constructor(private http: HttpClient) {}
 

@@ -11,6 +11,9 @@ export class RoiCalculatorComponent {
   calculatorForm: FormGroup;
   result: any = null;
 
+  // Make parseFloat available in template
+  parseFloat = parseFloat;
+
   constructor(
     private fb: FormBuilder,
     private predictionService: PredictionService

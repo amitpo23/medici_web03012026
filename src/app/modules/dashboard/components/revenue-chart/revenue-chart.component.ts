@@ -83,7 +83,7 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
     }
   };
 
-  public lineChartType: ChartType = 'line';
+  public lineChartType: string = 'line';
 
   constructor(private http: HttpClient) {}
 
