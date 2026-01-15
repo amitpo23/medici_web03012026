@@ -1,0 +1,235 @@
+<div class="ai-prediction-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-purple-600">psychology</mat-icon>
+        AI Prediction Engine
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        מערכת חיזוי חכמה המבוססת על 5 סוכני AI לזיהוי הזדמנויות קנייה ומכירה
+      </p>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button mat-stroked-button color="primary" (click)="clearCache()" matTooltip="נקה מטמון">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-flat-button color="primary" (click)="runFullAnalysis()" [disabled]="isLoading">
+        <mat-icon *ngIf="!isLoading">auto_awesome</mat-icon>
+        <mat-spinner *ngIf="isLoading" diameter="20" class="inline-block"></mat-spinner>
+        <span class="ml-2">הפעל ניתוח מלא</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+    <mat-card class="stat-card">
+      <div class="stat-value text-3xl font-bold text-purple-600">{{ analysisStats.totalOpportunities }}</div>
+      <div class="stat-label text-gray-500 dark:text-gray-400">הזדמנויות</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-value text-3xl font-bold text-emerald-600">{{ analysisStats.buyOpportunities }}</div>
+      <div class="stat-label text-gray-500 dark:text-gray-400">קנייה</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-value text-3xl font-bold text-red-600">{{ analysisStats.sellOpportunities }}</div>
+      <div class="stat-label text-gray-500 dark:text-gray-400">מכירה</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-value text-3xl font-bold text-orange-600">{{ analysisStats.urgentCount }}</div>
+      <div class="stat-label text-gray-500 dark:text-gray-400">דחוף</div>
+    </mat-card>
+    <mat-card class="stat-card">
+      <div class="stat-value text-3xl font-bold text-blue-600">{{ analysisStats.avgConfidence }}%</div>
+      <div class="stat-label text-gray-500 dark:text-gray-400">ביטחון ממוצע</div>
+    </mat-card>
+  </div>
+
+  <!-- Filters Panel -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
+        <!-- City Select -->
+        <mat-form-field appearance="outline" class="w-full lg:w-48">
+          <mat-label>עיר</mat-label>
+          <mat-select [formControl]="filtersForm.controls.city">
+            <mat-option [value]="null">כל הערים</mat-option>
+            <mat-option *ngFor="let city of cities" [value]="city.cityName">
+              {{ city.cityName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Hotel Select -->
+        <mat-form-field appearance="outline" class="w-full lg:w-64">
+          <mat-label>מלון</mat-label>
+          <mat-select [formControl]="filtersForm.controls.hotelId">
+            <mat-option [value]="null">כל המלונות</mat-option>
+            <mat-option *ngFor="let hotel of filteredHotels" [value]="hotel.hotelId">
+              {{ hotel.hotelName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Risk Tolerance -->
+        <mat-form-field appearance="outline" class="w-full lg:w-36">
+          <mat-label>סיכון</mat-label>
+          <mat-select [formControl]="filtersForm.controls.riskTolerance">
+            <mat-option value="low">נמוך</mat-option>
+            <mat-option value="medium">בינוני</mat-option>
+            <mat-option value="high">גבוה</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Days Ahead -->
+        <mat-form-field appearance="outline" class="w-full lg:w-36">
+          <mat-label>ימים קדימה</mat-label>
+          <mat-select [formControl]="filtersForm.controls.futureDays">
+            <mat-option [value]="7">שבוע</mat-option>
+            <mat-option [value]="14">שבועיים</mat-option>
+            <mat-option [value]="30">חודש</mat-option>
+            <mat-option [value]="60">חודשיים</mat-option>
+            <mat-option [value]="90">רבעון</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Clear Button -->
+        <button mat-stroked-button (click)="clearFilters()" class="lg:mb-1">
+          <mat-icon>clear</mat-icon>
+          נקה
+        </button>
+      </div>
+
+      <!-- User Instructions -->
+      <div class="mt-4">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>הנחיות מותאמות אישית (בעברית או אנגלית)</mat-label>
+          <textarea matInput [formControl]="filtersForm.controls.userInstructions" rows="2"
+            placeholder="לדוגמה: חפש הזדמנויות לקנות מלונות בתל אביב כשהמחיר יורד ב-15% או יותר מהממוצע"></textarea>
+          <mat-icon matSuffix>edit_note</mat-icon>
+        </mat-form-field>
+        
+        <!-- Example Instructions -->
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span class="text-sm text-gray-500 dark:text-gray-400">דוגמאות:</span>
+          <button *ngFor="let example of exampleInstructions" 
+                  mat-stroked-button 
+                  class="example-btn text-xs"
+                  (click)="applyExample(example)">
+            {{ example }}
+          </button>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Tabs -->
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" animationDuration="200ms">
+    <!-- Opportunities Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">lightbulb</mat-icon>
+        הזדמנויות
+        <span *ngIf="opportunities.length > 0" class="ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 text-xs dark:bg-purple-900/30 dark:text-purple-400">
+          {{ opportunities.length }}
+        </span>
+      </ng-template>
+      
+      <div class="py-4">
+        <div *ngIf="isLoadingOpportunities" class="flex justify-center items-center py-12">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+        
+        <div *ngIf="!isLoadingOpportunities && opportunities.length === 0" class="text-center py-12">
+          <mat-icon class="text-6xl text-gray-300 dark:text-gray-600">search_off</mat-icon>
+          <p class="text-gray-500 dark:text-gray-400 mt-4">לא נמצאו הזדמנויות מתאימות</p>
+          <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">נסה לשנות את הפילטרים או להריץ ניתוח מלא</p>
+        </div>
+
+        <div *ngIf="!isLoadingOpportunities && opportunities.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <app-opportunity-card *ngFor="let opp of opportunities" [opportunity]="opp"></app-opportunity-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Agent Status Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">smart_toy</mat-icon>
+        סוכני AI
+      </ng-template>
+      
+      <div class="py-4">
+        <app-agent-status [status]="agentStatus"></app-agent-status>
+      </div>
+    </mat-tab>
+
+    <!-- Market Analysis Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">analytics</mat-icon>
+        ניתוח שוק
+      </ng-template>
+      
+      <div class="py-4">
+        <app-market-analysis 
+          [city]="filtersForm.controls.city.value"
+          [hotelId]="filtersForm.controls.hotelId.value">
+        </app-market-analysis>
+      </div>
+    </mat-tab>
+
+    <!-- Demand Forecast Tab -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">trending_up</mat-icon>
+        חיזוי ביקוש
+      </ng-template>
+      
+      <div class="py-4">
+        <app-demand-forecast 
+          [city]="filtersForm.controls.city.value"
+          [hotelId]="filtersForm.controls.hotelId.value"
+          [days]="filtersForm.controls.futureDays.value || 30">
+        </app-demand-forecast>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <!-- Analysis Result Summary -->
+  <mat-card *ngIf="analysisResult?.synthesis" class="analysis-summary">
+    <mat-card-header>
+      <mat-icon mat-card-avatar class="text-purple-600 !text-3xl">insights</mat-icon>
+      <mat-card-title>סיכום ניתוח AI</mat-card-title>
+      <mat-card-subtitle>{{ analysisResult?.timestamp | date:'dd/MM/yyyy HH:mm' }}</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content class="mt-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="metric-box">
+          <span class="metric-label">המלצה</span>
+          <span class="metric-value text-lg font-bold" [class]="getActionClass(analysisResult?.synthesis?.recommendation || '')">
+            {{ analysisResult?.synthesis?.recommendation }}
+          </span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">ביטחון</span>
+          <span class="metric-value text-lg font-bold text-blue-600">{{ analysisResult?.synthesis?.confidence }}%</span>
+        </div>
+        <div class="metric-box">
+          <span class="metric-label">רמת סיכון</span>
+          <span class="metric-value text-lg font-bold" [class]="getRiskClass(analysisResult?.synthesis?.riskLevel || '')">
+            {{ analysisResult?.synthesis?.riskLevel }}
+          </span>
+        </div>
+      </div>
+      
+      <div class="executive-summary p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <h4 class="font-semibold mb-2 text-gray-900 dark:text-white">סיכום מנהלים</h4>
+        <p class="text-gray-700 dark:text-gray-300" dir="rtl">{{ analysisResult?.synthesis?.executiveSummary }}</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,98 @@
+.ai-prediction-container {
+  min-height: 100vh;
+  direction: rtl;
+}
+
+.stat-card {
+  padding: 1rem;
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: scale(1.05);
+}
+
+.stat-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.filters-card {
+  padding: 1rem;
+}
+
+.filters-card mat-form-field {
+  font-size: 14px;
+}
+
+.example-btn {
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.3s ease;
+  font-size: 11px;
+}
+
+.example-btn:hover {
+  background-color: rgba(147, 51, 234, 0.1);
+}
+
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.analysis-summary {
+  border-left: 4px solid #a855f7;
+}
+
+::ng-deep .mat-mdc-tab-group .mat-mdc-tab {
+  min-width: 120px;
+}
+
+::ng-deep .mat-mdc-tab-labels {
+  direction: rtl;
+}
+
+:host-context(.dark) .stat-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+:host-context(.dark) .filters-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+:host-context(.dark) .metric-box {
+  background-color: #1f2937;
+}
+
+:host-context(.dark) .metric-label {
+  color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  .ai-prediction-container {
+    padding: 0.75rem;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 1.5rem;
+  }
+}

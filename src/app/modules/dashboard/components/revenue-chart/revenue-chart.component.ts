@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -15,32 +15,37 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
   private chart?: Chart;
   baseUrl = environment.baseUrl;
 
-  // Chart configuration
   public lineChartData: ChartConfiguration['data'] = {
     datasets: [
       {
         data: [],
-        label: 'הכנסות',
-        backgroundColor: 'rgba(33, 150, 243, 0.2)',
+        label: 'Revenue',
+        backgroundColor: 'rgba(33, 150, 243, 0.1)',
         borderColor: '#2196f3',
         pointBackgroundColor: '#2196f3',
         pointBorderColor: '#fff',
+        pointRadius: 4,
+        pointHoverRadius: 6,
         pointHoverBackgroundColor: '#fff',
         pointHoverBorderColor: '#2196f3',
         fill: true,
-        tension: 0.4
+        tension: 0.4,
+        borderWidth: 3
       },
       {
         data: [],
-        label: 'רווח',
-        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        label: 'Profit',
+        backgroundColor: 'rgba(76, 175, 80, 0.1)',
         borderColor: '#4caf50',
         pointBackgroundColor: '#4caf50',
         pointBorderColor: '#fff',
+        pointRadius: 4,
+        pointHoverRadius: 6,
         pointHoverBackgroundColor: '#fff',
         pointHoverBorderColor: '#4caf50',
         fill: true,
-        tension: 0.4
+        tension: 0.4,
+        borderWidth: 3
       }
     ],
     labels: []
@@ -49,14 +54,36 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
   public lineChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
     plugins: {
       legend: {
         display: true,
-        position: 'top'
+        position: 'top',
+        align: 'end',
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 20,
+          font: {
+            size: 12,
+            weight: '500'
+          }
+        }
       },
       tooltip: {
         mode: 'index',
         intersect: false,
+        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        padding: 12,
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: true,
         callbacks: {
           label: function(context: any) {
             let label = context.dataset.label || '';
@@ -64,7 +91,7 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
               label += ': ';
             }
             if (context.parsed && context.parsed.y !== null) {
-              label += '₪' + context.parsed.y.toLocaleString();
+              label += '$' + context.parsed.y.toLocaleString();
             }
             return label;
           }
@@ -72,18 +99,43 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
       }
     },
     scales: {
+      x: {
+        grid: {
+          display: false
+        },
+        ticks: {
+          font: {
+            size: 11
+          }
+        }
+      },
       y: {
         beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.06)'
+        },
         ticks: {
+          font: {
+            size: 11
+          },
           callback: function(value: any) {
-            return '₪' + value.toLocaleString();
+            if (value >= 1000000) {
+              return '$' + (value / 1000000).toFixed(1) + 'M';
+            } else if (value >= 1000) {
+              return '$' + (value / 1000).toFixed(0) + 'K';
+            }
+            return '$' + value.toLocaleString();
           }
         }
       }
     }
   };
 
-  public lineChartType: string = 'line';
+  // Summary data
+  totalRevenue = 0;
+  totalProfit = 0;
+  avgMonthlyRevenue = 0;
+  growthRate = 0;
 
   constructor(private http: HttpClient) {}
 
@@ -131,11 +183,23 @@ export class RevenueChartComponent implements OnInit, AfterViewInit {
     const labels = sortedMonths.map(([key]) => {
       const [year, month] = key.split('-');
       const date = new Date(parseInt(year), parseInt(month) - 1);
-      return date.toLocaleDateString('he-IL', { month: 'short', year: '2-digit' });
+      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
     });
 
     const revenueData = sortedMonths.map(([_, data]) => data.revenue);
     const profitData = sortedMonths.map(([_, data]) => data.profit);
+
+    // Calculate summary stats
+    this.totalRevenue = revenueData.reduce((sum, val) => sum + val, 0);
+    this.totalProfit = profitData.reduce((sum, val) => sum + val, 0);
+    this.avgMonthlyRevenue = revenueData.length > 0 ? this.totalRevenue / revenueData.length : 0;
+    
+    // Calculate growth rate (last month vs previous)
+    if (revenueData.length >= 2) {
+      const lastMonth = revenueData[revenueData.length - 1];
+      const prevMonth = revenueData[revenueData.length - 2];
+      this.growthRate = prevMonth > 0 ? ((lastMonth - prevMonth) / prevMonth) * 100 : 0;
+    }
 
     this.lineChartData = {
       labels: labels,

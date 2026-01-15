@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 interface HotelStats {
   hotelName: string;
@@ -80,5 +80,12 @@ export class TopHotelsComponent implements OnInit {
     if (profitMargin >= 30) return 'high-profit';
     if (profitMargin >= 15) return 'medium-profit';
     return 'low-profit';
+  }
+
+  getRankClass(index: number): string {
+    if (index === 0) return 'gold';
+    if (index === 1) return 'silver';
+    if (index === 2) return 'bronze';
+    return '';
   }
 }

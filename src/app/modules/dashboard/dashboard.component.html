@@ -1,26 +1,125 @@
 <div class="dashboard-container">
+  <!-- Header -->
   <div class="dashboard-header">
-    <h1>📊 Dashboard - לוח בקרה</h1>
-    <button mat-raised-button color="primary" (click)="refreshData()">
-      <mat-icon>refresh</mat-icon>
-      רענן נתונים
+    <h1>
+      <mat-icon>dashboard</mat-icon>
+      Dashboard
+    </h1>
+    <div class="header-actions">
+      <div class="date-range-selector">
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'today'" (click)="setDateRange('today')">
+          Today
+        </button>
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'week'" (click)="setDateRange('week')">
+          This Week
+        </button>
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'month'" (click)="setDateRange('month')">
+          This Month
+        </button>
+      </div>
+      <button mat-raised-button color="primary" (click)="refreshData()">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <button class="action-btn" routerLink="/options">
+      <mat-icon>add_circle</mat-icon>
+      <span>New Opportunity</span>
+    </button>
+    <button class="action-btn" routerLink="/rooms">
+      <mat-icon>hotel</mat-icon>
+      <span>View Rooms</span>
+    </button>
+    <button class="action-btn" routerLink="/analytics">
+      <mat-icon>insights</mat-icon>
+      <span>Analytics</span>
+    </button>
+    <button class="action-btn" routerLink="/reservation">
+      <mat-icon>book_online</mat-icon>
+      <span>Reservations</span>
     </button>
   </div>
 
+  <!-- Loading State -->
   <div *ngIf="loading" class="loading-spinner">
-    <mat-spinner></mat-spinner>
-    <p>טוען נתונים...</p>
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading dashboard data...</p>
   </div>
 
+  <!-- Dashboard Content -->
   <div *ngIf="!loading" class="dashboard-content">
     <!-- KPI Cards -->
-    <app-kpi-cards [kpiData]="kpiData"></app-kpi-cards>
+    <div class="kpi-grid">
+      <!-- Total Revenue -->
+      <div class="kpi-card revenue" role="region" aria-label="Total Revenue">
+        <div class="kpi-header">
+          <div class="kpi-icon revenue">
+            <mat-icon>payments</mat-icon>
+          </div>
+          <div class="kpi-trend" [ngClass]="kpiData.revenueChange >= 0 ? 'positive' : 'negative'">
+            <mat-icon>{{ kpiData.revenueChange >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+            {{ kpiData.revenueChange | number:'1.1-1' }}%
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiData.totalRevenue | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-label">Total Revenue</div>
+      </div>
+
+      <!-- Total Profit -->
+      <div class="kpi-card profit" role="region" aria-label="Total Profit">
+        <div class="kpi-header">
+          <div class="kpi-icon profit">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="kpi-trend" [ngClass]="kpiData.profitChange >= 0 ? 'positive' : 'negative'">
+            <mat-icon>{{ kpiData.profitChange >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+            {{ kpiData.profitChange | number:'1.1-1' }}%
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiData.totalProfit | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-label">Total Profit</div>
+      </div>
+
+      <!-- Active Bookings -->
+      <div class="kpi-card bookings" role="region" aria-label="Active Bookings">
+        <div class="kpi-header">
+          <div class="kpi-icon bookings">
+            <mat-icon>book</mat-icon>
+          </div>
+          <div class="kpi-trend positive">
+            <mat-icon>schedule</mat-icon>
+            Live
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiData.activeBookings | number }}</div>
+        <div class="kpi-label">Active Bookings</div>
+      </div>
+
+      <!-- Profit Margin -->
+      <div class="kpi-card margin" role="region" aria-label="Profit Margin">
+        <div class="kpi-header">
+          <div class="kpi-icon margin">
+            <mat-icon>percent</mat-icon>
+          </div>
+          <div class="kpi-trend" [ngClass]="kpiData.profitMargin >= 15 ? 'positive' : 'negative'">
+            <mat-icon>{{ kpiData.profitMargin >= 15 ? 'check_circle' : 'warning' }}</mat-icon>
+            {{ kpiData.profitMargin >= 15 ? 'Good' : 'Low' }}
+          </div>
+        </div>
+        <div class="kpi-value">{{ kpiData.profitMargin | number:'1.1-1' }}%</div>
+        <div class="kpi-label">Profit Margin</div>
+      </div>
+    </div>
 
     <!-- Charts Row -->
     <div class="charts-row">
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>הכנסות חודשיות</mat-card-title>
+          <mat-card-title>Revenue Trend</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <app-revenue-chart></app-revenue-chart>
@@ -29,7 +128,7 @@
 
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>מגמת תפוסה</mat-card-title>
+          <mat-card-title>Bookings by Hotel</mat-card-title>
         </mat-card-header>
         <mat-card-content>
           <app-occupancy-trend></app-occupancy-trend>
@@ -37,14 +136,38 @@
       </mat-card>
     </div>
 
-    <!-- Top Hotels -->
-    <mat-card class="full-width-card">
-      <mat-card-header>
-        <mat-card-title>מלונות מובילים ברווחיות</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <app-top-hotels></app-top-hotels>
-      </mat-card-content>
-    </mat-card>
+    <!-- Top Hotels and Recent Activity -->
+    <div class="charts-row">
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Top Performing Hotels</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <app-top-hotels></app-top-hotels>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>Recent Activity</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="activity-list">
+            <div class="activity-item" *ngFor="let activity of recentActivity">
+              <div class="activity-icon" [ngClass]="activity.type">
+                <mat-icon>{{ activity.icon }}</mat-icon>
+              </div>
+              <div class="activity-content">
+                <div class="activity-title">{{ activity.title }}</div>
+                <div class="activity-time">{{ activity.time }}</div>
+              </div>
+              <div class="activity-value" [ngClass]="activity.valueClass">
+                {{ activity.value }}
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
   </div>
 </div>

@@ -1,0 +1,91 @@
+<div class="agent-status-container" dir="rtl">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <mat-card *ngFor="let agent of agents; let i = index" class="agent-card">
+      <div class="flex items-start gap-4 p-4">
+        <!-- Agent Icon -->
+        <div class="agent-icon p-3 rounded-xl" 
+             [ngClass]="{
+               'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400': agent.color === 'blue',
+               'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400': agent.color === 'green',
+               'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400': agent.color === 'orange',
+               'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400': agent.color === 'purple',
+               'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400': agent.color === 'red'
+             }">
+          <mat-icon class="text-2xl">{{ agent.icon }}</mat-icon>
+        </div>
+        
+        <!-- Agent Info -->
+        <div class="flex-1">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-semibold text-gray-900 dark:text-white">{{ agent.nameHe }}</h3>
+              <p class="text-xs text-gray-400 dark:text-gray-500">{{ agent.name }}</p>
+            </div>
+            <div class="status-indicator flex items-center gap-1" [ngClass]="getStatusClass(agent.status)">
+              <mat-icon class="text-sm">{{ getStatusIcon(agent.status) }}</mat-icon>
+              <span class="text-xs">{{ getStatusLabel(agent.status) }}</span>
+            </div>
+          </div>
+          
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            {{ agent.description }}
+          </p>
+          
+          <!-- Agent Number -->
+          <div class="mt-3 flex items-center">
+            <span class="agent-number px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+              סוכן #{{ i + 1 }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Connection Diagram -->
+  <mat-card class="mt-6 p-6">
+    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 text-center">ארכיטקטורת מערכת AI</h3>
+    
+    <div class="architecture-diagram">
+      <div class="diagram-row">
+        <div class="diagram-box input-box">
+          <mat-icon>input</mat-icon>
+          <span>נתוני כניסה</span>
+        </div>
+      </div>
+      
+      <div class="diagram-arrow">
+        <mat-icon>arrow_downward</mat-icon>
+      </div>
+      
+      <div class="diagram-row agents-row">
+        <div class="diagram-box agent-box" *ngFor="let agent of agents.slice(0, 4)">
+          <mat-icon>{{ agent.icon }}</mat-icon>
+          <span>{{ agent.nameHe }}</span>
+        </div>
+      </div>
+      
+      <div class="diagram-arrow">
+        <mat-icon>arrow_downward</mat-icon>
+      </div>
+      
+      <div class="diagram-row">
+        <div class="diagram-box decision-box">
+          <mat-icon>psychology</mat-icon>
+          <span>מקבל החלטות</span>
+        </div>
+      </div>
+      
+      <div class="diagram-arrow">
+        <mat-icon>arrow_downward</mat-icon>
+      </div>
+      
+      <div class="diagram-row">
+        <div class="diagram-box output-box">
+          <mat-icon>lightbulb</mat-icon>
+          <span>המלצות והזדמנויות</span>
+        </div>
+      </div>
+    </div>
+  </mat-card>
+</div>

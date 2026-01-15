@@ -1,87 +1,118 @@
 <div class="alerts-container">
   <div class="alerts-header">
-    <h2>🔔 התראות והמלצות חכמות</h2>
-    <div class="filter-buttons">
-      <button mat-button 
-              [class.active]="filterType === 'all'" 
-              (click)="filterType = 'all'">
-        הכל ({{ alerts.length }})
-      </button>
-      <button mat-button 
-              [class.active]="filterType === 'buy'" 
-              (click)="filterType = 'buy'">
-        🟢 קנה ({{ getAlertCountByType('buy') }})
-      </button>
-      <button mat-button 
-              [class.active]="filterType === 'sell'" 
-              (click)="filterType = 'sell'">
-        🔴 מכור ({{ getAlertCountByType('sell') }})
-      </button>
-      <button mat-button 
-              [class.active]="filterType === 'warning'" 
-              (click)="filterType = 'warning'">
-        ⚠️ אזהרה ({{ getAlertCountByType('warning') }})
-      </button>
+    <div class="header-left">
+      <mat-icon class="header-icon">notifications_active</mat-icon>
+      <div>
+        <h2>Smart Alerts & Recommendations</h2>
+        <p class="subtitle">AI-powered trading signals</p>
+      </div>
     </div>
-    <button mat-icon-button (click)="loadAlerts()" matTooltip="רענן">
+    <button mat-icon-button (click)="loadAlerts()" matTooltip="Refresh" class="refresh-btn">
       <mat-icon>refresh</mat-icon>
     </button>
   </div>
 
+  <div class="filter-bar">
+    <button mat-flat-button 
+            [class.active]="filterType === 'all'" 
+            (click)="filterType = 'all'">
+      All
+      <span class="badge">{{ alerts.length }}</span>
+    </button>
+    <button mat-flat-button 
+            [class.active]="filterType === 'buy'" 
+            (click)="filterType = 'buy'">
+      <mat-icon>trending_up</mat-icon>
+      Buy
+      <span class="badge buy">{{ getAlertCountByType('buy') }}</span>
+    </button>
+    <button mat-flat-button 
+            [class.active]="filterType === 'sell'" 
+            (click)="filterType = 'sell'">
+      <mat-icon>trending_down</mat-icon>
+      Sell
+      <span class="badge sell">{{ getAlertCountByType('sell') }}</span>
+    </button>
+    <button mat-flat-button 
+            [class.active]="filterType === 'warning'" 
+            (click)="filterType = 'warning'">
+      <mat-icon>warning</mat-icon>
+      Warning
+      <span class="badge warning">{{ getAlertCountByType('warning') }}</span>
+    </button>
+  </div>
+
   <div *ngIf="loading" class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>טוען התראות...</p>
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading alerts...</p>
   </div>
 
   <div *ngIf="!loading && filteredAlerts.length === 0" class="no-alerts">
-    <mat-icon>notifications_none</mat-icon>
-    <p>אין התראות כרגע</p>
+    <mat-icon>notifications_off</mat-icon>
+    <h3>No alerts at the moment</h3>
+    <p>We'll notify you when new opportunities arise</p>
   </div>
 
   <div *ngIf="!loading" class="alerts-list">
-    <mat-card *ngFor="let alert of filteredAlerts" 
-              class="alert-card"
-              [ngClass]="[getAlertClass(alert.type), getPriorityClass(alert.priority)]">
-      <div class="alert-header">
-        <div class="alert-icon">{{ getAlertIcon(alert.type) }}</div>
-        <div class="alert-info">
-          <h3>{{ alert.hotelName }}</h3>
-          <span class="priority-badge" [ngClass]="getPriorityClass(alert.priority)">
-            {{ alert.priority === 'high' ? 'עדיפות גבוהה' : 
-               alert.priority === 'medium' ? 'עדיפות בינונית' : 'עדיפות נמוכה' }}
-          </span>
-        </div>
-      </div>
-
-      <div class="alert-content">
-        <p class="alert-message">{{ alert.message }}</p>
-
-        <div *ngIf="alert.suggestedPrice || alert.potentialProfit" class="alert-details">
-          <div *ngIf="alert.suggestedPrice" class="detail-item">
-            <mat-icon>price_check</mat-icon>
-            <span>מחיר מוצע: ₪{{ alert.suggestedPrice | number:'1.0-0' }}</span>
+    <div *ngFor="let alert of filteredAlerts" 
+         class="alert-card"
+         [ngClass]="[getAlertClass(alert.type), getPriorityClass(alert.priority)]">
+      
+      <div class="alert-type-indicator"></div>
+      
+      <div class="alert-body">
+        <div class="alert-header">
+          <div class="alert-icon" [ngClass]="getAlertClass(alert.type)">
+            <mat-icon>{{ alert.type === 'buy' ? 'arrow_upward' : alert.type === 'sell' ? 'arrow_downward' : 'warning' }}</mat-icon>
           </div>
-          <div *ngIf="alert.potentialProfit" class="detail-item">
-            <mat-icon>trending_up</mat-icon>
-            <span>רווח פוטנציאלי: ₪{{ alert.potentialProfit | number:'1.0-0' }}</span>
+          <div class="alert-info">
+            <h3>{{ alert.hotelName }}</h3>
+            <span class="priority-badge" [ngClass]="getPriorityClass(alert.priority)">
+              {{ alert.priority === 'high' ? 'High Priority' : 
+                 alert.priority === 'medium' ? 'Medium Priority' : 'Low Priority' }}
+            </span>
+          </div>
+          <div class="alert-type-badge" [ngClass]="getAlertClass(alert.type)">
+            {{ alert.type === 'buy' ? 'BUY' : alert.type === 'sell' ? 'SELL' : 'ALERT' }}
           </div>
         </div>
-      </div>
 
-      <mat-card-actions>
-        <button mat-button color="primary" *ngIf="alert.type === 'buy'">
-          <mat-icon>shopping_cart</mat-icon>
-          קנה עכשיו
-        </button>
-        <button mat-button color="warn" *ngIf="alert.type === 'sell'">
-          <mat-icon>sell</mat-icon>
-          מכור עכשיו
-        </button>
-        <button mat-button>
-          <mat-icon>info</mat-icon>
-          פרטים נוספים
-        </button>
-      </mat-card-actions>
-    </mat-card>
+        <div class="alert-content">
+          <p class="alert-message">{{ alert.message }}</p>
+
+          <div *ngIf="alert.suggestedPrice || alert.potentialProfit" class="alert-metrics">
+            <div *ngIf="alert.suggestedPrice" class="metric">
+              <mat-icon>attach_money</mat-icon>
+              <div>
+                <span class="metric-label">Suggested Price</span>
+                <span class="metric-value">${{ alert.suggestedPrice | number:'1.0-0' }}</span>
+              </div>
+            </div>
+            <div *ngIf="alert.potentialProfit" class="metric profit">
+              <mat-icon>trending_up</mat-icon>
+              <div>
+                <span class="metric-label">Potential Profit</span>
+                <span class="metric-value">${{ alert.potentialProfit | number:'1.0-0' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="alert-actions">
+          <button mat-flat-button *ngIf="alert.type === 'buy'" class="action-btn buy">
+            <mat-icon>shopping_cart</mat-icon>
+            Buy Now
+          </button>
+          <button mat-flat-button *ngIf="alert.type === 'sell'" class="action-btn sell">
+            <mat-icon>sell</mat-icon>
+            Sell Now
+          </button>
+          <button mat-stroked-button class="details-btn">
+            <mat-icon>visibility</mat-icon>
+            View Details
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

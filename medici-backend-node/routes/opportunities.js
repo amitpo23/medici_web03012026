@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
+const ZenithPushService = require('../services/zenith-push-service');
+
+const zenithPushService = new ZenithPushService();
 
 // Get all opportunities
 router.get('/Opportunities', async (req, res) => {
@@ -16,7 +19,7 @@ router.get('/Opportunities', async (req, res) => {
   }
 });
 
-// Insert opportunity
+// Insert opportunity (with Zenith Push integration)
 router.post('/InsertOpp', async (req, res) => {
   try {
     const {
@@ -27,7 +30,7 @@ router.post('/InsertOpp', async (req, res) => {
 
     const pool = await getPool();
     
-    // Call stored procedure
+    // Call stored procedure to insert opportunity
     const result = await pool.request()
       .input('hotelId', hotelId)
       .input('dateFrom', startDateStr)
@@ -39,9 +42,56 @@ router.post('/InsertOpp', async (req, res) => {
       .input('maxRooms', maxRooms)
       .execute('MED_InsertOpportunity');
 
+    const opportunityId = result.recordset[0]?.OpportunityId;
+
+    // If Zenith Push is enabled, push availability to Zenith
+    if (opportunityId && process.env.ZENITH_SERVICE_URL) {
+      try {
+        // Get hotel and category details for Zenith mapping
+        const mappingResult = await pool.request()
+          .input('hotelId', hotelId)
+          .input('categoryId', categorylId)
+          .query(`
+            SELECT 
+              h.ZenithHotelCode,
+              rc.ZenithRoomCode
+            FROM Med_Hotels h
+            CROSS JOIN MED_RoomCategory rc
+            WHERE h.id = @hotelId AND rc.id = @categoryId
+          `);
+
+        const mapping = mappingResult.recordset[0];
+        if (mapping && mapping.ZenithHotelCode && mapping.ZenithRoomCode) {
+          // Push availability to Zenith
+          await zenithPushService.pushAvailability({
+            hotelCode: mapping.ZenithHotelCode,
+            invTypeCode: mapping.ZenithRoomCode,
+            startDate: startDateStr,
+            endDate: endDateStr,
+            available: maxRooms
+          });
+
+          // Push rates to Zenith
+          await zenithPushService.pushRates({
+            hotelCode: mapping.ZenithHotelCode,
+            invTypeCode: mapping.ZenithRoomCode,
+            startDate: startDateStr,
+            endDate: endDateStr,
+            amount: pushPrice,
+            currency: 'EUR'
+          });
+
+          console.log(`✅ Pushed opportunity ${opportunityId} to Zenith`);
+        }
+      } catch (zenithError) {
+        console.error('Zenith push error:', zenithError.message);
+        // Continue even if Zenith push fails
+      }
+    }
+
     res.json({
       success: true,
-      opportunityId: result.recordset[0]?.OpportunityId
+      opportunityId: opportunityId
     });
 
   } catch (err) {

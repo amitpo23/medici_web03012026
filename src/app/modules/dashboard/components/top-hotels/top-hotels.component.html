@@ -1,22 +1,44 @@
 <div class="hotels-container" *ngIf="!loading">
-  <div class="hotel-item" *ngFor="let hotel of topHotels; let i = index">
-    <div class="rank">{{ i + 1 }}</div>
+  <div class="hotel-item" *ngFor="let hotel of topHotels; let i = index" 
+       [attr.aria-label]="hotel.hotelName + ' - Rank ' + (i + 1)"
+       tabindex="0">
+    <div class="rank" [ngClass]="getRankClass(i)">
+      <span class="rank-number">{{ i + 1 }}</span>
+      <mat-icon *ngIf="i === 0">emoji_events</mat-icon>
+    </div>
     <div class="hotel-info">
       <h4>{{ hotel.hotelName }}</h4>
-      <span class="bookings-count">{{ hotel.bookings }} הזמנות</span>
+      <div class="hotel-meta">
+        <span class="bookings-badge">
+          <mat-icon>book</mat-icon>
+          {{ hotel.bookings }} bookings
+        </span>
+      </div>
     </div>
     <div class="hotel-stats">
-      <div class="stat">
-        <label>הכנסות</label>
-        <span class="value revenue">₪{{ hotel.revenue | number:'1.0-0' }}</span>
+      <div class="stat revenue-stat">
+        <div class="stat-icon">
+          <mat-icon>payments</mat-icon>
+        </div>
+        <div class="stat-content">
+          <label>Revenue</label>
+          <span class="value">{{ hotel.revenue | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
       </div>
-      <div class="stat">
-        <label>רווח</label>
-        <span class="value profit">₪{{ hotel.profit | number:'1.0-0' }}</span>
+      <div class="stat profit-stat">
+        <div class="stat-icon">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-content">
+          <label>Profit</label>
+          <span class="value">{{ hotel.profit | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
       </div>
-      <div class="stat">
-        <label>מרווח</label>
-        <span class="value margin" [ngClass]="getProfitColor(hotel.profitMargin)">
+      <div class="stat margin-stat">
+        <div class="progress-bar-container">
+          <div class="progress-bar" [style.width.%]="hotel.profitMargin" [ngClass]="getProfitColor(hotel.profitMargin)"></div>
+        </div>
+        <span class="margin-value" [ngClass]="getProfitColor(hotel.profitMargin)">
           {{ hotel.profitMargin | number:'1.1-1' }}%
         </span>
       </div>
@@ -24,10 +46,12 @@
   </div>
 
   <div *ngIf="topHotels.length === 0" class="no-data">
-    <p>אין נתונים להצגה</p>
+    <mat-icon>info</mat-icon>
+    <p>No data available</p>
   </div>
 </div>
 
 <div *ngIf="loading" class="loading">
   <mat-spinner diameter="40"></mat-spinner>
+  <p>Loading hotels...</p>
 </div>

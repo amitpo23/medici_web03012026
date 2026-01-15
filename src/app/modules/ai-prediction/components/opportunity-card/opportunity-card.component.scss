@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+.opportunity-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.opportunity-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.type-buy {
+  border-left: 4px solid #10b981;
+}
+
+.type-sell {
+  border-left: 4px solid #f59e0b;
+}
+
+.type-hold {
+  border-left: 4px solid #6b7280;
+}
+
+.priority-urgent {
+  animation: pulse-border 1.5s infinite;
+}
+
+@keyframes pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2); }
+}
+
+.type-icon {
+  font-size: 1.5rem;
+}
+
+.confidence-bar {
+  height: 4px;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background-color: #10b981;
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.price-info {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.price-box {
+  padding: 0.5rem;
+  border-radius: 0.375rem;
+  background-color: #f9fafb;
+  text-align: center;
+  flex: 1;
+}
+
+.price-label {
+  font-size: 0.625rem;
+  color: #6b7280;
+  text-transform: uppercase;
+}
+
+.price-value {
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.risk-low { color: #10b981; }
+.risk-medium { color: #f59e0b; }
+.risk-high { color: #ef4444; }
+
+:host-context(.dark) .opportunity-card {
+  border-color: #374151;
+}
+
+:host-context(.dark) .price-box {
+  background-color: #1f2937;
+}
+
+:host-context(.dark) .confidence-bar {
+  background-color: #374151;
+}
+
+:host-context(.dark) .price-label {
+  color: #9ca3af;
+}

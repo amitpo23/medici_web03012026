@@ -12,13 +12,13 @@ router.get('/Bookings', async (req, res) => {
           b.id, b.PreBookId, b.contentBookingID,
           h.name as HotelName,
           b.startDate, b.endDate,
-          b.price, b.pushPrice, b.lastPrice,
-          b.IsSold, b.IsCanceled,
-          b.dateInsert
+          b.price, b.lastPrice,
+          b.IsSold, b.IsActive, b.Status,
+          b.DateInsert,
+          b.providers, b.supplierReference
         FROM MED_Book b
         LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
-        WHERE b.IsActive = 1
-        ORDER BY b.dateInsert DESC
+        ORDER BY b.DateInsert DESC
       `);
 
     res.json(result.recordset);
@@ -36,15 +36,16 @@ router.get('/Canceled', async (req, res) => {
     const result = await pool.request()
       .query(`
         SELECT 
-          b.id, b.PreBookId, b.contentBookingID,
+          c.id, c.BookId, c.contentCancelBookingID,
+          b.contentBookingID,
           h.name as HotelName,
           b.startDate, b.endDate,
-          b.price, b.pushPrice,
-          b.dateInsert
-        FROM MED_Book b
+          b.price,
+          c.DateInsert
+        FROM MED_CancelBook c
+        LEFT JOIN MED_Book b ON c.BookId = b.id
         LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
-        WHERE b.IsCanceled = 1
-        ORDER BY b.dateInsert DESC
+        ORDER BY c.DateInsert DESC
       `);
 
     res.json(result.recordset);
@@ -78,7 +79,7 @@ router.delete('/SetCancelStatus', async (req, res) => {
     const pool = await getPool();
     await pool.request()
       .input('bookId', id)
-      .query('UPDATE MED_Book SET IsCanceled = 1 WHERE id = @bookId');
+      .query('UPDATE MED_Book SET IsActive = 0 WHERE id = @bookId');
 
     res.json({ success: true, message: 'Cancel status updated' });
   } catch (err) {

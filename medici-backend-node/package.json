@@ -1,11 +1,14 @@
 {
   "name": "medici-backend-node",
-  "version": "1.0.0",
-  "description": "Medici Hotels Backend API",
+  "version": "2.0.0",
+  "description": "Medici Hotels Backend API with AI Chat",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "worker:buyroom": "node workers/buyroom-worker.js",
+    "worker:cancellation": "node workers/auto-cancellation-worker.js",
+    "worker:priceupdate": "node workers/price-update-worker.js"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -14,7 +17,12 @@
     "cors": "^2.8.5",
     "body-parser": "^1.20.2",
     "jsonwebtoken": "^9.0.2",
-    "bcryptjs": "^2.4.3"
+    "bcryptjs": "^2.4.3",
+    "axios": "^1.6.2",
+    "@sendgrid/mail": "^8.1.0",
+    "xml2js": "^0.6.2",
+    "node-cron": "^3.0.3",
+    "fast-xml-parser": "^4.3.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

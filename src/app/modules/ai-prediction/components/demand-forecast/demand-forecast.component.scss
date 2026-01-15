@@ -1,0 +1,58 @@
+:host {
+  display: block;
+}
+
+.forecast-card {
+  transition: transform 0.3s ease;
+}
+
+.forecast-card:hover {
+  transform: scale(1.05);
+}
+
+.level-indicator {
+  font-size: 1.5rem;
+}
+
+.level-low { color: #10b981; }
+.level-medium { color: #f59e0b; }
+.level-high { color: #ef4444; }
+
+.period-cell {
+  min-width: 100px;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.period-cell.high-demand {
+  background-color: #fee2e2;
+}
+
+.insight-box {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(147, 51, 234, 0.2);
+  font-size: 0.75rem;
+  color: #7c3aed;
+}
+
+.analysis-section {
+  border-right: 4px solid #a855f7;
+}
+
+:host-context(.dark) .forecast-card {
+  background-color: #1f2937;
+  border-color: #374151;
+}
+
+:host-context(.dark) .insight-box {
+  color: #c4b5fd;
+}
+
+:host-context(.dark) .period-cell.high-demand {
+  background-color: rgba(185, 28, 28, 0.3);
+}

@@ -1,6 +1,6 @@
 {
     "name": "only-night-app",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "scripts": {
         "ng": "ng",
         "start": "ng serve",
@@ -10,7 +10,9 @@
         "prod": "ng build --configuration production --build-optimizer=true --aot=true --source-map=false --base-href /",
         "vercel-build": "ng build --configuration production",
         "watch": "ng build --watch --configuration development",
-        "test": "ng test"
+        "test": "ng test",
+        "lint": "eslint \"src/**/*.{ts,html}\" --fix",
+        "lint:check": "eslint \"src/**/*.{ts,html}\""
     },
     "private": true,
     "dependencies": {
@@ -39,17 +41,27 @@
     },
     "devDependencies": {
         "@angular-devkit/build-angular": "^16.2.9",
+        "@angular-eslint/eslint-plugin": "^21.1.0",
+        "@angular-eslint/eslint-plugin-template": "^21.1.0",
+        "@angular-eslint/template-parser": "^21.1.0",
         "@angular/cli": "~16.2.9",
         "@angular/compiler-cli": "^16.2.12",
+        "@eslint/js": "^9.39.2",
+        "@modelcontextprotocol/sdk": "^1.25.2",
         "@types/crypto-js": "^4.1.3",
         "@types/jasmine": "~5.1.1",
+        "@typescript-eslint/eslint-plugin": "^8.53.0",
+        "@typescript-eslint/parser": "^8.53.0",
         "autoprefixer": "^10.4.16",
+        "dotenv": "^17.2.3",
+        "eslint": "^9.39.2",
         "jasmine-core": "~5.1.1",
         "karma": "~6.4.2",
         "karma-chrome-launcher": "~3.2.0",
         "karma-coverage": "~2.2.1",
         "karma-jasmine": "~5.1.0",
         "karma-jasmine-html-reporter": "~2.1.0",
+        "mssql": "^12.2.0",
         "postcss": "^8.4.31",
         "tailwindcss": "^3.3.5",
         "typescript": "^4.9.3"

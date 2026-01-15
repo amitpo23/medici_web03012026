@@ -1,5 +1,82 @@
+// Occupancy Trend Chart Styles
+.chart-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .chart-container {
   position: relative;
-  height: 300px;
+  height: 280px;
   width: 100%;
+  padding: 8px;
+  flex: 1;
+}
+
+.chart-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: auto;
+  padding: 16px;
+  background: var(--surface-secondary, #f8fafc);
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  padding: 8px;
+
+  .summary-label {
+    font-size: 11px;
+    color: var(--text-tertiary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+  }
+
+  .summary-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+
+    &.highlight {
+      color: #8b5cf6;
+    }
+
+    &.positive {
+      color: #10b981;
+    }
+
+    &.negative {
+      color: #ef4444;
+    }
+  }
+}
+
+// Dark mode support
+:host-context(.dark) {
+  .chart-summary {
+    background: rgba(30, 41, 59, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .summary-item .summary-label {
+    color: #94a3b8;
+  }
+
+  .summary-item .summary-value {
+    color: #f1f5f9;
+  }
+}
+
+// Responsive adjustments
+@media (max-width: 768px) {
+  .chart-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

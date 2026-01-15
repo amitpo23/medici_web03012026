@@ -1,57 +1,187 @@
-<mat-drawer-container *ngIf="isActive()" class="example-container" hasBackdrop="false">
-    <mat-drawer #drawer mode="side" opened>
-        <div class="p-3">
-            <img class="side-logo" src="assets/logo/logo.svg" />
+<mat-drawer-container *ngIf="isActive()" class="main-container" hasBackdrop="false">
+    <mat-drawer #drawer mode="side" opened class="sidebar">
+        <!-- Logo Section -->
+        <div class="sidebar-header">
+            <img class="side-logo" src="assets/logo/logo.svg" alt="Medici Logo" />
+            <span class="logo-text">Medici</span>
         </div>
-        <mat-nav-list>
-            <a mat-list-item [routerLink]="['/options']">Opportunities</a>
-        </mat-nav-list>
-        <mat-accordion>
-            <mat-expansion-panel hideToggle>
+
+        <!-- Main Navigation -->
+        <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+            <!-- Dashboard Link -->
+            <a mat-list-item [routerLink]="['/dashboard']" routerLinkActive="active-link" 
+               class="nav-item" aria-label="Dashboard">
+                <mat-icon class="nav-icon">dashboard</mat-icon>
+                <span class="nav-text">Dashboard</span>
+            </a>
+
+            <!-- Analytics Link -->
+            <a mat-list-item [routerLink]="['/analytics']" routerLinkActive="active-link"
+               class="nav-item" aria-label="Analytics">
+                <mat-icon class="nav-icon">insights</mat-icon>
+                <span class="nav-text">Analytics</span>
+            </a>
+
+            <!-- AI Prediction Link -->
+            <a mat-list-item [routerLink]="['/ai-prediction']" routerLinkActive="active-link"
+               class="nav-item ai-nav-item" aria-label="AI Prediction">
+                <mat-icon class="nav-icon">psychology</mat-icon>
+                <span class="nav-text">AI Prediction</span>
+                <span class="new-badge">NEW</span>
+            </a>
+
+            <!-- Opportunities Link -->
+            <a mat-list-item [routerLink]="['/options']" routerLinkActive="active-link"
+               class="nav-item" aria-label="Opportunities">
+                <mat-icon class="nav-icon">trending_up</mat-icon>
+                <span class="nav-text">Opportunities</span>
+            </a>
+
+            <!-- Rooms Section -->
+            <mat-expansion-panel class="nav-panel" hideToggle>
                 <mat-expansion-panel-header>
-                    <mat-panel-title>
-                        Rooms
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">hotel</mat-icon>
+                        <span class="nav-text">Rooms</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
-                <mat-nav-list>
-                    <a mat-list-item [routerLink]="['/rooms']">Active</a>
-                    <a mat-list-item [routerLink]="['/rooms/cancel']">Cancel</a>
-                    <a mat-list-item [routerLink]="['/sales-room']">Sales</a>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/rooms']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">check_circle</mat-icon>
+                        Active
+                    </a>
+                    <a mat-list-item [routerLink]="['/rooms/cancel']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">cancel</mat-icon>
+                        Cancelled
+                    </a>
+                    <a mat-list-item [routerLink]="['/sales-room']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">sell</mat-icon>
+                        Sales
+                    </a>
                 </mat-nav-list>
             </mat-expansion-panel>
-            <mat-expansion-panel hideToggle>
+
+            <!-- Reservations Section -->
+            <mat-expansion-panel class="nav-panel" hideToggle>
                 <mat-expansion-panel-header>
-                    <mat-panel-title>
-                        Reservation
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">book_online</mat-icon>
+                        <span class="nav-text">Reservations</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
-                <mat-nav-list>
-                    <a mat-list-item [routerLink]="['/reservation']">List</a>
-                    <a mat-list-item [routerLink]="['/reservation/cancel']">Cancel</a>
-                    <a mat-list-item [routerLink]="['/reservation/modify']">Modify</a>
-                    <a mat-list-item [routerLink]="['/reservation/log']">Log</a>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/reservation']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">list</mat-icon>
+                        List
+                    </a>
+                    <a mat-list-item [routerLink]="['/reservation/cancel']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">cancel</mat-icon>
+                        Cancelled
+                    </a>
+                    <a mat-list-item [routerLink]="['/reservation/modify']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">edit</mat-icon>
+                        Modified
+                    </a>
+                    <a mat-list-item [routerLink]="['/reservation/log']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">history</mat-icon>
+                        Log
+                    </a>
                 </mat-nav-list>
             </mat-expansion-panel>
-            <mat-expansion-panel hideToggle>
+
+            <!-- Errors Section -->
+            <mat-expansion-panel class="nav-panel" hideToggle>
                 <mat-expansion-panel-header>
-                    <mat-panel-title>
-                        Errors
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">error_outline</mat-icon>
+                        <span class="nav-text">Errors</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
-                <mat-nav-list>
-                    <a mat-list-item [routerLink]="['/rooms/bookerrors']">Book</a>
-                    <a mat-list-item [routerLink]="['/rooms/cancelbookerrors']">Cancel Book</a>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/rooms/bookerrors']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">report_problem</mat-icon>
+                        Booking Errors
+                    </a>
+                    <a mat-list-item [routerLink]="['/rooms/cancelbookerrors']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">warning</mat-icon>
+                        Cancel Errors
+                    </a>
                 </mat-nav-list>
             </mat-expansion-panel>
-        </mat-accordion>
-        <mat-nav-list>
-            <a mat-list-item [routerLink]="['/search-price']">Search Price</a>
-            <a mat-list-item [routerLink]="['/hotels']">Hotels</a>
-            <a mat-list-item [routerLink]="['/sign-out']">Logout</a>
-        </mat-nav-list>
+
+            <!-- Search Price Link -->
+            <a mat-list-item [routerLink]="['/search-price']" routerLinkActive="active-link"
+               class="nav-item" aria-label="Search Price">
+                <mat-icon class="nav-icon">search</mat-icon>
+                <span class="nav-text">Search Price</span>
+            </a>
+
+            <!-- Hotels Link -->
+            <a mat-list-item [routerLink]="['/hotels']" routerLinkActive="active-link"
+               class="nav-item" aria-label="Hotels">
+                <mat-icon class="nav-icon">business</mat-icon>
+                <span class="nav-text">Hotels</span>
+            </a>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+            <button mat-button class="theme-toggle" (click)="toggleTheme()" aria-label="Toggle dark mode">
+                <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+            </button>
+            <a mat-list-item [routerLink]="['/sign-out']" class="logout-btn" aria-label="Logout">
+                <mat-icon>logout</mat-icon>
+                <span>Logout</span>
+            </a>
+        </div>
     </mat-drawer>
-    <mat-drawer-content>
-        <router-outlet></router-outlet>
+
+    <mat-drawer-content class="main-content">
+        <!-- Top Header Bar -->
+        <header class="top-header" role="banner">
+            <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle sidebar" class="menu-toggle">
+                <mat-icon>menu</mat-icon>
+            </button>
+            
+            <div class="header-spacer"></div>
+            
+            <!-- Quick Stats -->
+            <div class="quick-stats" *ngIf="quickStats">
+                <div class="stat-badge profit">
+                    <mat-icon>trending_up</mat-icon>
+                    <span>{{ quickStats.todayProfit | currency:'USD':'symbol':'1.0-0' }}</span>
+                </div>
+                <div class="stat-badge bookings">
+                    <mat-icon>book</mat-icon>
+                    <span>{{ quickStats.activeBookings }} Active</span>
+                </div>
+            </div>
+
+            <!-- User Menu -->
+            <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
+                <mat-icon>account_circle</mat-icon>
+            </button>
+            <mat-menu #userMenu="matMenu">
+                <button mat-menu-item [routerLink]="['/profile']">
+                    <mat-icon>person</mat-icon>
+                    <span>Profile</span>
+                </button>
+                <button mat-menu-item [routerLink]="['/settings']">
+                    <mat-icon>settings</mat-icon>
+                    <span>Settings</span>
+                </button>
+                <mat-divider></mat-divider>
+                <button mat-menu-item [routerLink]="['/sign-out']">
+                    <mat-icon>logout</mat-icon>
+                    <span>Logout</span>
+                </button>
+            </mat-menu>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="content-area" role="main">
+            <router-outlet></router-outlet>
+        </main>
     </mat-drawer-content>
 </mat-drawer-container>
 

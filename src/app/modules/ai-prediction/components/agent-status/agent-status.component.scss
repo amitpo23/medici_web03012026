@@ -1,0 +1,99 @@
+:host {
+  display: block;
+}
+
+.agent-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.agent-card:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.agent-icon {
+  font-size: 2rem;
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.agent-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.agent-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.no-data {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.agent-mini {
+  width: 100%;
+}
+
+.agent-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  text-align: center;
+  min-width: 120px;
+  border: 1px solid;
+}
+
+.role-market .agent-item {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.role-demand .agent-item {
+  background-color: #f3f4f6;
+  color: #374151;
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
+.role-competition .agent-item {
+  background-color: #f3e8ff;
+  color: #7c3aed;
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.role-opportunity .agent-item,
+.role-decision .agent-item {
+  background-color: #d1fae5;
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+:host-context(.dark) .agent-card {
+  border-color: #374151;
+}
+
+:host-context(.dark) .agent-item {
+  background-color: #1f2937;
+}
+
+:host-context(.dark) .no-data {
+  color: #4b5563;
+}

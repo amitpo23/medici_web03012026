@@ -10,8 +10,7 @@ export const environment = {
   production: false,
   
   // Azure Dev Backend URL
-  // TODO: Update this URL after creating Azure App Service
-  baseUrl: 'https://medici-backend-dev.azurewebsites.net/',
+  baseUrl: 'https://medici-backend-dev-f9h6hxgncha9fbbp.eastus2-01.azurewebsites.net/',
   
   // Development mode settings
   enableDebugInfo: true,

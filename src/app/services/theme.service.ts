@@ -42,9 +42,14 @@ export class ThemeService {
     localStorage.setItem(this.THEME_KEY, theme);
   }
 
-  toggleTheme(): void {
+  toggleTheme(): boolean {
     const newTheme = this.themeSubject.value === 'light' ? 'dark' : 'light';
     this.setTheme(newTheme);
+    return newTheme === 'dark';
+  }
+
+  isDarkMode(): boolean {
+    return this.themeSubject.value === 'dark';
   }
 
   private applyTheme(theme: Theme): void {

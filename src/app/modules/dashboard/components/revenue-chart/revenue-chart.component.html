@@ -1,4 +1,27 @@
-<div class="chart-container">
-  <canvas #chartCanvas></canvas>
+<div class="chart-wrapper">
+  <div class="chart-container">
+    <canvas #chartCanvas></canvas>
+  </div>
+  
+  <div class="chart-summary">
+    <div class="summary-item">
+      <span class="summary-label">Total Revenue</span>
+      <span class="summary-value revenue">{{ totalRevenue | currency:'USD':'symbol':'1.0-0' }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Total Profit</span>
+      <span class="summary-value profit">{{ totalProfit | currency:'USD':'symbol':'1.0-0' }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Avg. Monthly</span>
+      <span class="summary-value">{{ avgMonthlyRevenue | currency:'USD':'symbol':'1.0-0' }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Growth</span>
+      <span class="summary-value" [class.positive]="growthRate >= 0" [class.negative]="growthRate < 0">
+        {{ growthRate >= 0 ? '+' : '' }}{{ growthRate | number:'1.1-1' }}%
+      </span>
+    </div>
+  </div>
 </div>
 

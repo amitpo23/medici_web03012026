@@ -1,3 +1,7 @@
+// ========================================
+// Price Predictor Component Styles
+// ========================================
+
 .predictor-container {
   display: flex;
   flex-direction: column;
@@ -5,6 +9,43 @@
 }
 
 .prediction-form-card {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--border-color, #e2e8f0);
+
+  .form-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+
+    .form-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 28px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+      color: #fff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+    }
+
+    p {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: var(--text-secondary, #64748b);
+    }
+  }
+
   .prediction-form {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -15,9 +56,16 @@
       width: 100%;
     }
 
-    button {
+    .predict-btn {
       height: 56px;
-      font-size: 16px;
+      font-size: 15px;
+      font-weight: 500;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+
+      mat-icon {
+        margin-right: 8px;
+      }
     }
   }
 }
@@ -26,16 +74,45 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px;
+  padding: 48px;
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
 
   p {
     margin-top: 16px;
-    color: #666;
+    color: var(--text-secondary, #64748b);
+    font-size: 15px;
   }
 }
 
 .prediction-result-card {
+  background: var(--card-bg, #fff);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid var(--border-color, #e2e8f0);
   animation: slideIn 0.3s ease;
+
+  .result-header {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+
+    mat-icon {
+      color: #3b82f6;
+      font-size: 24px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+    }
+  }
 }
 
 @keyframes slideIn {
@@ -58,76 +135,133 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 24px;
-    background: #f9f9f9;
-    border-radius: 12px;
+    padding: 32px;
+    background: var(--bg-secondary, #f8fafc);
+    border-radius: 16px;
 
     .result-item {
       text-align: center;
 
       label {
         display: block;
-        font-size: 14px;
-        color: #666;
+        font-size: 13px;
+        color: var(--text-secondary, #64748b);
         margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       .value {
-        font-size: 32px;
+        font-size: 36px;
         font-weight: 700;
 
         &.current-price {
-          color: #666;
+          color: var(--text-tertiary, #94a3b8);
         }
 
         &.predicted-price {
-          &.trend-up { color: #4caf50; }
-          &.trend-down { color: #f44336; }
-          &.trend-stable { color: #ff9800; }
+          &.trend-up { color: #10b981; }
+          &.trend-down { color: #ef4444; }
+          &.trend-stable { color: #f59e0b; }
         }
       }
     }
 
-    .arrow-icon {
-      font-size: 48px;
+    .arrow-container {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       
-      &.trend-up { color: #4caf50; }
-      &.trend-down { color: #f44336; }
-      &.trend-stable { color: #ff9800; }
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #fff;
+      }
+
+      &.trend-up { 
+        background: linear-gradient(135deg, #10b981, #059669);
+      }
+      &.trend-down { 
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+      }
+      &.trend-stable { 
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+      }
     }
   }
 
-  .confidence-section {
-    label {
-      display: block;
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
-    }
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
 
-    mat-progress-bar {
-      height: 24px;
+    .metric-card {
+      background: var(--bg-secondary, #f8fafc);
       border-radius: 12px;
+      padding: 20px;
 
-      &.high-confidence ::ng-deep .mdc-linear-progress__bar-inner {
-        border-color: #4caf50 !important;
+      .metric-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        color: var(--text-secondary, #64748b);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
       }
 
-      &.medium-confidence ::ng-deep .mdc-linear-progress__bar-inner {
-        border-color: #ff9800 !important;
-      }
+      .metric-body {
+        display: flex;
+        align-items: center;
+        gap: 12px;
 
-      &.low-confidence ::ng-deep .mdc-linear-progress__bar-inner {
-        border-color: #f44336 !important;
-      }
-    }
+        mat-progress-bar {
+          flex: 1;
+          height: 12px;
+          border-radius: 6px;
 
-    .confidence-value {
-      display: block;
-      text-align: center;
-      margin-top: 8px;
-      font-weight: 600;
-      color: #333;
+          &.high-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+            border-color: #10b981 !important;
+          }
+
+          &.medium-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+            border-color: #f59e0b !important;
+          }
+
+          &.low-confidence ::ng-deep .mdc-linear-progress__bar-inner {
+            border-color: #ef4444 !important;
+          }
+        }
+
+        .confidence-value {
+          font-weight: 700;
+          font-size: 18px;
+          
+          &.high-confidence { color: #10b981; }
+          &.medium-confidence { color: #f59e0b; }
+          &.low-confidence { color: #ef4444; }
+        }
+
+        .change-value {
+          font-size: 28px;
+          font-weight: 700;
+
+          &.trend-up { color: #10b981; }
+          &.trend-down { color: #ef4444; }
+          &.trend-stable { color: #f59e0b; }
+        }
+      }
     }
   }
 
@@ -136,47 +270,60 @@
     gap: 16px;
     padding: 20px;
     border-radius: 12px;
-    border-right: 4px solid;
+    border-left: 4px solid;
 
     &.trend-up {
-      background: rgba(76, 175, 80, 0.1);
-      border-right-color: #4caf50;
+      background: rgba(16, 185, 129, 0.1);
+      border-left-color: #10b981;
     }
 
     &.trend-down {
-      background: rgba(244, 67, 54, 0.1);
-      border-right-color: #f44336;
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
     }
 
     &.trend-stable {
-      background: rgba(255, 152, 0, 0.1);
-      border-right-color: #ff9800;
+      background: rgba(245, 158, 11, 0.1);
+      border-left-color: #f59e0b;
     }
 
-    mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
+    .recommendation-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.8);
+
+      mat-icon {
+        font-size: 24px;
+        color: #f59e0b;
+      }
     }
 
-    .recommendation-text {
+    .recommendation-content {
       flex: 1;
 
       strong {
         display: block;
         margin-bottom: 8px;
-        color: #333;
+        color: var(--text-primary, #1e293b);
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
       p {
         margin: 0;
-        font-size: 16px;
-        color: #666;
+        font-size: 15px;
+        color: var(--text-secondary, #64748b);
+        line-height: 1.5;
       }
     }
   }
 
-  .trend-info {
+  .trend-chips {
     mat-chip-set {
       display: flex;
       justify-content: center;
@@ -184,39 +331,66 @@
     }
 
     mat-chip {
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 16px;
+        margin-right: 4px;
+      }
+
       &.trend-up {
-        background: rgba(76, 175, 80, 0.2);
-        color: #2e7d32;
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #059669 !important;
       }
 
       &.trend-down {
-        background: rgba(244, 67, 54, 0.2);
-        color: #c62828;
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #dc2626 !important;
       }
 
       &.trend-stable {
-        background: rgba(255, 152, 0, 0.2);
-        color: #ef6c00;
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: #d97706 !important;
       }
 
       &.high-confidence {
-        background: rgba(76, 175, 80, 0.2);
-        color: #2e7d32;
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #059669 !important;
       }
 
       &.medium-confidence {
-        background: rgba(255, 152, 0, 0.2);
-        color: #ef6c00;
+        background: rgba(245, 158, 11, 0.15) !important;
+        color: #d97706 !important;
       }
 
       &.low-confidence {
-        background: rgba(244, 67, 54, 0.2);
-        color: #c62828;
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #dc2626 !important;
       }
     }
   }
 }
 
+// Dark mode
+:host-context(.dark) {
+  .prediction-form-card,
+  .prediction-result-card,
+  .loading-container {
+    background: rgba(30, 41, 59, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .result-row,
+  .metric-card {
+    background: rgba(15, 23, 42, 0.5);
+  }
+
+  .recommendation-icon {
+    background: rgba(0, 0, 0, 0.2);
+  }
+}
+
+// Responsive
 @media (max-width: 768px) {
   .prediction-form {
     grid-template-columns: 1fr !important;
@@ -224,10 +398,14 @@
 
   .result-row {
     flex-direction: column;
-    gap: 16px;
+    gap: 24px;
 
-    .arrow-icon {
+    .arrow-container {
       transform: rotate(90deg);
     }
+  }
+
+  .metrics-row {
+    grid-template-columns: 1fr;
   }
 }

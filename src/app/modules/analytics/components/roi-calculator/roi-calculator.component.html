@@ -1,106 +1,134 @@
 <div class="calculator-container">
-  <mat-card class="calculator-card">
-    <mat-card-header>
-      <mat-card-title>💰 מחשבון ROI - תשואה על השקעה</mat-card-title>
-      <mat-card-subtitle>חשב את התשואה הצפויה על ההשקעה שלך</mat-card-subtitle>
-    </mat-card-header>
-    <mat-card-content>
-      <form [formGroup]="calculatorForm" class="calculator-form">
+  <div class="calculator-card">
+    <div class="card-header">
+      <div class="header-icon">
+        <mat-icon>calculate</mat-icon>
+      </div>
+      <div>
+        <h3>ROI Calculator</h3>
+        <p>Calculate your expected return on investment</p>
+      </div>
+    </div>
+    
+    <form [formGroup]="calculatorForm" class="calculator-form">
+      <div class="form-grid">
         <mat-form-field appearance="outline">
-          <mat-label>השקעה (עלות)</mat-label>
+          <mat-label>Investment Cost</mat-label>
+          <span matPrefix>$&nbsp;</span>
           <input matInput type="number" formControlName="investment" placeholder="0">
-          <span matPrefix>₪&nbsp;</span>
+          <mat-icon matSuffix>attach_money</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>הכנסה צפויה</mat-label>
+          <mat-label>Expected Revenue</mat-label>
+          <span matPrefix>$&nbsp;</span>
           <input matInput type="number" formControlName="expectedRevenue" placeholder="0">
-          <span matPrefix>₪&nbsp;</span>
+          <mat-icon matSuffix>trending_up</mat-icon>
         </mat-form-field>
 
         <mat-form-field appearance="outline">
-          <mat-label>משך ימים</mat-label>
+          <mat-label>Number of Days</mat-label>
           <input matInput type="number" formControlName="days" placeholder="0">
-          <mat-hint>מספר הימים של ההזמנה</mat-hint>
+          <mat-icon matSuffix>event</mat-icon>
+          <mat-hint>Duration of the booking</mat-hint>
         </mat-form-field>
-
-        <div class="button-group">
-          <button mat-raised-button color="primary" 
-                  [disabled]="calculatorForm.invalid"
-                  (click)="calculate()">
-            <mat-icon>calculate</mat-icon>
-            חשב ROI
-          </button>
-          <button mat-button (click)="reset()">
-            <mat-icon>refresh</mat-icon>
-            אפס
-          </button>
-        </div>
-      </form>
-    </mat-card-content>
-  </mat-card>
-
-  <mat-card *ngIf="result" class="result-card" [@fadeIn]>
-    <mat-card-header>
-      <mat-card-title>📊 תוצאות</mat-card-title>
-    </mat-card-header>
-    <mat-card-content>
-      <div class="results-grid">
-        <div class="result-item main-result" [ngClass]="getROIColor(parseFloat(result.roi))">
-          <label>ROI - תשואה על השקעה</label>
-          <div class="value">{{ result.roi }}%</div>
-          <span class="indicator" *ngIf="parseFloat(result.roi) >= 20">🔥 מעולה!</span>
-          <span class="indicator" *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20">👍 טוב!</span>
-          <span class="indicator" *ngIf="parseFloat(result.roi) < 10 && parseFloat(result.roi) >= 5">⚠️ בינוני</span>
-          <span class="indicator" *ngIf="parseFloat(result.roi) < 5">📉 נמוך</span>
-        </div>
-
-        <div class="result-item">
-          <label>רווח נקי</label>
-          <div class="value profit">₪{{ result.profit | number:'1.0-0' }}</div>
-        </div>
-
-        <div class="result-item">
-          <label>מרווח רווח</label>
-          <div class="value">{{ result.profitMargin }}%</div>
-        </div>
-
-        <div class="result-item">
-          <label>ROI יומי</label>
-          <div class="value">{{ result.dailyROI }}%</div>
-        </div>
-
-        <div class="result-item">
-          <label>ROI שנתי (מוערך)</label>
-          <div class="value annual">{{ result.annualizedROI }}%</div>
-        </div>
       </div>
 
-      <div class="insights-section">
-        <h3>💡 תובנות והמלצות</h3>
-        <ul>
-          <li *ngIf="parseFloat(result.roi) >= 20">
-            <mat-icon class="success">check_circle</mat-icon>
-            תשואה מעולה! זו עסקה משתלמת מאוד.
-          </li>
-          <li *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20">
-            <mat-icon class="good">check_circle</mat-icon>
-            תשואה טובה. כדאי לשקול את העסקה.
-          </li>
-          <li *ngIf="parseFloat(result.roi) < 10">
-            <mat-icon class="warning">warning</mat-icon>
-            תשואה נמוכה יחסית. שקול אלטרנטיבות.
-          </li>
-          <li *ngIf="parseFloat(result.dailyROI) > 1">
-            <mat-icon class="success">trending_up</mat-icon>
-            ROI יומי גבוה - עסקה מהירה ורווחית!
-          </li>
-          <li *ngIf="parseFloat(result.profitMargin) >= 30">
-            <mat-icon class="success">attach_money</mat-icon>
-            מרווח רווח מצוין ({{ result.profitMargin }}%)
-          </li>
-        </ul>
+      <div class="button-group">
+        <button mat-flat-button color="primary" 
+                class="calculate-btn"
+                [disabled]="calculatorForm.invalid"
+                (click)="calculate()">
+          <mat-icon>insights</mat-icon>
+          Calculate ROI
+        </button>
+        <button mat-stroked-button (click)="reset()" class="reset-btn">
+          <mat-icon>refresh</mat-icon>
+          Reset
+        </button>
       </div>
-    </mat-card-content>
-  </mat-card>
+    </form>
+  </div>
+
+  <div *ngIf="result" class="result-card" [@fadeIn]>
+    <div class="result-header">
+      <mat-icon>analytics</mat-icon>
+      <h3>Results</h3>
+    </div>
+    
+    <div class="results-grid">
+      <div class="result-item main-result" [ngClass]="getROIColor(parseFloat(result.roi))">
+        <div class="result-indicator"></div>
+        <label>Return on Investment</label>
+        <div class="value">{{ result.roi }}%</div>
+        <span class="performance-tag" *ngIf="parseFloat(result.roi) >= 20">Excellent</span>
+        <span class="performance-tag" *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20">Good</span>
+        <span class="performance-tag" *ngIf="parseFloat(result.roi) < 10 && parseFloat(result.roi) >= 5">Average</span>
+        <span class="performance-tag" *ngIf="parseFloat(result.roi) < 5">Low</span>
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-item">
+          <mat-icon>account_balance_wallet</mat-icon>
+          <div class="metric-content">
+            <label>Net Profit</label>
+            <div class="value profit">${{ result.profit | number:'1.0-0' }}</div>
+          </div>
+        </div>
+
+        <div class="metric-item">
+          <mat-icon>pie_chart</mat-icon>
+          <div class="metric-content">
+            <label>Profit Margin</label>
+            <div class="value">{{ result.profitMargin }}%</div>
+          </div>
+        </div>
+
+        <div class="metric-item">
+          <mat-icon>today</mat-icon>
+          <div class="metric-content">
+            <label>Daily ROI</label>
+            <div class="value">{{ result.dailyROI }}%</div>
+          </div>
+        </div>
+
+        <div class="metric-item">
+          <mat-icon>calendar_month</mat-icon>
+          <div class="metric-content">
+            <label>Annual ROI (est.)</label>
+            <div class="value annual">{{ result.annualizedROI }}%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="insights-section">
+      <div class="insights-header">
+        <mat-icon>lightbulb</mat-icon>
+        <h4>Insights & Recommendations</h4>
+      </div>
+      <ul class="insights-list">
+        <li *ngIf="parseFloat(result.roi) >= 20" class="insight success">
+          <mat-icon>check_circle</mat-icon>
+          <span>Excellent ROI! This is a very profitable deal.</span>
+        </li>
+        <li *ngIf="parseFloat(result.roi) >= 10 && parseFloat(result.roi) < 20" class="insight good">
+          <mat-icon>thumb_up</mat-icon>
+          <span>Good return. Consider moving forward with this deal.</span>
+        </li>
+        <li *ngIf="parseFloat(result.roi) < 10" class="insight warning">
+          <mat-icon>warning</mat-icon>
+          <span>Relatively low return. Consider alternatives.</span>
+        </li>
+        <li *ngIf="parseFloat(result.dailyROI) > 1" class="insight success">
+          <mat-icon>speed</mat-icon>
+          <span>High daily ROI - fast and profitable transaction!</span>
+        </li>
+        <li *ngIf="parseFloat(result.profitMargin) >= 30" class="insight success">
+          <mat-icon>attach_money</mat-icon>
+          <span>Excellent profit margin ({{ result.profitMargin }}%)</span>
+        </li>
+      </ul>
+    </div>
+  </div>
 </div>

@@ -1,0 +1,354 @@
+// ========================================
+// Medici Booking Engine - Main Layout Styles
+// ========================================
+
+// Variables
+$sidebar-width: 260px;
+$sidebar-collapsed-width: 64px;
+$header-height: 64px;
+$primary-color: #3f51b5;
+$accent-color: #ff4081;
+$success-color: #4caf50;
+$warning-color: #ff9800;
+$error-color: #f44336;
+
+// Light Theme Colors
+$light-bg: #f5f7fa;
+$light-sidebar-bg: #1e2a3a;
+$light-text: #333;
+$light-card-bg: #fff;
+
+// Dark Theme Colors
+$dark-bg: #121212;
+$dark-sidebar-bg: #1a1a2e;
+$dark-text: #e0e0e0;
+$dark-card-bg: #1e1e2d;
+
+// Main Container
+.main-container {
+  height: 100vh;
+  background-color: $light-bg;
+
+  :host-context(.dark) & {
+    background-color: $dark-bg;
+  }
+}
+
+// Sidebar Styles
+.sidebar {
+  width: $sidebar-width;
+  background: linear-gradient(180deg, #1e2a3a 0%, #2d3e50 100%);
+  border: none;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.15);
+
+  :host-context(.dark) & {
+    background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 100%);
+  }
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 12px;
+
+  .side-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Navigation Styles
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 0;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px !important;
+  color: rgba(255, 255, 255, 0.75);
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+  margin: 2px 0;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+  }
+
+  &.active-link {
+    background: rgba(63, 81, 181, 0.3);
+    color: #fff;
+    border-left-color: $primary-color;
+  }
+}
+
+.nav-icon {
+  margin-right: 12px;
+  font-size: 22px;
+  width: 24px;
+  height: 24px;
+}
+
+.nav-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+// AI Nav Item with badge
+.ai-nav-item {
+  position: relative;
+  
+  .new-badge {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #9c27b0 0%, #673ab7 100%);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+    animation: pulse-glow 2s infinite;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(156, 39, 176, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(156, 39, 176, 0.8);
+  }
+}
+
+// Expansion Panel Styles
+.nav-panel {
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+
+  .mat-expansion-panel-header {
+    padding: 0 !important;
+    height: auto !important;
+  }
+
+  .mat-expansion-panel-body {
+    padding: 0 !important;
+  }
+}
+
+.sub-nav {
+  background: rgba(0, 0, 0, 0.15);
+  padding: 8px 0 !important;
+
+  a {
+    color: rgba(255, 255, 255, 0.65) !important;
+    padding-left: 56px !important;
+    font-size: 13px !important;
+
+    &:hover {
+      color: #fff !important;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    &.active-link {
+      color: #fff !important;
+      background: rgba(63, 81, 181, 0.2);
+    }
+  }
+}
+
+.sub-nav-icon {
+  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+}
+
+// Sidebar Footer
+.sidebar-footer {
+  padding: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .theme-toggle {
+    color: rgba(255, 255, 255, 0.7);
+
+    &:hover {
+      color: #fff;
+    }
+  }
+
+  .logout-btn {
+    color: rgba(255, 255, 255, 0.7) !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    &:hover {
+      color: $error-color !important;
+    }
+  }
+}
+
+// Main Content Area
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: $light-bg;
+
+  :host-context(.dark) & {
+    background-color: $dark-bg;
+  }
+}
+
+// Top Header Bar
+.top-header {
+  height: $header-height;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  z-index: 100;
+
+  :host-context(.dark) & {
+    background: $dark-card-bg;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.menu-toggle {
+  margin-right: 16px;
+}
+
+.header-spacer {
+  flex: 1;
+}
+
+// Quick Stats in Header
+.quick-stats {
+  display: flex;
+  gap: 16px;
+  margin-right: 24px;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &.profit {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(76, 175, 80, 0.25) 100%);
+    color: $success-color;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+  }
+
+  &.bookings {
+    background: linear-gradient(135deg, rgba(63, 81, 181, 0.15) 0%, rgba(63, 81, 181, 0.25) 100%);
+    color: $primary-color;
+    border: 1px solid rgba(63, 81, 181, 0.3);
+  }
+}
+
+// Content Area
+.content-area {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    max-width: 280px;
+  }
+
+  .quick-stats {
+    display: none;
+  }
+
+  .content-area {
+    padding: 16px;
+  }
+}
+
+// Accessibility Improvements
+.nav-item:focus-visible,
+.logout-btn:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 2px solid $primary-color;
+  outline-offset: 2px;
+}
+
+// Skip to main content link (accessibility)
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 0;
+  padding: 12px 24px;
+  background: $primary-color;
+  color: #fff;
+  z-index: 9999;
+
+  &:focus {
+    top: 0;
+  }
+}

@@ -1,0 +1,72 @@
+<mat-card class="opportunity-card h-full hover:shadow-lg transition-shadow" [class.urgent]="opportunity.priority === 'URGENT'">
+  <!-- Header -->
+  <div class="card-header flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex items-center gap-2">
+      <span class="type-badge px-3 py-1 rounded-full text-sm font-medium" [ngClass]="typeClass">
+        <mat-icon class="text-sm align-middle">{{ typeIcon }}</mat-icon>
+        {{ typeLabel }}
+      </span>
+      <span class="priority-badge px-2 py-0.5 rounded text-xs font-medium" [ngClass]="priorityClass">
+        {{ priorityLabel }}
+      </span>
+    </div>
+    <div class="confidence-badge flex items-center gap-1 text-sm">
+      <mat-icon class="text-blue-500 text-sm">verified</mat-icon>
+      <span class="font-semibold">{{ opportunity.confidence }}%</span>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <mat-card-content class="p-4">
+    <!-- Hotel/City Info -->
+    <div *ngIf="opportunity.hotelName || opportunity.cityName" class="mb-3">
+      <div *ngIf="opportunity.hotelName" class="font-semibold text-gray-900 dark:text-white">
+        {{ opportunity.hotelName }}
+      </div>
+      <div *ngIf="opportunity.cityName" class="text-sm text-gray-500 dark:text-gray-400">
+        <mat-icon class="text-sm align-middle">location_on</mat-icon>
+        {{ opportunity.cityName }}
+      </div>
+    </div>
+
+    <!-- Action -->
+    <div class="action-text text-gray-800 dark:text-gray-200 mb-2" dir="rtl">
+      {{ opportunity.action }}
+    </div>
+
+    <!-- Reason -->
+    <div class="reason-text text-sm text-gray-600 dark:text-gray-400" dir="rtl">
+      {{ opportunity.reason }}
+    </div>
+
+    <!-- Price Info -->
+    <div *ngIf="opportunity.currentPrice || opportunity.targetPrice" class="price-info mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div class="flex justify-between items-center text-sm">
+        <div *ngIf="opportunity.currentPrice">
+          <span class="text-gray-500 dark:text-gray-400">מחיר נוכחי:</span>
+          <span class="font-semibold ml-1">${{ opportunity.currentPrice | number:'1.0-0' }}</span>
+        </div>
+        <mat-icon *ngIf="opportunity.currentPrice && opportunity.targetPrice" class="text-gray-400">arrow_forward</mat-icon>
+        <div *ngIf="opportunity.targetPrice">
+          <span class="text-gray-500 dark:text-gray-400">מחיר יעד:</span>
+          <span class="font-semibold ml-1 text-green-600">${{ opportunity.targetPrice | number:'1.0-0' }}</span>
+        </div>
+      </div>
+      <div *ngIf="opportunity.expectedProfit" class="mt-2 text-center">
+        <span class="text-sm text-gray-500 dark:text-gray-400">רווח צפוי:</span>
+        <span class="font-bold text-emerald-600 ml-1">${{ opportunity.expectedProfit | number:'1.0-0' }}</span>
+      </div>
+    </div>
+  </mat-card-content>
+
+  <!-- Footer -->
+  <div class="card-footer p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+    <span class="risk-label text-sm" [ngClass]="riskClass">
+      <mat-icon class="text-sm align-middle">warning</mat-icon>
+      {{ riskLabel }}
+    </span>
+    <span *ngIf="opportunity.validUntil" class="text-xs text-gray-400">
+      בתוקף עד {{ opportunity.validUntil | date:'dd/MM' }}
+    </span>
+  </div>
+</mat-card>

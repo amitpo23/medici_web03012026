@@ -1,4 +1,27 @@
-<div class="chart-container">
-  <canvas #chartCanvas></canvas>
+<div class="chart-wrapper">
+  <div class="chart-container">
+    <canvas #chartCanvas></canvas>
+  </div>
+  
+  <div class="chart-summary">
+    <div class="summary-item">
+      <span class="summary-label">Avg. Occupancy</span>
+      <span class="summary-value">{{ avgOccupancy }}%</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Peak Occupancy</span>
+      <span class="summary-value highlight">{{ peakOccupancy }}%</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Peak Month</span>
+      <span class="summary-value">{{ peakMonth }}</span>
+    </div>
+    <div class="summary-item">
+      <span class="summary-label">Trend</span>
+      <span class="summary-value" [class.positive]="trend >= 0" [class.negative]="trend < 0">
+        {{ trend >= 0 ? '+' : '' }}{{ trend }}%
+      </span>
+    </div>
+  </div>
 </div>
 

@@ -1,0 +1,137 @@
+<div class="market-analysis-container" dir="rtl">
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex justify-center items-center py-12">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !isLoading" class="text-center py-12">
+    <mat-icon class="text-6xl text-red-400">error_outline</mat-icon>
+    <p class="text-red-500 mt-4">{{ error }}</p>
+    <button mat-stroked-button color="primary" (click)="loadData()" class="mt-4">נסה שוב</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading && !error" class="space-y-6">
+    <!-- Overview Section -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <!-- Price Stats -->
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="text-blue-600">attach_money</mat-icon>
+          <mat-card-title>סטטיסטיקת מחירים</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="mt-4" *ngIf="overview?.priceStats">
+          <div class="grid grid-cols-2 gap-4">
+            <div class="metric">
+              <span class="label">ממוצע</span>
+              <span class="value">${{ overview.priceStats.average | number:'1.0-0' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">חציון</span>
+              <span class="value">${{ overview.priceStats.median | number:'1.0-0' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">מינימום</span>
+              <span class="value text-green-600">${{ overview.priceStats.min | number:'1.0-0' }}</span>
+            </div>
+            <div class="metric">
+              <span class="label">מקסימום</span>
+              <span class="value text-red-600">${{ overview.priceStats.max | number:'1.0-0' }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-content *ngIf="!overview?.priceStats" class="mt-4">
+          <p class="text-gray-500">אין נתונים זמינים</p>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Trend Card -->
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar [ngClass]="getTrendClass(overview?.trend)">{{ getTrendIcon(overview?.trend) }}</mat-icon>
+          <mat-card-title>מגמת מחירים</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="mt-4">
+          <div class="text-center py-4">
+            <mat-icon class="text-6xl" [ngClass]="getTrendClass(overview?.trend)">{{ getTrendIcon(overview?.trend) }}</mat-icon>
+            <p class="text-xl font-bold mt-2" [ngClass]="getTrendClass(overview?.trend)">
+              {{ getTrendLabel(overview?.trend) }}
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Market Indicators -->
+      <mat-card class="stat-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="text-purple-600">insights</mat-icon>
+          <mat-card-title>אינדיקטורים</mat-card-title>
+        </mat-card-header>
+        <mat-card-content class="mt-4" *ngIf="overview?.marketIndicators">
+          <div class="space-y-3">
+            <div class="indicator">
+              <span class="label">ביקוש</span>
+              <div class="progress-bar">
+                <div class="progress" [style.width.%]="(overview.marketIndicators.demandLevel || 0) * 10"></div>
+              </div>
+              <span class="value">{{ overview.marketIndicators.demandLevel || 0 }}/10</span>
+            </div>
+            <div class="indicator">
+              <span class="label">תנודתיות</span>
+              <div class="progress-bar">
+                <div class="progress volatility" [style.width.%]="(overview.marketIndicators.volatility || 0) * 10"></div>
+              </div>
+              <span class="value">{{ overview.marketIndicators.volatility || 0 }}/10</span>
+            </div>
+            <div class="indicator">
+              <span class="label">עונתיות</span>
+              <div class="progress-bar">
+                <div class="progress seasonality" [style.width.%]="(overview.marketIndicators.seasonalityScore || 0) * 10"></div>
+              </div>
+              <span class="value">{{ overview.marketIndicators.seasonalityScore || 0 }}/10</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Seasonality Section -->
+    <mat-card *ngIf="seasonality?.seasonality">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="text-orange-600">calendar_month</mat-icon>
+        <mat-card-title>דפוסי עונתיות</mat-card-title>
+        <mat-card-subtitle>ניתוח מחירים לפי יום בשבוע</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content class="mt-4">
+        <div class="day-patterns grid grid-cols-7 gap-2">
+          <div *ngFor="let day of ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']; let i = index" 
+               class="day-card text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-400">{{ day }}</span>
+            <div *ngIf="seasonality.dayOfWeekPatterns && seasonality.dayOfWeekPatterns[i]" class="mt-2">
+              <span class="text-lg font-bold text-gray-900 dark:text-white">
+                ${{ seasonality.dayOfWeekPatterns[i].avgPrice | number:'1.0-0' }}
+              </span>
+              <div class="text-xs text-gray-500 mt-1">
+                {{ seasonality.dayOfWeekPatterns[i].count }} הזמנות
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recommendation -->
+    <mat-card *ngIf="trends?.recommendation" class="recommendation-card">
+      <mat-card-content class="p-4">
+        <div class="flex items-start gap-4">
+          <mat-icon class="text-4xl text-purple-600">auto_awesome</mat-icon>
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">המלצת AI</h3>
+            <p class="text-gray-700 dark:text-gray-300">{{ trends.recommendation }}</p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

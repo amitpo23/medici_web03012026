@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { DashboardService, DashboardStats } from '../../services/dashboard.service';
 
 export interface StatCard {
@@ -11,6 +12,8 @@ export interface StatCard {
 
 @Component({
   selector: 'app-stats-cards',
+  standalone: true,
+  imports: [CommonModule],
   templateUrl: './stats-cards.component.html',
   styleUrls: ['./stats-cards.component.css']
 })

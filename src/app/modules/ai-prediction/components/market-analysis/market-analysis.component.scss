@@ -1,0 +1,112 @@
+:host {
+  display: block;
+}
+
+.chart-card {
+  height: 100%;
+}
+
+.trend-indicator {
+  font-size: 1.5rem;
+}
+
+.trend-up { color: #10b981; }
+.trend-down { color: #ef4444; }
+.trend-stable { color: #f59e0b; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background-color: #f9fafb;
+}
+
+.metric-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.metric-value {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.day-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.day-name {
+  width: 5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.bar-container {
+  flex: 1;
+  height: 0.5rem;
+  background-color: #e5e7eb;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background-color: #3b82f6;
+  border-radius: 9999px;
+  transition: all 0.3s ease;
+}
+
+.bar-fill.high {
+  background-color: #f97316;
+}
+
+.bar-fill.peak {
+  background-color: #a855f7;
+}
+
+.day-avg {
+  width: 3rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  text-align: left;
+}
+
+tr:hover {
+  background-color: #f3f4f6;
+}
+
+.analysis-section {
+  border-right: 4px solid #a855f7;
+}
+
+:host-context(.dark) .metric-item {
+  background-color: #1f2937;
+}
+
+:host-context(.dark) .metric-label,
+:host-context(.dark) .day-name,
+:host-context(.dark) .day-avg {
+  color: #9ca3af;
+}
+
+:host-context(.dark) .metric-value {
+  color: white;
+}
+
+:host-context(.dark) .bar-container {
+  background-color: #374151;
+}
+
+:host-context(.dark) tr:hover {
+  background-color: #374151;
+}

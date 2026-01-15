@@ -1,7 +1,7 @@
 {
     "/api": {
-        "target": "https://medici-backend-dev.azurewebsites.net",
-        "secure": false,
+        "target": "https://medici-backend-dev-f9h6hxgncha9fbbp.eastus2-01.azurewebsites.net",
+        "secure": true,
         "changeOrigin": true,
         "logLevel": "debug",
         "pathRewrite": {
