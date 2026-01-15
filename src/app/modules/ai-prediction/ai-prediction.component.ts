@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { MatCheckboxChange } from '@angular/material/checkbox';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AIAnalysisResult, AIOpportunity, AIPredictionService, City, Hotel } from '../../services/ai-prediction.service';
@@ -270,8 +269,8 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   /**
    * Select/Deselect all opportunities
    */
-  onSelectAll(event: MatCheckboxChange): void {
-    if (event.checked) {
+  onSelectAll(checked: boolean): void {
+    if (checked) {
       this.opportunities.forEach(opp => {
         if (opp.hotelId) {
           this.selectedOpportunities.add(opp.hotelId);

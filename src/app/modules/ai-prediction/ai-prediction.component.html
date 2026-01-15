@@ -204,7 +204,7 @@
         <!-- Zenith Push Actions Bar -->
         <div *ngIf="opportunities.length > 0" class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
           <div class="flex items-center gap-3">
-            <mat-checkbox [(ngModel)]="selectAllOpportunities" (change)="onSelectAll($event)">
+            <mat-checkbox [(ngModel)]="selectAllOpportunities" (ngModelChange)="onSelectAll($event)">
               בחר הכל
             </mat-checkbox>
             <span class="text-sm text-gray-600 dark:text-gray-400">
