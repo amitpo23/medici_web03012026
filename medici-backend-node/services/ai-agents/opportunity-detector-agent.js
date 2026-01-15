@@ -13,9 +13,10 @@ class OpportunityDetectorAgent extends BaseAgent {
      * Detect opportunities
      */
     async analyze(data) {
-        const { bookings, hotelId, city, userInstructions } = data;
+        const { bookings, hotelId, city, userInstructions, filters } = data;
         
         this.log(`Detecting opportunities with instructions: ${userInstructions || 'default'}`);
+        this.log(`Applied filters: ${JSON.stringify(filters || {})}`);
 
         // Filter bookings
         let relevantBookings = bookings;
@@ -54,6 +55,11 @@ class OpportunityDetectorAgent extends BaseAgent {
 
         if (userInstructions) {
             filteredOpportunities = this.applyUserInstructions(filteredOpportunities, userInstructions);
+        }
+
+        // Apply advanced filters if provided
+        if (filters) {
+            filteredOpportunities = this.applyAdvancedFilters(filteredOpportunities, filters);
         }
 
         // Score and rank all opportunities
@@ -154,6 +160,12 @@ class OpportunityDetectorAgent extends BaseAgent {
             data.bookings.forEach(b => {
                 if (b.price < stats.avg * 0.85 && b.IsActive) {
                     const discount = ((stats.avg - b.price) / stats.avg) * 100;
+                    const buyPrice = b.price;
+                    const estimatedSellPrice = stats.avg * 1.05; // Conservative sell estimate
+                    const expectedProfit = estimatedSellPrice - buyPrice;
+                    const profitMargin = (expectedProfit / estimatedSellPrice) * 100;
+                    const roi = (expectedProfit / buyPrice) * 100;
+                    
                     opportunities.push({
                         type: 'BUY',
                         reason: 'Price below market average',
@@ -161,16 +173,22 @@ class OpportunityDetectorAgent extends BaseAgent {
                         hotelId: b.HotelId,
                         bookingId: b.id,
                         currentPrice: b.price,
+                        buyPrice: buyPrice,
+                        estimatedSellPrice: parseFloat(estimatedSellPrice.toFixed(2)),
                         marketAvg: stats.avg,
                         discount: discount.toFixed(1),
-                        potentialProfit: (stats.avg - b.price).toFixed(2),
+                        expectedProfit: parseFloat(expectedProfit.toFixed(2)),
+                        profitMargin: parseFloat(profitMargin.toFixed(2)),
+                        roi: parseFloat(roi.toFixed(2)),
+                        potentialProfit: (stats.avg - b.price).toFixed(2), // Keep for backward compatibility
                         startDate: b.startDate,
                         endDate: b.endDate,
                         provider: b.providers,
                         score: discount,
                         priority: discount > 20 ? 'high' : discount > 10 ? 'medium' : 'low',
                         isActive: b.IsActive,
-                        status: b.Status
+                        status: b.Status,
+                        confidence: this.calculateOpportunityConfidence(discount, data.prices.length)
                     });
                 }
             });
@@ -452,6 +470,129 @@ class OpportunityDetectorAgent extends BaseAgent {
         if (opportunityCount > 10) confidence += 0.1;
         
         return Math.min(0.95, confidence);
+    }
+
+    /**
+     * Calculate opportunity confidence score
+     */
+    calculateOpportunityConfidence(discountOrPremium, sampleSize) {
+        let confidence = 0.6;
+        
+        // Higher discount/premium = higher confidence
+        if (discountOrPremium > 25) confidence += 0.2;
+        else if (discountOrPremium > 15) confidence += 0.1;
+        
+        // More data = higher confidence
+        if (sampleSize > 20) confidence += 0.1;
+        if (sampleSize > 50) confidence += 0.1;
+        
+        return Math.min(0.95, confidence);
+    }
+
+    /**
+     * Apply advanced filters to opportunities
+     */
+    applyAdvancedFilters(opportunities, filters) {
+        const {
+            minProfit,
+            minMarginPercent,
+            minROI,
+            profitRange,
+            daysToCheckIn,
+            season,
+            weekendOnly,
+            freeCancellationOnly,
+            isPushed,
+            isSold
+        } = filters;
+
+        // Helper function to filter opportunities array
+        const filterOpportunities = (opps) => {
+            let filtered = [...opps];
+
+            // Profit filters
+            if (minProfit !== undefined && minProfit > 0) {
+                filtered = filtered.filter(o => 
+                    (o.expectedProfit || o.potentialProfit || 0) >= minProfit
+                );
+            }
+
+            if (minMarginPercent !== undefined && minMarginPercent > 0) {
+                filtered = filtered.filter(o => 
+                    (o.profitMargin || 0) >= minMarginPercent
+                );
+            }
+
+            if (minROI !== undefined && minROI > 0) {
+                filtered = filtered.filter(o => (o.roi || 0) >= minROI);
+            }
+
+            if (profitRange && Array.isArray(profitRange) && profitRange.length === 2) {
+                const [min, max] = profitRange;
+                filtered = filtered.filter(o => {
+                    const profit = o.expectedProfit || o.potentialProfit || 0;
+                    return profit >= min && profit <= max;
+                });
+            }
+
+            // Time-based filters
+            if (daysToCheckIn !== undefined) {
+                const now = new Date();
+                filtered = filtered.filter(o => {
+                    if (!o.startDate) return true;
+                    const checkIn = new Date(o.startDate);
+                    const daysUntil = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+                    return daysUntil <= daysToCheckIn;
+                });
+            }
+
+            if (season) {
+                filtered = filtered.filter(o => {
+                    if (!o.startDate) return true;
+                    const date = new Date(o.startDate);
+                    const month = date.getMonth() + 1;
+                    
+                    if (season === 'summer') return month >= 6 && month <= 8;
+                    if (season === 'winter') return month === 12 || month <= 2;
+                    if (season === 'spring') return month >= 3 && month <= 5;
+                    if (season === 'fall') return month >= 9 && month <= 11;
+                    return true;
+                });
+            }
+
+            if (weekendOnly) {
+                filtered = filtered.filter(o => {
+                    if (!o.startDate) return false;
+                    const date = new Date(o.startDate);
+                    const day = date.getDay();
+                    return day === 5 || day === 6; // Friday or Saturday
+                });
+            }
+
+            // Status filters
+            if (freeCancellationOnly) {
+                filtered = filtered.filter(o => o.freeCancellation === true);
+            }
+
+            if (isPushed !== undefined) {
+                filtered = filtered.filter(o => o.isPushed === isPushed);
+            }
+
+            if (isSold !== undefined) {
+                filtered = filtered.filter(o => o.isSold === isSold);
+            }
+
+            return filtered;
+        };
+
+        // Apply filters to all opportunity types
+        return {
+            priceAnomalies: filterOpportunities(opportunities.priceAnomalies || []),
+            buyOpportunities: filterOpportunities(opportunities.buyOpportunities || []),
+            sellOpportunities: filterOpportunities(opportunities.sellOpportunities || []),
+            arbitrageOpportunities: filterOpportunities(opportunities.arbitrageOpportunities || []),
+            timingOpportunities: filterOpportunities(opportunities.timingOpportunities || [])
+        };
     }
 }
 

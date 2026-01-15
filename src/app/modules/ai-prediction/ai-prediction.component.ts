@@ -22,8 +22,17 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   // UI State
   isLoading = false;
   isLoadingOpportunities = false;
+  isPushingToZenith = false;
   activeTab = 0;
   agentStatus: any = null;
+
+  // Selection State for Zenith Push
+  selectedOpportunities: Set<number> = new Set();
+  selectAllOpportunities = false;
+
+  get selectedOpportunitiesCount(): number {
+    return this.selectedOpportunities.size;
+  }
 
   // Filters Form
   filtersForm = new FormGroup({
@@ -31,7 +40,15 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
     hotelId: new FormControl<number | null>(null),
     userInstructions: new FormControl<string>(''),
     riskTolerance: new FormControl<string>('medium'),
-    futureDays: new FormControl<number>(30)
+    futureDays: new FormControl<number>(30),
+    // New profit-based filters
+    minProfit: new FormControl<number | null>(null),
+    minMarginPercent: new FormControl<number | null>(null),
+    minROI: new FormControl<number | null>(null),
+    daysToCheckIn: new FormControl<number | null>(null),
+    season: new FormControl<string | null>(null),
+    weekendOnly: new FormControl<boolean>(false),
+    freeCancellationOnly: new FormControl<boolean>(false)
   });
 
   // Analysis stats
@@ -120,11 +137,22 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
     this.isLoadingOpportunities = true;
     const formValue = this.filtersForm.value;
 
-    this.aiService.getOpportunities({
+    // Build filters object from form
+    const filters: any = {};
+    if (formValue.minProfit) filters.minProfit = formValue.minProfit;
+    if (formValue.minMarginPercent) filters.minMarginPercent = formValue.minMarginPercent;
+    if (formValue.minROI) filters.minROI = formValue.minROI;
+    if (formValue.daysToCheckIn) filters.daysToCheckIn = formValue.daysToCheckIn;
+    if (formValue.season) filters.season = formValue.season;
+    if (formValue.weekendOnly) filters.weekendOnly = formValue.weekendOnly;
+    if (formValue.freeCancellationOnly) filters.freeCancellationOnly = formValue.freeCancellationOnly;
+
+    this.aiService.getOpportunitiesFiltered({
       city: formValue.city || undefined,
       hotelId: formValue.hotelId || undefined,
       userInstructions: formValue.userInstructions || undefined,
-      limit: 50
+      filters: Object.keys(filters).length > 0 ? filters : undefined,
+      limit: 100
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
         if (response.success) {
@@ -226,14 +254,81 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
 
   // Example instructions for users (in Hebrew)
   exampleInstructions = [
-    'חפש הזדמנויות לקנות בעונה הנמוכה',
+    'רווח מעל 100 דולר',
+    'מרווח מעל 15%',
+    'חפש הזדמנויות בעונה הנמוכה',
     'התמקד במלונות 4 ו-5 כוכבים',
-    'חפש הזדמנויות ארביטראז׳',
-    'התמקד בסופי שבוע',
-    'חפש מלונות עם ירידת מחירים של יותר מ-20%'
+    'חפש מלונות עם ירידת מחירים של יותר מ-20%',
+    'סופ"ש בלבד עם ביטול חינם'
   ];
 
   applyExample(instruction: string): void {
     this.filtersForm.patchValue({ userInstructions: instruction });
+  }
+
+  /**
+   * Select/Deselect all opportunities
+   */
+  onSelectAll(checked: boolean): void {
+    if (checked) {
+      this.opportunities.forEach(opp => {
+        if (opp.hotelId) {
+          this.selectedOpportunities.add(opp.hotelId);
+        }
+      });
+    } else {
+      this.selectedOpportunities.clear();
+    }
+  }
+
+  /**
+   * Clear selection
+   */
+  clearSelection(): void {
+    this.selectedOpportunities.clear();
+    this.selectAllOpportunities = false;
+  }
+
+  /**
+   * Open Zenith Push Dialog
+   */
+  openZenithPushDialog(): void {
+    if (this.selectedOpportunities.size === 0) {
+      return;
+    }
+
+    // TODO: Open Material Dialog for push confirmation and options
+    // For now, directly call push
+    this.pushToZenith('publish', {});
+  }
+
+  /**
+   * Push selected opportunities to Zenith
+   */
+  pushToZenith(action: 'publish' | 'update' | 'close', overrides: any): void {
+    this.isPushingToZenith = true;
+    const opportunityIds = Array.from(this.selectedOpportunities);
+
+    this.aiService.pushToZenith(opportunityIds, action, overrides)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response) => {
+          this.isPushingToZenith = false;
+          if (response.success) {
+            console.log('✅ Push successful:', response.summary);
+            alert(`הצלחה! ${response.summary.successful} הזדמנויות נדחפו ל-Zenith`);
+            this.clearSelection();
+            this.loadOpportunities(); // Reload to update status
+          } else {
+            console.error('❌ Push failed:', response);
+            alert(`שגיאה: ${response.error}`);
+          }
+        },
+        error: (err) => {
+          this.isPushingToZenith = false;
+          console.error('Error pushing to Zenith:', err);
+          alert(`שגיאה בדחיפה ל-Zenith: ${err.message}`);
+        }
+      });
   }
 }

@@ -1,4 +1,29 @@
 {
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=827846
-  "recommendations": ["angular.ng-template"]
+  // ═══════════════════════════════════════════════════════════════
+  // 🚀 Recommended Extensions for LSP & MCP
+  // הבנה סמנטית מהירה פי 900 מחיפוש טקסטואלי!
+  // ═══════════════════════════════════════════════════════════════
+  "recommendations": [
+    // 🧠 LSP - Language Server Protocol (CRITICAL)
+    "angular.ng-template",              // Angular Language Service - הבנה סמנטית לתבניות
+    "ms-vscode.vscode-typescript-next", // TypeScript Language Server (latest)
+    
+    // 📝 Code Quality
+    "dbaeumer.vscode-eslint",           // ESLint - Static Analysis
+    "esbenp.prettier-vscode",           // Prettier - Code Formatting
+    
+    // 🎨 Developer Experience
+    "christian-kohler.path-intellisense",  // Auto-complete file paths
+    
+    // 🔧 Angular Specific
+    "johnpapa.angular2",                // Angular Snippets
+    "cyrilletuzi.angular-schematics",   // Angular Schematics
+    
+    // 🐙 Git Integration
+    "eamodio.gitlens",                  // Git insights
+    
+    // 🎯 Productivity
+    "formulahendry.auto-rename-tag",    // Auto rename HTML tags
+    "steoates.autoimport"               // Auto import
+  ]
 }

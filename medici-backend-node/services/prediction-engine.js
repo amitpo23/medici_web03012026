@@ -238,7 +238,7 @@ class PredictionEngine {
      * Get opportunities only (faster query)
      */
     async getOpportunities(options = {}) {
-        const { hotelId, city, userInstructions, limit = 50 } = options;
+        const { hotelId, city, userInstructions, filters, limit = 50 } = options;
 
         const bookings = await this.fetchBookingData({ hotelId, city });
         
@@ -254,7 +254,8 @@ class PredictionEngine {
             bookings,
             hotelId,
             city,
-            userInstructions
+            userInstructions,
+            filters // Pass filters to agent
         });
 
         if (!result.success) {
@@ -277,7 +278,7 @@ class PredictionEngine {
             sellCount: result.analysis.summary.sellOpportunities,
             highPriority: result.analysis.summary.highPriorityCount,
             opportunities,
-            filters: { hotelId, city, userInstructions }
+            filters: { hotelId, city, userInstructions, ...filters }
         };
     }
 

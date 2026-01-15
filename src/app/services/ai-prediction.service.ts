@@ -15,9 +15,17 @@ export interface AIOpportunity {
   currentPrice?: number;
   targetPrice?: number;
   expectedProfit?: number;
+  profitMargin?: number;
+  roi?: number;
+  buyPrice?: number;
+  estimatedSellPrice?: number;
   riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
   validUntil?: string;
   details?: any;
+  startDate?: string;
+  endDate?: string;
+  formattedDate?: string;
+  rank?: number;
 }
 
 export interface AgentAnalysis {
@@ -139,6 +147,33 @@ export class AIPredictionService {
   }
 
   /**
+   * Get opportunities with advanced filters
+   */
+  getOpportunitiesFiltered(options?: {
+    hotelId?: number;
+    city?: string;
+    userInstructions?: string;
+    filters?: {
+      minProfit?: number;
+      minMarginPercent?: number;
+      minROI?: number;
+      profitRange?: [number, number];
+      daysToCheckIn?: number;
+      season?: string;
+      weekendOnly?: boolean;
+      freeCancellationOnly?: boolean;
+      isPushed?: boolean;
+      isSold?: boolean;
+    };
+    limit?: number;
+  }): Observable<{ success: boolean; opportunities: AIOpportunity[]; appliedFilters?: any }> {
+    return this.http.post<{ success: boolean; opportunities: AIOpportunity[]; appliedFilters?: any }>(
+      `${this.baseUrl}ai/opportunities/filter`,
+      options
+    );
+  }
+
+  /**
    * Get market analysis
    */
   getMarketAnalysis(type: 'overview' | 'trends' | 'seasonality', options?: { hotelId?: number; city?: string }): Observable<any> {
@@ -168,8 +203,37 @@ export class AIPredictionService {
     return this.http.post(`${this.baseUrl}ai/clear-cache`, {});
   }
 
-  /**
-   * Get priority color class
+  /**   * Push opportunities to Zenith
+   */
+  pushToZenith(
+    opportunityIds: number[],
+    action: 'publish' | 'update' | 'close',
+    overrides?: {
+      pushPrice?: number;
+      available?: number;
+      mealPlan?: string;
+    }
+  ): Observable<{
+    success: boolean;
+    summary?: {
+      total: number;
+      successful: number;
+      failed: number;
+      action: string;
+    };
+    results?: any[];
+    errors?: any[];
+    error?: string;
+    message?: string;
+  }> {
+    return this.http.post<any>(`${this.baseUrl}ZenithApi/push-batch`, {
+      opportunityIds,
+      action,
+      overrides
+    });
+  }
+
+  /**   * Get priority color class
    */
   getPriorityClass(priority: string): string {
     switch (priority) {

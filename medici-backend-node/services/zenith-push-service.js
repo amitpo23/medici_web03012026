@@ -65,7 +65,17 @@ class ZenithPushService {
    * @param {Object} params - Rate parameters
    */
   generateRateXML(params) {
-    const { hotelCode, invTypeCode, ratePlanCode, startDate, endDate, price, currency = 'EUR' } = params;
+    const { hotelCode, invTypeCode, ratePlanCode, startDate, endDate, price, currency = 'EUR', mealPlan } = params;
+    
+    // Meal plan mapping
+    const mealPlanCodes = {
+      'BB': '1', // Bed & Breakfast
+      'HB': '3', // Half Board
+      'FB': '4', // Full Board
+      'AI': '5'  // All Inclusive
+    };
+
+    const mealPlanCode = mealPlanCodes[mealPlan] || '14'; // Default: Room Only
     
     return `<?xml version="1.0" encoding="UTF-8"?>
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -87,6 +97,7 @@ class ZenithPushService {
               <BaseByGuestAmts>
                 <BaseByGuestAmt AmountAfterTax="${price}" CurrencyCode="${currency}" NumberOfGuests="2"/>
               </BaseByGuestAmts>
+              ${mealPlan ? `<MealsIncluded MealPlanCode="${mealPlanCode}"/>` : ''}
             </Rate>
           </Rates>
         </RatePlan>
@@ -170,7 +181,7 @@ class ZenithPushService {
    * @param {Object} booking - Booking details
    */
   async pushBooking(booking) {
-    const { hotelCode, invTypeCode, ratePlanCode, startDate, endDate, pushPrice } = booking;
+    const { hotelCode, invTypeCode, ratePlanCode, startDate, endDate, pushPrice, available = 1, mealPlan } = booking;
 
     // Push availability first
     const availResult = await this.pushAvailability({
@@ -178,27 +189,36 @@ class ZenithPushService {
       invTypeCode,
       startDate,
       endDate,
-      available: 1
+      available
     });
 
     if (!availResult.success) {
-      return { success: false, error: 'Failed to push availability', details: availResult };
+      return { 
+        success: false, 
+        error: 'Failed to push availability', 
+        zenithError: availResult.error,
+        details: availResult 
+      };
     }
 
-    // Then push rate
+    // Then push rate with meal plan
     const rateResult = await this.pushRate({
       hotelCode,
       invTypeCode,
       ratePlanCode,
       startDate,
       endDate,
-      price: pushPrice
+      price: pushPrice,
+      mealPlan
     });
 
     return {
       success: rateResult.success,
+      error: rateResult.success ? null : 'Failed to push rate',
+      zenithError: rateResult.error,
       availability: availResult,
-      rate: rateResult
+      rate: rateResult,
+      response: rateResult.response
     };
   }
 
@@ -206,12 +226,12 @@ class ZenithPushService {
    * Close availability (when room is sold or cancelled)
    * @param {Object} params - Parameters
    */
-  async closeAvailability(params) {
-    return this.pushAvailability({
+  async closeBooking(params) {
+    return this.pushBooking({
       ...params,
       available: 0
     });
   }
 }
 
-module.exports = ZenithPushService;
+module.exports = new ZenithPushService();

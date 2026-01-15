@@ -369,4 +369,189 @@ router.get('/health', (req, res) => {
   });
 });
 
+/**
+ * POST /ZenithApi/push-batch
+ * Push multiple opportunities to Zenith
+ * Body: {
+ *   opportunityIds: number[],
+ *   action: 'publish' | 'update' | 'close',
+ *   overrides?: {
+ *     available?: number,
+ *     mealPlan?: string,
+ *     roomType?: string
+ *   }
+ * }
+ */
+router.post('/push-batch', async (req, res) => {
+  try {
+    const { opportunityIds, action = 'publish', overrides = {} } = req.body;
+
+    if (!opportunityIds || !Array.isArray(opportunityIds) || opportunityIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'opportunityIds array is required'
+      });
+    }
+
+    console.log(`[Zenith Batch] Processing ${opportunityIds.length} opportunities with action: ${action}`);
+
+    const pool = await getPool();
+    const zenithPushService = require('../services/zenith-push-service');
+    
+    // Fetch opportunities with Zenith mappings
+    const placeholders = opportunityIds.map((_, i) => `@oppId${i}`).join(',');
+    const request = pool.request();
+    opportunityIds.forEach((id, i) => request.input(`oppId${i}`, id));
+
+    const oppResult = await request.query(`
+      SELECT 
+        o.OpportunityId,
+        o.DateForm,
+        o.DateTo,
+        o.PushPrice,
+        o.PushHotelCode,
+        o.PushRatePlanCode,
+        o.PushInvTypeCode,
+        o.IsPush,
+        h.Innstant_ZenithId as ZenithHotelCode,
+        h.RatePlanCode as DefaultRatePlanCode,
+        h.InvTypeCode as DefaultInvTypeCode,
+        h.Name as HotelName,
+        b.BoardName as MealPlan
+      FROM MED_Opportunities o
+      LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+      LEFT JOIN MED_Board b ON o.BoardId = b.BoardId
+      WHERE o.OpportunityId IN (${placeholders})
+    `);
+
+    const opportunities = oppResult.recordset;
+    
+    if (opportunities.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'No opportunities found with provided IDs'
+      });
+    }
+
+    const results = [];
+    const errors = [];
+    
+    // Process each opportunity with rate limiting
+    for (const opp of opportunities) {
+      try {
+        const hotelCode = opp.PushHotelCode || opp.ZenithHotelCode;
+        const ratePlanCode = opp.PushRatePlanCode || opp.DefaultRatePlanCode;
+        const invTypeCode = opp.PushInvTypeCode || opp.DefaultInvTypeCode;
+
+        if (!hotelCode || !ratePlanCode || !invTypeCode) {
+          errors.push({
+            opportunityId: opp.OpportunityId,
+            error: 'Missing Zenith mapping (hotelCode, ratePlanCode, or invTypeCode)',
+            hotelName: opp.HotelName
+          });
+          continue;
+        }
+
+        const pushData = {
+          hotelCode,
+          invTypeCode,
+          ratePlanCode,
+          startDate: opp.DateForm,
+          endDate: opp.DateTo,
+          pushPrice: overrides.pushPrice || opp.PushPrice,
+          available: action === 'close' ? 0 : (overrides.available || 1),
+          mealPlan: overrides.mealPlan || opp.MealPlan
+        };
+
+        console.log(`[Zenith Batch] Pushing opportunity ${opp.OpportunityId} - ${opp.HotelName}`);
+
+        // Call zenith push service
+        let result;
+        if (action === 'close') {
+          result = await zenithPushService.closeBooking(pushData);
+        } else {
+          result = await zenithPushService.pushBooking(pushData);
+        }
+
+        if (result.success) {
+          // Update opportunity status
+          await pool.request()
+            .input('oppId', opp.OpportunityId)
+            .input('datePush', new Date())
+            .query(`
+              UPDATE MED_Opportunities 
+              SET IsPush = 1, DatePush = @datePush
+              WHERE OpportunityId = @oppId
+            `);
+
+          // Insert into push queue/log
+          await pool.request()
+            .input('oppId', opp.OpportunityId)
+            .input('action', action)
+            .query(`
+              INSERT INTO Med_HotelsToPush (OpportunityId, DateInsert, DatePush, IsActive, Action)
+              VALUES (@oppId, GETDATE(), GETDATE(), 0, @action)
+            `);
+
+          results.push({
+            opportunityId: opp.OpportunityId,
+            hotelName: opp.HotelName,
+            status: 'success',
+            action,
+            zenithResponse: result.response?.substring(0, 200) // Truncate for response size
+          });
+        } else {
+          errors.push({
+            opportunityId: opp.OpportunityId,
+            hotelName: opp.HotelName,
+            error: result.error || 'Zenith push failed',
+            zenithError: result.zenithError
+          });
+        }
+
+        // Rate limiting: 500ms delay between pushes
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+      } catch (error) {
+        console.error(`[Zenith Batch] Error pushing opportunity ${opp.OpportunityId}:`, error);
+        errors.push({
+          opportunityId: opp.OpportunityId,
+          hotelName: opp.HotelName,
+          error: error.message
+        });
+      }
+    }
+
+    // Send Slack notification
+    if (results.length > 0) {
+      await slackService.sendNotification(
+        `Zenith Batch Push Completed`,
+        `Successfully pushed ${results.length} opportunities\n` +
+        `Failed: ${errors.length}\n` +
+        `Action: ${action}`
+      );
+    }
+
+    res.json({
+      success: true,
+      summary: {
+        total: opportunityIds.length,
+        successful: results.length,
+        failed: errors.length,
+        action
+      },
+      results,
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error('[Zenith Batch] Fatal error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process batch push',
+      message: error.message
+    });
+  }
+});
+
 module.exports = router;

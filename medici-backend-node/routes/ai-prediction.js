@@ -157,6 +157,88 @@ router.post('/opportunities', async (req, res) => {
 });
 
 /**
+ * POST /ai/opportunities/filter
+ * Advanced opportunity filtering with profit-based criteria
+ * Body: { 
+ *   hotelId, city, userInstructions,
+ *   filters: { 
+ *     minProfit, minMarginPercent, minROI, profitRange,
+ *     daysToCheckIn, season, weekendOnly, freeCancellationOnly,
+ *     isPushed, isSold 
+ *   }
+ * }
+ */
+router.post('/opportunities/filter', async (req, res) => {
+    try {
+        const { hotelId, city, userInstructions, filters, limit } = req.body;
+        
+        console.log('🎯 Advanced opportunity filter requested:', {
+            hotelId,
+            city,
+            filters,
+            instructions: userInstructions
+        });
+
+        // Parse user instructions for profit keywords
+        if (userInstructions) {
+            const lowerInstructions = userInstructions.toLowerCase();
+            
+            // Hebrew: "רווח מעל 100 דולר" or "רווח גבוה מ-100"
+            // English: "profit over 100" or "profit above $100"
+            const profitMatch = lowerInstructions.match(/(?:profit|רווח).*?(?:over|above|מעל|גבוה מ-)?\$?\s*(\d+)/i);
+            if (profitMatch && !filters?.minProfit) {
+                filters = filters || {};
+                filters.minProfit = parseFloat(profitMatch[1]);
+                console.log(`📊 Extracted minProfit from instructions: ${filters.minProfit}`);
+            }
+
+            // Margin: "margin over 15%" or "מרווח מעל 15%"
+            const marginMatch = lowerInstructions.match(/(?:margin|מרווח).*?(?:over|above|מעל|גבוה מ-)?\s*(\d+)%?/i);
+            if (marginMatch && !filters?.minMarginPercent) {
+                filters = filters || {};
+                filters.minMarginPercent = parseFloat(marginMatch[1]);
+                console.log(`📊 Extracted minMarginPercent from instructions: ${filters.minMarginPercent}`);
+            }
+
+            // ROI: "roi above 20%" or "תשואה מעל 20%"
+            const roiMatch = lowerInstructions.match(/(?:roi|תשואה).*?(?:over|above|מעל|גבוה מ-)?\s*(\d+)%?/i);
+            if (roiMatch && !filters?.minROI) {
+                filters = filters || {};
+                filters.minROI = parseFloat(roiMatch[1]);
+                console.log(`📊 Extracted minROI from instructions: ${filters.minROI}`);
+            }
+
+            // Season: "summer only" or "קיץ בלבד"
+            if (/summer|קיץ/i.test(lowerInstructions)) filters = { ...filters, season: 'summer' };
+            if (/winter|חורף/i.test(lowerInstructions)) filters = { ...filters, season: 'winter' };
+            if (/weekend|סופ"ש|סופש/i.test(lowerInstructions)) filters = { ...filters, weekendOnly: true };
+            if (/free.?cancel|ביטול חינם/i.test(lowerInstructions)) filters = { ...filters, freeCancellationOnly: true };
+        }
+        
+        const engine = getPredictionEngine();
+        const result = await engine.getOpportunities({
+            hotelId,
+            city,
+            userInstructions,
+            filters,
+            limit: limit || 100
+        });
+        
+        // Add filter summary to response
+        result.appliedFilters = filters;
+        
+        res.json(result);
+    } catch (error) {
+        console.error('Error filtering opportunities:', error);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to filter opportunities',
+            message: error.message 
+        });
+    }
+});
+
+/**
  * GET /ai/market/:type
  * Get specific market analysis
  * Type: overview, trends, seasonality
