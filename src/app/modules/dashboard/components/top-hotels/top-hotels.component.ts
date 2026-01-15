@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Component, OnInit } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 interface HotelStats {

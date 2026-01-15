@@ -11,7 +11,8 @@ Write-Host "📦 Checking Vercel CLI..." -ForegroundColor Yellow
 $vercelVersion = vercel --version 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Vercel CLI installed: $vercelVersion" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "❌ Vercel CLI not found. Installing..." -ForegroundColor Red
     npm install -g vercel
 }
@@ -21,7 +22,8 @@ Write-Host "`n🔐 Checking Vercel login status..." -ForegroundColor Yellow
 $whoami = vercel whoami 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Logged in as: $whoami" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "❌ Not logged in. Please run: vercel login" -ForegroundColor Red
     Write-Host "`nRun this command:" -ForegroundColor Yellow
     Write-Host "  vercel login" -ForegroundColor Cyan
@@ -35,7 +37,8 @@ npm run vercel-build
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✅ Frontend build successful!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "❌ Frontend build failed!" -ForegroundColor Red
     exit 1
 }
@@ -45,7 +48,8 @@ if (Test-Path "$projectRoot\dist\only-night-app\index.html") {
     Write-Host "✅ Build output verified!" -ForegroundColor Green
     $size = (Get-ChildItem "$projectRoot\dist\only-night-app" -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB
     Write-Host "   Size: $([math]::Round($size, 2)) MB" -ForegroundColor Cyan
-} else {
+}
+else {
     Write-Host "❌ Build output not found!" -ForegroundColor Red
     exit 1
 }
@@ -60,14 +64,16 @@ $choice = Read-Host "Enter choice (1 or 2)"
 if ($choice -eq "2") {
     Write-Host "`n📤 Deploying to PRODUCTION..." -ForegroundColor Magenta
     vercel --prod
-} else {
+}
+else {
     Write-Host "`n📤 Deploying to PREVIEW..." -ForegroundColor Magenta
     vercel
 }
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n✅ Frontend deployed successfully!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "`n❌ Frontend deployment failed!" -ForegroundColor Red
     exit 1
 }
@@ -88,13 +94,15 @@ if ($deployBackend -eq "y") {
     
     if ($choice -eq "2") {
         vercel --prod
-    } else {
+    }
+    else {
         vercel
     }
     
     if ($LASTEXITCODE -eq 0) {
         Write-Host "`n✅ Backend deployed successfully!" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "`n❌ Backend deployment failed!" -ForegroundColor Red
     }
 }

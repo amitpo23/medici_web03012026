@@ -1,98 +1,89 @@
 {
-  // ═══════════════════════════════════════════════════════════════
-  // 🤖 MCP - Model Context Protocol (AI Assistant Integration)
-  // ═══════════════════════════════════════════════════════════════
-  "chat.mcp.enabled": true,
-  "chat.mcp.discovery.enabled": true,
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 🧠 LSP - Language Server Protocol (Semantic Code Understanding)
-  // מהיר פי 900 מחיפוש טקסטואלי!
-  // ═══════════════════════════════════════════════════════════════
-  
-  // TypeScript Language Server - הבנה סמנטית מלאה
-  "typescript.tsdk": "node_modules/typescript/lib",
-  "typescript.enablePromptUseWorkspaceTsdk": true,
-  "typescript.preferences.importModuleSpecifier": "relative",
-  "typescript.updateImportsOnFileMove.enabled": "always",
-  "typescript.suggest.completeFunctionCalls": true,
-  "typescript.inlayHints.parameterNames.enabled": "all",
-  "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
-  "typescript.inlayHints.variableTypes.enabled": true,
-  "typescript.preferences.includePackageJsonAutoImports": "on",
-  "typescript.suggest.autoImports": true,
-  
-  // JavaScript - same LSP benefits
-  "javascript.updateImportsOnFileMove.enabled": "always",
-  "javascript.suggest.autoImports": true,
-  "javascript.inlayHints.parameterNames.enabled": "all",
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 🅰️ Angular Language Service - הבנה סמנטית לתבניות
-  // ═══════════════════════════════════════════════════════════════
-  "angular.enable-strict-mode-prompt": false,
-  "angular.log": "off",
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 📝 Editor - Auto-formatting & Actions
-  // ═══════════════════════════════════════════════════════════════
-  "editor.formatOnSave": true,
-  "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": "explicit",
-    "source.organizeImports": "explicit"
-  },
-  "editor.quickSuggestions": {
-    "other": true,
-    "comments": false,
-    "strings": true
-  },
-  "editor.parameterHints.enabled": true,
-  "editor.hover.enabled": true,
-  "editor.definitionLinkOpensInPeek": false,
-  
-  // Go to Definition - F12 / Ctrl+Click
-  "editor.gotoLocation.multipleDefinitions": "goto",
-  "editor.gotoLocation.multipleReferences": "goto",
-  "editor.gotoLocation.multipleImplementations": "goto",
-  "editor.gotoLocation.multipleTypeDefinitions": "goto",
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 🔍 ESLint - Static Analysis
-  // ═══════════════════════════════════════════════════════════════
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "html"
-  ],
-  "eslint.codeActionsOnSave.mode": "problems",
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 📁 Files & Workspace
-  // ═══════════════════════════════════════════════════════════════
-  "files.associations": {
-    "*.json": "jsonc"
-  },
-  "search.exclude": {
-    "**/node_modules": true,
-    "**/dist": true,
-    "**/.angular": true
-  },
-  
-  // ═══════════════════════════════════════════════════════════════
-  // 💅 Formatters - Per Language
-  // ═══════════════════════════════════════════════════════════════
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[html]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[scss]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+    // ═══════════════════════════════════════════════════════════════
+    // 🤖 MCP - Model Context Protocol (AI Assistant Integration)
+    // ═══════════════════════════════════════════════════════════════
+    "chat.mcp.enabled": true,
+    "chat.mcp.discovery.enabled": true,
+    // ═══════════════════════════════════════════════════════════════
+    // 🧠 LSP - Language Server Protocol (Semantic Code Understanding)
+    // מהיר פי 900 מחיפוש טקסטואלי!
+    // ═══════════════════════════════════════════════════════════════
+    // TypeScript Language Server - הבנה סמנטית מלאה
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.suggest.completeFunctionCalls": true,
+    "typescript.inlayHints.parameterNames.enabled": "all",
+    "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+    "typescript.inlayHints.variableTypes.enabled": true,
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.autoImports": true,
+    // JavaScript - same LSP benefits
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "javascript.suggest.autoImports": true,
+    "javascript.inlayHints.parameterNames.enabled": "all",
+    // ═══════════════════════════════════════════════════════════════
+    // 🅰️ Angular Language Service - הבנה סמנטית לתבניות
+    // ═══════════════════════════════════════════════════════════════
+    "angular.enable-strict-mode-prompt": false,
+    "angular.log": "off",
+    // ═══════════════════════════════════════════════════════════════
+    // 📝 Editor - Auto-formatting & Actions
+    // ═══════════════════════════════════════════════════════════════
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    "editor.parameterHints.enabled": true,
+    "editor.hover.enabled": true,
+    "editor.definitionLinkOpensInPeek": false,
+    // Go to Definition - F12 / Ctrl+Click
+    "editor.gotoLocation.multipleDefinitions": "goto",
+    "editor.gotoLocation.multipleReferences": "goto",
+    "editor.gotoLocation.multipleImplementations": "goto",
+    "editor.gotoLocation.multipleTypeDefinitions": "goto",
+    // ═══════════════════════════════════════════════════════════════
+    // 🔍 ESLint - Static Analysis
+    // ═══════════════════════════════════════════════════════════════
+    "eslint.validate": [
+        "javascript",
+        "javascriptreact",
+        "typescript",
+        "typescriptreact",
+        "html"
+    ],
+    "eslint.codeActionsOnSave.mode": "problems",
+    // ═══════════════════════════════════════════════════════════════
+    // 📁 Files & Workspace
+    // ═══════════════════════════════════════════════════════════════
+    "files.associations": {
+        "*.json": "jsonc"
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "**/.angular": true
+    },
+    // ═══════════════════════════════════════════════════════════════
+    // 💅 Formatters - Per Language
+    // ═══════════════════════════════════════════════════════════════
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

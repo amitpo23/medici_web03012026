@@ -1,9 +1,9 @@
-import js from "@eslint/js";
-import tseslint from "@typescript-eslint/eslint-plugin";
-import tsparser from "@typescript-eslint/parser";
 import angular from "@angular-eslint/eslint-plugin";
 import angularTemplate from "@angular-eslint/eslint-plugin-template";
 import angularTemplateParser from "@angular-eslint/template-parser";
+import js from "@eslint/js";
+import tseslint from "@typescript-eslint/eslint-plugin";
+import tsparser from "@typescript-eslint/parser";
 
 export default [
   // Ignore patterns

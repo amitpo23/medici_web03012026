@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { AIPredictionService } from '../../../../services/ai-prediction.service';
 
 @Component({

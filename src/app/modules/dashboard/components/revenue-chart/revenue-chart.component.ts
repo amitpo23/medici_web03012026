@@ -1,7 +1,7 @@
-import { Component, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { environment } from '../../../../environments/environment';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { environment } from '../../../../environments/environment';
 
 Chart.register(...registerables);
 

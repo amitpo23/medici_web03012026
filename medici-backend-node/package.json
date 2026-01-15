@@ -27,7 +27,11 @@
   "devDependencies": {
     "nodemon": "^3.0.2"
   },
-  "keywords": ["medici", "hotels", "api"],
+  "keywords": [
+    "medici",
+    "hotels",
+    "api"
+  ],
   "author": "",
   "license": "ISC"
 }

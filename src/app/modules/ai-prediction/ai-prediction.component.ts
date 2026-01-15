@@ -1,8 +1,9 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { MatCheckboxChange } from '@angular/material/checkbox';
 import { Subject } from 'rxjs';
-import { takeUntil, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { AIPredictionService, AIOpportunity, City, Hotel, AIAnalysisResult } from '../../services/ai-prediction.service';
+import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { AIAnalysisResult, AIOpportunity, AIPredictionService, City, Hotel } from '../../services/ai-prediction.service';
 
 @Component({
   selector: 'app-ai-prediction',
@@ -269,8 +270,8 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   /**
    * Select/Deselect all opportunities
    */
-  onSelectAll(checked: boolean): void {
-    if (checked) {
+  onSelectAll(event: MatCheckboxChange): void {
+    if (event.checked) {
       this.opportunities.forEach(opp => {
         if (opp.hotelId) {
           this.selectedOpportunities.add(opp.hotelId);
@@ -316,7 +317,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
           this.isPushingToZenith = false;
           if (response.success) {
             console.log('✅ Push successful:', response.summary);
-            alert(`הצלחה! ${response.summary.successful} הזדמנויות נדחפו ל-Zenith`);
+            alert(`הצלחה! ${response.summary?.successful || 0} הזדמנויות נדחפו ל-Zenith`);
             this.clearSelection();
             this.loadOpportunities(); // Reload to update status
           } else {
