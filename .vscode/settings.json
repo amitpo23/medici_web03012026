@@ -1,9 +1,10 @@
 {
-    // ═══════════════════════════════════════════════════════════════
-    // 🤖 MCP - Model Context Protocol (AI Assistant Integration)
-    // ═══════════════════════════════════════════════════════════════
-    "chat.mcp.enabled": true,
-    "chat.mcp.discovery.enabled": true,
+    "chat.mcp.discovery.enabled": {
+        "claude-desktop": true,
+        "windsurf": true,
+        "cursor-global": true,
+        "cursor-workspace": true
+    },
     // ═══════════════════════════════════════════════════════════════
     // 🧠 LSP - Language Server Protocol (Semantic Code Understanding)
     // מהיר פי 900 מחיפוש טקסטואלי!
@@ -42,7 +43,7 @@
         "strings": true
     },
     "editor.parameterHints.enabled": true,
-    "editor.hover.enabled": true,
+    "editor.hover.enabled": "on",
     "editor.definitionLinkOpensInPeek": false,
     // Go to Definition - F12 / Ctrl+Click
     "editor.gotoLocation.multipleDefinitions": "goto",
@@ -85,5 +86,6 @@
     },
     "[scss]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "chat.mcp.access": "all"
 }
