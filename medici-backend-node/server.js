@@ -1,10 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
 require('dotenv').config();
+
+const logger = require('./config/logger');
+const { requestLogger, errorLogger } = require('./middleware/request-logger');
+const { apiLimiter } = require('./middleware/rate-limiter');
+const alertsAgent = require('./services/alerts-agent');
+const healthMonitor = require('./services/health-monitor');
+const { setupSwagger } = require('./config/swagger');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: false, // Allow for Swagger UI
+  crossOriginEmbedderPolicy: false
+}));
 
 // Middleware
 const corsOptions = {
@@ -21,6 +35,24 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text({ type: 'application/xml', limit: '10mb' }));
 app.use(bodyParser.text({ type: 'text/xml', limit: '10mb' }));
 
+// HTTP Request Logging with metrics
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  res.on('finish', () => {
+    const responseTime = Date.now() - startTime;
+    const isError = res.statusCode >= 400;
+    healthMonitor.trackRequest(responseTime, isError);
+  });
+  next();
+});
+app.use(requestLogger);
+
+// API Rate Limiting
+app.use('/api', apiLimiter);
+
+// Swagger API Documentation
+setupSwagger(app);
+
 // Routes
 const authRoutes = require('./routes/auth');
 const opportunityRoutes = require('./routes/opportunities');
@@ -36,6 +68,10 @@ const aiPredictionRoutes = require('./routes/ai-prediction');
 const reportsRoutes = require('./routes/reports');
 const dashboardRoutes = require('./routes/dashboard');
 const aiChatRoutes = require('./routes/ai-chat');
+const scraperRoutes = require('./routes/scraper');
+const logsRoutes = require('./routes/logs');
+const alertsRoutes = require('./routes/alerts');
+const healthRoutes = require('./routes/health');
 
 app.use('/sign-in', authRoutes);
 app.use('/Opportunity', opportunityRoutes);
@@ -51,6 +87,10 @@ app.use('/ai', aiPredictionRoutes);
 app.use('/reports', reportsRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/ai-chat', aiChatRoutes);
+app.use('/scraper', scraperRoutes);
+app.use('/logs', logsRoutes);
+app.use('/alerts', alertsRoutes);
+app.use('/health', healthRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -59,6 +99,8 @@ app.get('/', (req, res) => {
     message: 'Medici Hotels API',
     version: '1.0.0',
     environment: process.env.NODE_ENV,
+    documentation: '/api-docs',
+    health: '/health',
     endpoints: {
       auth: '/sign-in',
       opportunity: '/Opportunity',
@@ -73,7 +115,11 @@ app.get('/', (req, res) => {
       aiPrediction: '/ai',
       reports: '/reports',
       dashboard: '/dashboard',
-      aiChat: '/ai-chat (שאל שאלות על הנתונים בשפה טבעית)'
+      aiChat: '/ai-chat (שאל שאלות על הנתונים בשפה טבעית)',
+      scraper: '/scraper (בדיקת מחירי מתחרים)',
+      logs: '/logs (ניהול וצפייה בלוגים)',
+      alerts: '/alerts (מערכת התראות ומעקב)',
+      health: '/health (בדיקת תקינות מערכת)'
     }
   });
 });
@@ -89,8 +135,14 @@ app.get('/api', (req, res) => {
 });
 
 // Error handling middleware
+app.use(errorLogger);
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
+  logger.error('Server error', {
+    error: err.message,
+    stack: err.stack,
+    url: req.url
+  });
+  
   res.status(500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
@@ -99,19 +151,37 @@ app.use((err, req, res, next) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  logger.info('🚀 Medici Hotels Server Started', {
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development',
+    database: process.env.DB_DATABASE || 'not configured',
+    nodeVersion: process.version
+  });
+  
+  // Start Alerts Agent
+  logger.info('Starting Alerts Agent...');
+  alertsAgent.start(5); // Scan every 5 minutes
+  
+  console.log(`\n╔═══════════════════════════════════════════════════════════╗`);
+  console.log(`║  🚀 MEDICI HOTELS API - RUNNING                          ║`);
+  console.log(`╚═══════════════════════════════════════════════════════════╝\n`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🚀 Server: http://localhost:${PORT}`);
   console.log(`🗄️  Database: ${process.env.DB_DATABASE || 'not configured'}`);
-  console.log(`🌐 Endpoints:`);
-  console.log(`   - Auth: /sign-in`);
-  console.log(`   - Opportunities: /Opportunity`);
-  console.log(`   - Bookings: /Book`);
-  console.log(`   - Reservations: /Reservation`);
-  console.log(`   - Sales Room: /SalesRoom`);
-  console.log(`   - Search: /Search`);
-  console.log(`   - Errors: /Errors`);
-  console.log(`   - Hotels: /hotels`);
-  console.log(`   - Zenith API: /ZenithApi`);
+  console.log(`📝 Logs: ./logs/`);
+  console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
+  console.log(`💚 Health: http://localhost:${PORT}/health`);
+  console.log(`📊 Metrics: http://localhost:${PORT}/health/metrics\n`);
+  console.log(`🌐 Main Endpoints:`);
+  console.log(`   • Auth: /sign-in`);
+  console.log(`   • Opportunities: /Opportunity`);
+  console.log(`   • Bookings: /Book`);
+  console.log(`   • Reservations: /Reservation`);
+  console.log(`   • AI Chat: /ai-chat`);
+  console.log(`   • AI Predictions: /ai`);
+  console.log(`   • Scraper: /scraper`);
+  console.log(`   • Logs: /logs`);
+  console.log(`   • Alerts: /alerts\n`);
 });
 
 module.exports = app;

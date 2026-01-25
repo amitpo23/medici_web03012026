@@ -4,6 +4,8 @@
  */
 
 const { getPool } = require('../config/database');
+const competitorScraper = require('./competitor-scraper');
+const logger = require('../config/logger');
 
 class AIDBChatService {
   constructor() {
@@ -174,7 +176,15 @@ class AIDBChatService {
    * Execute query and return results with explanation
    */
   async askQuestion(question) {
+    const startTime = Date.now();
+    logger.logAIActivity('question', question, true);
+    
     try {
+      // Check if question is about competitor prices (scraping)
+      if (this.isCompetitorPriceQuestion(question)) {
+        return await this.handleCompetitorPriceQuestion(question);
+      }
+      
       const pool = await getPool();
       
       // Get schema if needed
@@ -185,6 +195,9 @@ class AIDBChatService {
       
       // Execute query
       const result = await pool.request().query(sqlQuery);
+      
+      const duration = Date.now() - startTime;
+      logger.logDBQuery(sqlQuery, duration, result.recordset.length);
       
       // Format response
       return {
@@ -197,7 +210,11 @@ class AIDBChatService {
       };
       
     } catch (error) {
-      console.error('[AIDBChat] Error:', error);
+      logger.error('AI Chat error', { 
+        question: question.substring(0, 100),
+        error: error.message,
+        stack: error.stack
+      });
       return {
         success: false,
         question: question,
@@ -205,6 +222,145 @@ class AIDBChatService {
         suggestion: 'נסה לנסח את השאלה אחרת, או שאל "מה אני יכול לשאול?"'
       };
     }
+  }
+
+  /**
+   * Check if question is about competitor prices
+   */
+  isCompetitorPriceQuestion(question) {
+    const lowerQuestion = question.toLowerCase();
+    const competitorKeywords = ['booking.com', 'booking', 'מתחרה', 'competitor', 'מחיר ב', 'price at'];
+    return competitorKeywords.some(keyword => lowerQuestion.includes(keyword));
+  }
+
+  /**
+   * Hlogger.info('AI Chat detected competitor price question', { question: question.substring(0, 100) }
+   */
+  async handleCompetitorPriceQuestion(question) {
+    try {
+      console.log(`🔍 AI Chat detected competitor price question: ${question}`);
+      
+      // Extract hotel name from question
+      const hotelName = this.extractHotelName(question);
+      
+      if (!hotelName) {
+        return {
+          success: false,
+          question,
+          error: 'לא הצלחתי לזהות איזה מלון לבדוק',
+          suggestion: 'נסה לשאול: "מה המחיר ב-Booking.com עבור דיוויד אינטרקונטיננטל?"'
+        };
+      }
+      
+      // Use dates from question or default to next weekend
+      const { checkIn, checkOut } = this.extractDates(question);
+      
+      logger.info('Triggering scraper from AI Chat', { hotelName, checkIn, checkOut });
+      
+      // Scrape Booking.com
+      const result = await competitorScraper.scrapeBookingCom(hotelName, checkIn, checkOut, 2);
+      
+      if (result.success) {
+        return {
+          success: true,
+          question,
+          type: 'competitor-price',
+          hotelName,
+          checkIn,
+          checkOut,
+          price: result.price,
+          currency: result.currency,
+          source: result.source,
+          scrapedAt: result.scrapedAt,
+          url: result.url,
+          explanation: `המחיר ב-Booking.com עבור ${hotelName} הוא ${result.price} ${result.currency} לתאריכים ${checkIn} עד ${checkOut}`,
+          screenshot: result.screenshot
+        };
+      } else {
+        return {
+          success: false,
+          question,
+          error: `לא הצלחתי למצוא מחיר עבור ${hotelName}`,
+          details: result.error
+        };
+      }
+      
+    } catch (error) {
+      logger.error('Competitor price question error', { 
+        question: question.substring(0, 100),
+        error: error.message 
+      });
+      return {
+        success: false,
+        question,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Extract hotel name from question
+   */
+  extractHotelName(question) {
+    // Common hotel name patterns
+    const patterns = [
+      /(?:עבור|for|של)\s+([א-תa-z\s]+?)(?:\?|$|ב-|at|in)/i,
+      /(דיוויד.*?אינטרקונטיננטל)/i,
+      /(david.*?intercontinental)/i,
+      /(הילטון)/i,
+      /(hilton)/i,
+      /(שרתון)/i,
+      /(sheraton)/i,
+      /(דן.*?תל.*?אביב)/i
+    ];
+    
+    for (const pattern of patterns) {
+      const match = question.match(pattern);
+      if (match && match[1]) {
+        return match[1].trim();
+      }
+    }
+    
+    // Default to David Intercontinental if mentioned
+    if (question.includes('דיוויד') || question.includes('david')) {
+      return 'David Intercontinental Tel Aviv';
+    }
+    
+    return null;
+  }
+
+  /**
+   * Extract dates from question or use defaults
+   */
+  extractDates(question) {
+    // Try to find specific dates in question
+    const dateMatch = question.match(/(\d{4}-\d{2}-\d{2})/);
+    
+    if (dateMatch) {
+      const checkIn = dateMatch[1];
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkInDate);
+      checkOutDate.setDate(checkOutDate.getDate() + 2); // 2 nights
+      
+      return {
+        checkIn,
+        checkOut: checkOutDate.toISOString().split('T')[0]
+      };
+    }
+    
+    // Default: Next month, 2 nights
+    const today = new Date();
+    const nextMonth = new Date(today);
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    nextMonth.setDate(15); // Mid-month
+    
+    const checkOut = new Date(nextMonth);
+    checkOut.setDate(checkOut.getDate() + 2);
+    
+    return {
+      checkIn: nextMonth.toISOString().split('T')[0],
+      checkOut: checkOut.toISOString().split('T')[0]
+    };
   }
 
   /**
@@ -263,10 +419,11 @@ class AIDBChatService {
       'מה הרווח הכולל?',
       'אילו מלונות הכי רווחיים?',
       'כמה הזדמנויות יש?',
+      'מה המחיר ב-Booking.com עבור דיוויד אינטרקונטיננטל?',
       'How many bookings today?',
       'Total revenue this month?',
       'Top 10 hotels by profit?',
-      'Show me opportunities status'
+      'What is the price at Booking.com for Hilton Tel Aviv?'
     ];
   }
 }

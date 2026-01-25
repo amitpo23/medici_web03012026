@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
-const ZenithPushService = require('../services/zenith-push-service');
-
-const zenithPushService = new ZenithPushService();
+const zenithPushService = require('../services/zenith-push-service');
 
 // Get all opportunities
 router.get('/Opportunities', async (req, res) => {
