@@ -237,9 +237,10 @@ export class AIDatabaseChatComponent implements OnInit, OnDestroy {
   /**
    * Handle Enter key press
    */
-  onEnterPress(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
+  onEnterPress(event: Event): void {
+    const keyboardEvent = event as KeyboardEvent;
+    if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
+      keyboardEvent.preventDefault();
       this.sendQuestion();
     }
   }
