@@ -1,0 +1,47 @@
+
+> only-night-app@2.1.0 start
+> ng serve
+
+- Generating browser application bundles (phase: setup)...
+✔ Browser application bundle generation complete.
+
+Initial Chunk Files                                                                                     | Names                                      |  Raw Size
+vendor.js                                                                                               | vendor                                     |   6.79 MB |
+styles.css, styles.js                                                                                   | styles                                     | 482.35 kB |
+polyfills.js                                                                                            | polyfills                                  | 252.55 kB |
+main.js                                                                                                 | main                                       | 141.30 kB |
+runtime.js                                                                                              | runtime                                    |  13.26 kB |
+
+| Initial Total                              |   7.66 MB
+
+Lazy Chunk Files                                                                                        | Names                                      |  Raw Size
+default-src_app_modules_shared_confirm-dialog_confirm-dialog_component_ts-node_modules_ag-gri-08d6f4.js | modules-options-options-module             |   2.52 MB |
+src_app_modules_dashboard_dashboard_module_ts.js                                                        | modules-dashboard-dashboard-module         | 648.58 kB |
+src_app_modules_analytics_analytics_module_ts.js                                                        | modules-analytics-analytics-module         | 248.14 kB |
+src_app_modules_ai-prediction_ai-prediction_module_ts.js                                                | modules-ai-prediction-ai-prediction-module | 213.16 kB |
+src_app_modules_rooms_rooms_module_ts.js                                                                | modules-rooms-rooms-module                 | 140.08 kB |
+src_app_modules_reservation_reservation_module_ts.js                                                    | modules-reservation-reservation-module     | 125.24 kB |
+src_app_modules_sales-room_sales-room_module_ts.js                                                      | modules-sales-room-sales-room-module       |  70.73 kB |
+src_app_modules_options_options_module_ts.js                                                            | modules-options-options-module             |  57.32 kB |
+default-src_app_common_ts-src_app_modules_options_opp-form_opp-form_component_ts.js                     | modules-options-options-module             |  42.65 kB |
+src_app_modules_search-price_search-price_module_ts.js                                                  | modules-search-price-search-price-module   |  37.97 kB |
+src_app_modules_hotels_hotels_module_ts.js                                                              | modules-hotels-hotels-module               |  18.88 kB |
+common.js                                                                                               | common                                     |  14.85 kB |
+
+Build at: 2026-01-28T05:45:22.977Z - Hash: cc54073d86ef66e3 - Time: 35067ms
+
+Warning: /workspaces/medici_web03012026/src/app/core/auth/auth.service.ts depends on 'crypto-js'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: /workspaces/medici_web03012026/src/app/core/auth/auth.service.ts depends on 'crypto-js/enc-base64'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+Warning: /workspaces/medici_web03012026/src/app/core/auth/auth.service.ts depends on 'crypto-js/enc-utf8'. CommonJS or AMD dependencies can cause optimization bailouts.
+For more info see: https://angular.io/guide/build#configuring-commonjs-dependencies
+
+
+
+** Angular Live Development Server is listening on localhost:4200, open your browser on http://localhost:4200/ **
+
+
+✔ Compiled successfully.

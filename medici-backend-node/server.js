@@ -72,6 +72,7 @@ const scraperRoutes = require('./routes/scraper');
 const logsRoutes = require('./routes/logs');
 const alertsRoutes = require('./routes/alerts');
 const healthRoutes = require('./routes/health');
+const aiRagRoutes = require('./routes/ai-rag');
 
 app.use('/sign-in', authRoutes);
 app.use('/Opportunity', opportunityRoutes);
@@ -87,6 +88,7 @@ app.use('/ai', aiPredictionRoutes);
 app.use('/reports', reportsRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/ai-chat', aiChatRoutes);
+app.use('/ai/rag', aiRagRoutes);
 app.use('/scraper', scraperRoutes);
 app.use('/logs', logsRoutes);
 app.use('/alerts', alertsRoutes);

@@ -1,0 +1,485 @@
+2026-01-28 05:41:33 [[32minfo[39m]: Logger initialized {"environment":"development","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs"}
+📚 Swagger documentation available at /api-docs
+2026-01-28 05:41:35 [[32minfo[39m]: 🚀 Medici Hotels Server Started {"port":"3000","environment":"development","database":"medici-db-dev-copy","nodeVersion":"v24.11.1"}
+2026-01-28 05:41:35 [[32minfo[39m]: Starting Alerts Agent...
+2026-01-28 05:41:35 [[32minfo[39m]: 🚨 Alerts Agent Started {"interval":"5 minutes"}
+2026-01-28 05:41:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+
+╔═══════════════════════════════════════════════════════════╗
+║  🚀 MEDICI HOTELS API - RUNNING                          ║
+╚═══════════════════════════════════════════════════════════╝
+
+📊 Environment: development
+🚀 Server: http://localhost:3000
+🗄️  Database: medici-db-dev-copy
+📝 Logs: ./logs/
+📚 API Docs: http://localhost:3000/api-docs
+💚 Health: http://localhost:3000/health
+📊 Metrics: http://localhost:3000/health/metrics
+
+🌐 Main Endpoints:
+   • Auth: /sign-in
+   • Opportunities: /Opportunity
+   • Bookings: /Book
+   • Reservations: /Reservation
+   • AI Chat: /ai-chat
+   • AI Predictions: /ai
+   • Scraper: /scraper
+   • Logs: /logs
+   • Alerts: /alerts
+
+2026-01-28 05:41:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":24}
+2026-01-28 05:41:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 05:41:36 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"9ms","ip":"::1"}
+2026-01-28 05:41:46 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+✅ Connected to Azure SQL Database
+2026-01-28 05:42:07 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"2735ms","ip":"::1"}
+2026-01-28 05:46:03 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"1711ms","ip":"::1"}
+2026-01-28 05:46:10 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"316ms","ip":"::1"}
+2026-01-28 05:46:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 05:46:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":48}
+2026-01-28 05:46:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 05:51:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 05:51:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":27}
+2026-01-28 05:51:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 05:54:20 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+2026-01-28 05:54:20 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/metrics","status":200,"responseTime":"2ms","ip":"::1"}
+2026-01-28 05:54:22 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"1632ms","ip":"::1"}
+2026-01-28 05:54:23 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"313ms","ip":"::1"}
+Error fetching hotels: RequestError: Invalid column name 'dateInsert'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid column name 'dateInsert'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 207,
+      state: 1,
+      class: 16,
+      message: "Invalid column name 'dateInsert'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 207,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: [
+    RequestError: Invalid column name 'city'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    },
+    RequestError: Invalid column name 'country'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    },
+    RequestError: Invalid column name 'stars'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    }
+  ]
+}
+2026-01-28 05:54:24 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":500,"responseTime":"169ms","ip":"::1"}
+Error fetching opportunities: RequestError: Invalid object name 'MED_Opportunities'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'MED_Opportunities'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'MED_Opportunities'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 1
+    }
+  },
+  number: 208,
+  lineNumber: 1,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: []
+}
+2026-01-28 05:54:24 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Opportunities","status":500,"responseTime":"164ms","ip":"::1"}
+2026-01-28 05:54:37 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Reservation/ActiveReservations","status":404,"responseTime":"2ms","ip":"::1"}
+2026-01-28 05:54:38 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/status","status":200,"responseTime":"0ms","ip":"::1"}
+Error fetching dashboard stats: RequestError: Invalid object name 'Med_Reservations'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'Med_Reservations'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'Med_Reservations'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: []
+}
+2026-01-28 05:54:39 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/stats","status":500,"responseTime":"290ms","ip":"::1"}
+2026-01-28 05:54:40 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Search/Search?HotelId=1&CheckIn=2026-02-01&CheckOut=2026-02-05","status":404,"responseTime":"11ms","ip":"::1"}
+2026-01-28 05:56:09 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"0ms","ip":"::1"}
+2026-01-28 05:56:11 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"1765ms","ip":"::1"}
+2026-01-28 05:56:11 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/status","status":200,"responseTime":"0ms","ip":"::1"}
+2026-01-28 05:56:11 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+2026-01-28 05:56:27 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+2026-01-28 05:56:27 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"308ms","ip":"::1"}
+2026-01-28 05:56:27 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/status","status":200,"responseTime":"0ms","ip":"::1"}
+Error fetching hotels: RequestError: Invalid column name 'dateInsert'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid column name 'dateInsert'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 207,
+      state: 1,
+      class: 16,
+      message: "Invalid column name 'dateInsert'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 207,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: [
+    RequestError: Invalid column name 'city'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    },
+    RequestError: Invalid column name 'country'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    },
+    RequestError: Invalid column name 'stars'.
+        at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+        at Connection.emit (node:events:508:28)
+        at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+        at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+        at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+        at Readable.emit (node:events:508:28)
+        at addChunk (node:internal/streams/readable:559:12)
+        at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+        at Readable.push (node:internal/streams/readable:391:5)
+        at nextAsync (node:internal/streams/from:194:22) {
+      code: 'EREQUEST',
+      originalError: [Error],
+      number: 207,
+      lineNumber: 2,
+      state: 1,
+      class: 16,
+      serverName: 'medici-sql-dev',
+      procName: ''
+    }
+  ]
+}
+2026-01-28 05:56:28 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":500,"responseTime":"165ms","ip":"::1"}
+Error fetching opportunities: RequestError: Invalid object name 'MED_Opportunities'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'MED_Opportunities'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'MED_Opportunities'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 1
+    }
+  },
+  number: 208,
+  lineNumber: 1,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: []
+}
+2026-01-28 05:56:28 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Opportunities","status":500,"responseTime":"164ms","ip":"::1"}
+Error fetching dashboard stats: RequestError: Invalid object name 'Med_Reservations'.
+    at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:384:15)
+    at Connection.emit (node:events:508:28)
+    at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+    at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+    at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+    at Readable.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+    at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+    at Readable.push (node:internal/streams/readable:391:5)
+    at nextAsync (node:internal/streams/from:194:22) {
+  code: 'EREQUEST',
+  originalError: Error: Invalid object name 'Med_Reservations'.
+      at handleError (/workspaces/medici_web03012026/medici-backend-node/node_modules/mssql/lib/tedious/request.js:382:19)
+      at Connection.emit (node:events:508:28)
+      at Connection.emit (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/connection.js:959:18)
+      at RequestTokenHandler.onErrorMessage (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/handler.js:285:21)
+      at Readable.<anonymous> (/workspaces/medici_web03012026/medici-backend-node/node_modules/tedious/lib/token/token-stream-parser.js:18:33)
+      at Readable.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushObjectMode (node:internal/streams/readable:536:3)
+      at Readable.push (node:internal/streams/readable:391:5)
+      at nextAsync (node:internal/streams/from:194:22) {
+    info: ErrorMessageToken {
+      name: 'ERROR',
+      handlerName: 'onErrorMessage',
+      number: 208,
+      state: 1,
+      class: 16,
+      message: "Invalid object name 'Med_Reservations'.",
+      serverName: 'medici-sql-dev',
+      procName: '',
+      lineNumber: 2
+    }
+  },
+  number: 208,
+  lineNumber: 2,
+  state: 1,
+  class: 16,
+  serverName: 'medici-sql-dev',
+  procName: '',
+  precedingErrors: []
+}
+2026-01-28 05:56:28 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/stats","status":500,"responseTime":"287ms","ip":"::1"}
+2026-01-28 05:56:29 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"267ms","ip":"::1"}
+2026-01-28 05:56:29 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+2026-01-28 05:56:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 05:56:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":78}
+2026-01-28 05:56:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:01:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:01:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":78}
+2026-01-28 06:01:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:06:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:06:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:06:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:07:45 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/Bookings","status":200,"responseTime":"1624ms","ip":"::1"}
+2026-01-28 06:08:01 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"0ms","ip":"::1"}
+2026-01-28 06:08:01 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/","status":200,"responseTime":"1ms","ip":"::1"}
+2026-01-28 06:11:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:11:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":21}
+2026-01-28 06:11:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:15:27 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/quick-stats","status":200,"responseTime":"1475ms","ip":"::1"}
+2026-01-28 06:15:40 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/status","status":200,"responseTime":"0ms","ip":"::1"}
+2026-01-28 06:16:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:16:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":27}
+2026-01-28 06:16:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:21:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:21:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":18}
+2026-01-28 06:21:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:22:22 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/quick-stats","status":200,"responseTime":"1381ms","ip":"::1"}
+2026-01-28 06:26:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:26:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":15}
+2026-01-28 06:26:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:31:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:31:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":15}
+2026-01-28 06:31:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:36:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:36:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:36:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:41:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:41:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:41:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:46:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:46:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:46:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}

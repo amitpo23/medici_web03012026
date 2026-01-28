@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "/workspaces/medici_web03012026/medici-backend-node/logs/.6bceb0e9c3154870488ae42ba8df3923e206e135-audit.json",
+    "files": [
+        {
+            "date": 1769578785082,
+            "name": "/workspaces/medici_web03012026/medici-backend-node/logs/application-2026-01-28.log",
+            "hash": "fff4159106b001aa0751d05922a5d36d7e48df44883682de5d90057f812f1d9d"
+        }
+    ],
+    "hashType": "sha256"
+}
