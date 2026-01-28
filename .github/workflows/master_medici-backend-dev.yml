@@ -28,11 +28,16 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
+      - name: Zip artifact for deployment
+        run: |
+          cd medici-backend-node
+          zip -r ../node-app.zip . -x "*.git*"
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: medici-backend-node/
+          path: node-app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -46,6 +51,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
+
+      - name: Unzip artifact for deployment
+        run: unzip node-app.zip -d ./deploy
 
       - name: 'Login to Azure'
         uses: azure/login@v1
@@ -64,4 +72,4 @@ jobs:
         with:
           app-name: 'medici-backend-dev'
           slot-name: 'Production'
-          package: .
+          package: ./deploy
