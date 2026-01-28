@@ -1,0 +1,61 @@
+2026-01-28 07:07:07 [[32minfo[39m]: Logger initialized {"environment":"development","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs"}
+📚 Swagger documentation available at /api-docs
+2026-01-28 07:07:11 [[32minfo[39m]: 🚀 Medici Hotels Server Started {"port":"3000","environment":"development","database":"medici-db-dev-copy","nodeVersion":"v24.11.1"}
+2026-01-28 07:07:11 [[32minfo[39m]: Starting Alerts Agent...
+2026-01-28 07:07:11 [[32minfo[39m]: 🚨 Alerts Agent Started {"interval":"5 minutes"}
+2026-01-28 07:07:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+
+╔═══════════════════════════════════════════════════════════╗
+║  🚀 MEDICI HOTELS API - RUNNING                          ║
+╚═══════════════════════════════════════════════════════════╝
+
+📊 Environment: development
+🚀 Server: http://localhost:3000
+🗄️  Database: medici-db-dev-copy
+📝 Logs: ./logs/
+📚 API Docs: http://localhost:3000/api-docs
+💚 Health: http://localhost:3000/health
+📊 Metrics: http://localhost:3000/health/metrics
+
+🌐 Main Endpoints:
+   • Auth: /sign-in
+   • Opportunities: /Opportunity
+   • Bookings: /Book
+   • Reservations: /Reservation
+   • AI Chat: /ai-chat
+   • AI Predictions: /ai
+   • Scraper: /scraper
+   • Logs: /logs
+   • Alerts: /alerts
+
+2026-01-28 07:07:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":144}
+2026-01-28 07:07:11 [[33mwarn[39m]: 🚨 ALERT TRIGGERED {"alert":"High Error Rate","severity":"critical"}
+2026-01-28 07:07:11 [[31merror[39m]: Failed to send email alert {"error":"emailService.send is not a function"}
+2026-01-28 07:07:11 [[31merror[39m]: Failed to send Slack alert {"error":"slackService.sendAlert is not a function"}
+✅ Connected to Azure SQL Database
+2026-01-28 07:07:13 [[31merror[39m]: Failed to save alert to database {"error":"Invalid object name 'SystemAlerts'."}
+2026-01-28 07:07:13 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":1}
+2026-01-28 07:07:19 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/health","status":200,"responseTime":"10ms","ip":"::1"}
+2026-01-28 07:07:19 [[32minfo[39m]: ✅ Azure OpenAI Service initialized {"endpoint":"https://your-resource-name.openai.azure.com/","deployment":"gpt-4"}
+2026-01-28 07:07:19 [[31merror[39m]: Failed to initialize Pinecone {"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io"}
+2026-01-28 07:07:19 [[31merror[39m]: Failed to initialize RAG Service {"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io"}
+2026-01-28 07:07:19 [[31merror[39m]: RAG stats error {"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io"}
+2026-01-28 07:07:19 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/stats","status":500,"responseTime":"268ms","ip":"::1"}
+2026-01-28 07:07:41 [[31merror[39m]: Azure OpenAI chat error {"error":"Connection error."}
+2026-01-28 07:07:41 [[31merror[39m]: Chat error {"error":"Connection error."}
+2026-01-28 07:07:41 [[32minfo[39m]: HTTP Request {"method":"POST","url":"/chat","status":500,"responseTime":"1402ms","ip":"::1"}
+2026-01-28 07:12:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:12:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":192}
+2026-01-28 07:12:11 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:17:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:17:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":52}
+2026-01-28 07:17:11 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:22:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:22:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":10}
+2026-01-28 07:22:11 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:27:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:27:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 07:27:11 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:32:11 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:32:11 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 07:32:11 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}

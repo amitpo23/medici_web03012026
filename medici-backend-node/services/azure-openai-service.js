@@ -3,7 +3,7 @@
  * Provides GPT-4 and Embeddings capabilities
  */
 
-const { OpenAIClient, AzureKeyCredential } = require('@azure/openai');
+const { AzureOpenAI } = require('openai');
 const logger = require('../config/logger');
 
 class AzureOpenAIService {
@@ -25,10 +25,11 @@ class AzureOpenAIService {
         throw new Error('Azure OpenAI credentials not configured');
       }
 
-      this.client = new OpenAIClient(
-        this.endpoint,
-        new AzureKeyCredential(this.apiKey)
-      );
+      this.client = new AzureOpenAI({
+        apiKey: this.apiKey,
+        endpoint: this.endpoint,
+        apiVersion: '2024-02-15-preview'
+      });
 
       this.initialized = true;
       logger.info('✅ Azure OpenAI Service initialized', {
@@ -65,8 +66,7 @@ class AzureOpenAIService {
         maxTokens = 2000,
         topP = 0.95,
         frequencyPenalty = 0,
-        presencePenalty = 0,
-        stream = false
+        presencePenalty = 0
       } = options;
 
       logger.debug('Azure OpenAI chat request', {
@@ -75,26 +75,24 @@ class AzureOpenAIService {
         temperature
       });
 
-      const response = await this.client.getChatCompletions(
-        this.deploymentName,
+      const response = await this.client.chat.completions.create({
+        model: this.deploymentName,
         messages,
-        {
-          temperature,
-          maxTokens,
-          topP,
-          frequencyPenalty,
-          presencePenalty
-        }
-      );
+        temperature,
+        max_tokens: maxTokens,
+        top_p: topP,
+        frequency_penalty: frequencyPenalty,
+        presence_penalty: presencePenalty
+      });
 
       const result = {
         message: response.choices[0].message.content,
         role: response.choices[0].message.role,
-        finishReason: response.choices[0].finishReason,
+        finishReason: response.choices[0].finish_reason,
         usage: {
-          promptTokens: response.usage.promptTokens,
-          completionTokens: response.usage.completionTokens,
-          totalTokens: response.usage.totalTokens
+          promptTokens: response.usage.prompt_tokens,
+          completionTokens: response.usage.completion_tokens,
+          totalTokens: response.usage.total_tokens
         },
         model: response.model
       };
@@ -127,10 +125,10 @@ class AzureOpenAIService {
         count: inputs.length
       });
 
-      const response = await this.client.getEmbeddings(
-        this.embeddingDeployment,
-        inputs
-      );
+      const response = await this.client.embeddings.create({
+        model: this.embeddingDeployment,
+        input: inputs
+      });
 
       const embeddings = response.data.map(item => ({
         index: item.index,

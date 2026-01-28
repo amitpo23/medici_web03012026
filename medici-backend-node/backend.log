@@ -483,3 +483,15 @@ Error fetching dashboard stats: RequestError: Invalid object name 'Med_Reservati
 2026-01-28 06:46:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
 2026-01-28 06:46:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
 2026-01-28 06:46:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:51:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:51:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:51:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 06:56:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 06:56:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 06:56:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:01:35 [[32minfo[39m]: 🔍 Alerts Agent: Starting scan
+2026-01-28 07:01:35 [[32minfo[39m]: 📊 Alerts Agent: Processing logs {"count":12}
+2026-01-28 07:01:35 [[32minfo[39m]: ✅ Alerts Agent: Scan complete {"triggeredAlerts":0}
+2026-01-28 07:04:52 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/ai/rag/health","status":404,"responseTime":"1ms","ip":"::1"}
+2026-01-28 07:04:52 [[32minfo[39m]: HTTP Request {"method":"GET","url":"/ai/rag/stats","status":404,"responseTime":"1ms","ip":"::1"}
+2026-01-28 07:04:53 [[32minfo[39m]: HTTP Request {"method":"POST","url":"/ai/rag/ask","status":404,"responseTime":"1ms","ip":"::1"}

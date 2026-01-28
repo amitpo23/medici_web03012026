@@ -18,6 +18,7 @@ const routes: Routes = [
   { path: 'dashboard', loadChildren: () => import('./modules/dashboard/dashboard.module').then(m => m.DashboardModule) },
   { path: 'analytics', loadChildren: () => import('./modules/analytics/analytics.module').then(m => m.AnalyticsModule) },
   { path: 'ai-prediction', loadChildren: () => import('./modules/ai-prediction/ai-prediction.module').then(m => m.AIPredictionModule) },
+  { path: 'ai-chat', loadChildren: () => import('./modules/ai-database-chat/ai-database-chat.module').then(m => m.AIDatabaseChatModule) },
   { path: 'options', loadChildren: () => import('./modules/options/options.module').then(m => m.OptionsModule) },
   { path: 'rooms', loadChildren: () => import('./modules/rooms/rooms.module').then(m => m.RoomsModule) },
   { path: 'sales-room', loadChildren: () => import('./modules/sales-room/sales-room.module').then(m => m.SalesRoomModule) },

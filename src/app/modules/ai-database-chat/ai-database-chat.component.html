@@ -1,0 +1,228 @@
+<div class="ai-chat-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-blue-600">smart_toy</mat-icon>
+        AI Database Chat
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        שאל שאלות בשפה טבעית על נתוני ההזמנות והמלונות
+      </p>
+      <div class="flex items-center gap-2 mt-2">
+        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+          🤖 Powered by Azure OpenAI
+        </span>
+        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gradient-to-r from-green-500 to-teal-600 text-white">
+          🧠 RAG + Pinecone
+        </span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button mat-stroked-button (click)="toggleSchema()" matTooltip="הצג סכמת טבלאות">
+        <mat-icon>table_chart</mat-icon>
+        <span class="hidden md:inline ml-2">Schema</span>
+      </button>
+      <button mat-stroked-button (click)="toggleSqlQuery()" matTooltip="הצג SQL queries">
+        <mat-icon>code</mat-icon>
+        <span class="hidden md:inline ml-2">SQL</span>
+      </button>
+      <button mat-flat-button color="warn" (click)="clearChat()" matTooltip="נקה היסטוריה">
+        <mat-icon>delete_sweep</mat-icon>
+        <span class="hidden md:inline ml-2">נקה</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-4" *ngIf="quickStats">
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-blue-600 text-4xl">confirmation_number</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ formatNumber(quickStats.TotalBookings) }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">סה"כ הזמנות</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-green-600 text-4xl">hotel</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ formatNumber(quickStats.ActiveHotels) }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">מלונות פעילים</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-purple-600 text-4xl">trending_up</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ formatNumber(quickStats.ActiveOpportunities) }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">הזדמנויות</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-emerald-600 text-4xl">attach_money</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ formatCurrency(quickStats.TotalRevenue) }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">הכנסות כוללות</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-orange-600 text-4xl">savings</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ formatCurrency(quickStats.TotalProfit) }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">רווח כולל</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Database Schema (Collapsible) -->
+  <mat-card *ngIf="showSchema" class="schema-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="align-middle">table_chart</mat-icon>
+        מבנה הטבלאות (Database Schema)
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="isLoadingSchema" class="text-center py-4">
+        <mat-spinner diameter="40" class="mx-auto"></mat-spinner>
+        <p class="text-gray-500 mt-2">טוען סכמה...</p>
+      </div>
+      <div *ngIf="!isLoadingSchema && databaseSchema.length > 0" class="space-y-2">
+        <div *ngFor="let table of databaseSchema" class="p-3 bg-gray-50 dark:bg-gray-800 rounded">
+          <div class="font-bold text-blue-600 dark:text-blue-400">{{ table.TABLE_NAME }}</div>
+          <div class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ table.COLUMNS }}</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Main Chat Area -->
+  <mat-card class="chat-card">
+    <mat-card-content class="p-0">
+      <!-- Messages Container -->
+      <div #chatContainer class="chat-messages-container" [class.show-sql]="showSqlQuery">
+        <div *ngFor="let message of messages" class="message-wrapper" [class.user-message]="message.role === 'user'" [class.assistant-message]="message.role === 'assistant'">
+          
+          <!-- User Message -->
+          <div *ngIf="message.role === 'user'" class="message user">
+            <div class="message-bubble">
+              <div class="message-content">{{ message.content }}</div>
+              <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+            </div>
+            <mat-icon class="message-avatar">person</mat-icon>
+          </div>
+
+          <!-- Assistant Message -->
+          <div *ngIf="message.role === 'assistant'" class="message assistant">
+            <mat-icon class="message-avatar">smart_toy</mat-icon>
+            <div class="message-bubble">
+              <div class="message-content markdown-content" [innerHTML]="message.content"></div>
+              
+              <!-- SQL Query (if available and showSqlQuery is true) -->
+              <div *ngIf="showSqlQuery && message.sqlQuery" class="sql-query-box mt-3">
+                <div class="sql-header">
+                  <mat-icon class="text-xs">code</mat-icon>
+                  <span class="font-bold">SQL Query:</span>
+                </div>
+                <pre class="sql-code">{{ message.sqlQuery }}</pre>
+              </div>
+
+              <!-- Results Table (if available) -->
+              <div *ngIf="message.results && message.results.length > 0" class="results-table-container mt-3">
+                <div class="results-header">
+                  <mat-icon class="text-xs">table_view</mat-icon>
+                  <span class="font-bold">תוצאות ({{ message.results.length }} שורות):</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="results-table">
+                    <thead>
+                      <tr>
+                        <th *ngFor="let key of message.results[0] | keyvalue | slice:0:10">{{ key.key }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of message.results | slice:0:10">
+                        <td *ngFor="let key of row | keyvalue | slice:0:10">{{ row[key.key] }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div *ngIf="message.results.length > 10" class="text-xs text-gray-500 mt-2 text-center">
+                    מציג 10 תוצאות ראשונות מתוך {{ message.results.length }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Error Display -->
+              <div *ngIf="message.error" class="error-box mt-3">
+                <mat-icon class="text-red-500">error</mat-icon>
+                <span>{{ message.error }}</span>
+              </div>
+
+              <div class="message-time">{{ message.timestamp | date:'short' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoading" class="message-wrapper assistant-message">
+          <div class="message assistant">
+            <mat-icon class="message-avatar">smart_toy</mat-icon>
+            <div class="message-bubble loading">
+              <mat-spinner diameter="24"></mat-spinner>
+              <span class="ml-3">חושב...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggestions Chips (show when no messages) -->
+      <div *ngIf="messages.length <= 1" class="suggestions-container">
+        <div class="text-sm font-semibold text-gray-600 dark:text-gray-400 mb-3">💡 שאלות לדוגמה:</div>
+        <div class="flex flex-wrap gap-2">
+          <button *ngFor="let suggestion of suggestions" 
+                  mat-stroked-button 
+                  class="suggestion-chip"
+                  (click)="useSuggestion(suggestion)">
+            {{ suggestion }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="chat-input-area">
+        <mat-form-field appearance="outline" class="chat-input-field">
+          <mat-label>שאל שאלה בעברית או אנגלית...</mat-label>
+          <textarea matInput 
+                    [formControl]="questionControl"
+                    (keydown.enter)="onEnterPress($event)"
+                    rows="2"
+                    placeholder="לדוגמה: כמה הזמנות יש לי היום?"></textarea>
+          <button mat-icon-button matSuffix 
+                  [disabled]="!questionControl.value || isLoading"
+                  (click)="sendQuestion()"
+                  color="primary"
+                  matTooltip="שלח (Enter)">
+            <mat-icon>send</mat-icon>
+          </button>
+        </mat-form-field>
+        <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
+          לחץ Enter לשליחה • Shift+Enter לשורה חדשה
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

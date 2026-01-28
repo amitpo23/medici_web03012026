@@ -1,0 +1,20 @@
+{"error":"AzureKeyCredential is not a constructor","level":"error","message":"Failed to initialize Azure OpenAI","timestamp":"2026-01-28 07:05:20"}
+{"error":"AzureKeyCredential is not a constructor","level":"error","message":"Failed to initialize RAG Service","timestamp":"2026-01-28 07:05:20"}
+{"error":"AzureKeyCredential is not a constructor","level":"error","message":"RAG stats error","timestamp":"2026-01-28 07:05:20"}
+{"error":"emailService.send is not a function","level":"error","message":"Failed to send email alert","timestamp":"2026-01-28 07:05:50"}
+{"error":"slackService.sendAlert is not a function","level":"error","message":"Failed to send Slack alert","timestamp":"2026-01-28 07:05:50"}
+{"error":"Invalid object name 'SystemAlerts'.","level":"error","message":"Failed to save alert to database","timestamp":"2026-01-28 07:05:53"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"Failed to initialize Azure OpenAI","timestamp":"2026-01-28 07:05:59"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"Failed to initialize RAG Service","timestamp":"2026-01-28 07:05:59"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"RAG stats error","timestamp":"2026-01-28 07:05:59"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"Failed to initialize Azure OpenAI","timestamp":"2026-01-28 07:06:00"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"Failed to initialize RAG Service","timestamp":"2026-01-28 07:06:00"}
+{"error":"OpenAIClient is not a constructor","level":"error","message":"RAG ask error","timestamp":"2026-01-28 07:06:00"}
+{"error":"emailService.send is not a function","level":"error","message":"Failed to send email alert","timestamp":"2026-01-28 07:07:11"}
+{"error":"slackService.sendAlert is not a function","level":"error","message":"Failed to send Slack alert","timestamp":"2026-01-28 07:07:11"}
+{"error":"Invalid object name 'SystemAlerts'.","level":"error","message":"Failed to save alert to database","timestamp":"2026-01-28 07:07:13"}
+{"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io","level":"error","message":"Failed to initialize Pinecone","timestamp":"2026-01-28 07:07:19"}
+{"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io","level":"error","message":"Failed to initialize RAG Service","timestamp":"2026-01-28 07:07:19"}
+{"error":"The API key you provided was rejected while calling https://api.pinecone.io/indexes. Please check your configuration values and try again. You can find the configuration values for your project in the Pinecone developer console at https://app.pinecone.io","level":"error","message":"RAG stats error","timestamp":"2026-01-28 07:07:19"}
+{"error":"Connection error.","level":"error","message":"Azure OpenAI chat error","timestamp":"2026-01-28 07:07:41"}
+{"error":"Connection error.","level":"error","message":"Chat error","timestamp":"2026-01-28 07:07:41"}
