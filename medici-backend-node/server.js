@@ -5,8 +5,11 @@ const helmet = require('helmet');
 require('dotenv').config();
 
 const logger = require('./config/logger');
+const requestId = require('./middleware/request-id');
 const { requestLogger, errorLogger } = require('./middleware/request-logger');
-const { apiLimiter } = require('./middleware/rate-limiter');
+const { apiLimiter, authLimiter, heavyLimiter } = require('./middleware/rate-limiter');
+const { verifyToken, requireAdmin } = require('./middleware/auth');
+const { enforceMode, getMode, setMode, MODES } = require('./middleware/operational-mode');
 const alertsAgent = require('./services/alerts-agent');
 const healthMonitor = require('./services/health-monitor');
 const { setupSwagger } = require('./config/swagger');
@@ -30,6 +33,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(requestId);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.text({ type: 'application/xml', limit: '10mb' }));
@@ -53,6 +57,15 @@ app.use('/api', apiLimiter);
 // Swagger API Documentation
 setupSwagger(app);
 
+// Validate required environment variables at startup
+const requiredEnvVars = ['DB_SERVER', 'DB_USER', 'DB_PASSWORD', 'DB_DATABASE', 'JWT_SECRET'];
+const missingVars = requiredEnvVars.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+  logger.error('Missing required environment variables', { missing: missingVars });
+  console.error(`FATAL: Missing required environment variables: ${missingVars.join(', ')}`);
+  process.exit(1);
+}
+
 // Routes
 const authRoutes = require('./routes/auth');
 const opportunityRoutes = require('./routes/opportunities');
@@ -74,25 +87,30 @@ const alertsRoutes = require('./routes/alerts');
 const healthRoutes = require('./routes/health');
 const aiRagRoutes = require('./routes/ai-rag');
 
-app.use('/sign-in', authRoutes);
-app.use('/Opportunity', opportunityRoutes);
-app.use('/Book', bookingRoutes);
-app.use('/Reservation', reservationRoutes);
-app.use('/SalesRoom', salesRoomRoutes);
-app.use('/Search', searchRoutes);
-app.use('/Errors', errorsRoutes);
-app.use('/hotels', hotelsRoutes);
-app.use('/Misc', miscRoutes);
-app.use('/ZenithApi', zenithRoutes);
-app.use('/ai', aiPredictionRoutes);
-app.use('/reports', reportsRoutes);
-app.use('/dashboard', dashboardRoutes);
-app.use('/ai-chat', aiChatRoutes);
-app.use('/ai/rag', aiRagRoutes);
-app.use('/scraper', scraperRoutes);
-app.use('/logs', logsRoutes);
-app.use('/alerts', alertsRoutes);
+// Public routes (no auth required)
+app.use('/sign-in', authLimiter, authRoutes);
 app.use('/health', healthRoutes);
+
+// Protected routes (JWT auth required + operational mode enforcement)
+app.use('/Opportunity', verifyToken, enforceMode, opportunityRoutes);
+app.use('/Book', verifyToken, enforceMode, bookingRoutes);
+app.use('/Reservation', verifyToken, enforceMode, reservationRoutes);
+app.use('/SalesRoom', verifyToken, enforceMode, salesRoomRoutes);
+app.use('/Search', verifyToken, enforceMode, searchRoutes);
+app.use('/Errors', verifyToken, errorsRoutes);
+app.use('/hotels', verifyToken, hotelsRoutes);
+app.use('/Misc', verifyToken, miscRoutes);
+app.use('/ZenithApi', verifyToken, enforceMode, zenithRoutes);
+app.use('/ai', verifyToken, aiPredictionRoutes);
+app.use('/reports', verifyToken, reportsRoutes);
+app.use('/dashboard', verifyToken, dashboardRoutes);
+app.use('/ai-chat', verifyToken, aiChatRoutes);
+app.use('/scraper', verifyToken, heavyLimiter, scraperRoutes);
+
+// Admin-only routes
+app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
+app.use('/logs', verifyToken, logsRoutes);
+app.use('/alerts', verifyToken, alertsRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -150,6 +168,20 @@ app.use((err, req, res, next) => {
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
 });
+
+// Verify database connection before starting
+const { getPool } = require('./config/database');
+
+async function startServer() {
+  try {
+    await getPool();
+    logger.info('Database connection verified');
+  } catch (err) {
+    logger.error('Failed to connect to database at startup', { error: err.message });
+    console.error('WARNING: Database connection failed at startup. Server will start but DB operations may fail.');
+  }
+}
+startServer();
 
 // Start server
 app.listen(PORT, () => {

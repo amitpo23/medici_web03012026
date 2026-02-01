@@ -10,10 +10,11 @@
 
 require('dotenv').config();
 const cron = require('node-cron');
-const sql = require('mssql');
 const ZenithPushService = require('../services/zenith-push-service');
 const SlackService = require('../services/slack-service');
-const dbConfig = require('../config/database');
+const { getPool } = require('../config/database');
+const logger = require('../config/logger');
+const { withRetry, withConcurrencyLimit } = require('../services/retry-helper');
 
 const zenithPushService = new ZenithPushService();
 
@@ -60,22 +61,22 @@ async function getHotelRates(pool, hotelId) {
         .input('startDate', startDate)
         .input('endDate', endDate)
         .query(`
-            SELECT 
-                o.Id as OpportunityId,
-                o.DateFrom as RateDate,
+            SELECT
+                o.OpportunityId,
+                o.DateForm as RateDate,
                 o.PushPrice as Rate,
-                o.MaxRooms as Available,
-                o.Status,
-                rc.CategoryCode as RoomCode,
-                rc.CategoryName as RoomName,
-                b.BoardName as MealPlan
-            FROM MED_Opportunities o
-            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.id
-            INNER JOIN MED_Board b ON o.BoardId = b.id
-            WHERE o.HotelId = @hotelId
-            AND o.DateFrom BETWEEN @startDate AND @endDate
-            AND o.Status = 'ACTIVE'
-            ORDER BY o.DateFrom, rc.CategoryCode
+                o.PushBookingLimit as Available,
+                CASE WHEN o.IsActive = 1 THEN 'ACTIVE' ELSE 'INACTIVE' END as Status,
+                rc.PMS_Code as RoomCode,
+                rc.Name as RoomName,
+                b.BoardCode as MealPlan
+            FROM [MED_ֹOֹֹpportunities] o
+            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
+            INNER JOIN MED_Board b ON o.BoardId = b.BoardId
+            WHERE o.DestinationsId = @hotelId
+            AND o.DateForm BETWEEN @startDate AND @endDate
+            AND o.IsActive = 1
+            ORDER BY o.DateForm, rc.PMS_Code
         `);
     
     return result.recordset;
@@ -94,23 +95,23 @@ async function getHotelAvailability(pool, hotelId) {
         .input('startDate', startDate)
         .input('endDate', endDate)
         .query(`
-            SELECT 
-                o.DateFrom as AvailabilityDate,
-                o.MaxRooms as AvailableRooms,
-                o.MaxRooms as TotalRooms,
+            SELECT
+                o.DateForm as AvailabilityDate,
+                o.PushBookingLimit as AvailableRooms,
+                o.PushBookingLimit as TotalRooms,
                 0 as MinStay,
                 0 as MaxStay,
                 0 as StopSell,
                 0 as ClosedToArrival,
                 0 as ClosedToDeparture,
-                rc.CategoryCode as RoomCode,
-                rc.CategoryName as RoomName
-            FROM MED_Opportunities o
-            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.id
-            WHERE o.HotelId = @hotelId
-            AND o.DateFrom BETWEEN @startDate AND @endDate
-            AND o.Status = 'ACTIVE'
-            ORDER BY o.DateFrom, rc.CategoryCode
+                rc.PMS_Code as RoomCode,
+                rc.Name as RoomName
+            FROM [MED_ֹOֹֹpportunities] o
+            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
+            WHERE o.DestinationsId = @hotelId
+            AND o.DateForm BETWEEN @startDate AND @endDate
+            AND o.IsActive = 1
+            ORDER BY o.DateForm, rc.PMS_Code
         `);
     
     return result.recordset;
@@ -195,92 +196,97 @@ function groupAvailabilityByRange(availability) {
  * Push rates and availability for a hotel
  */
 async function syncHotelToZenith(pool, hotel) {
-    console.log(`[PriceUpdate] Syncing ${hotel.HotelName} (${hotel.ZenithHotelCode})`);
-    
+    logger.info(`[PriceUpdate] Syncing ${hotel.HotelName} (${hotel.ZenithHotelCode})`);
+
     try {
         // Get rates and availability
         const rates = await getHotelRates(pool, hotel.Id);
         const availability = await getHotelAvailability(pool, hotel.Id);
-        
-        console.log(`  Found ${rates.length} rate records, ${availability.length} availability records`);
-        
+
+        logger.info(`[PriceUpdate] Found ${rates.length} rate records, ${availability.length} availability records`, { hotel: hotel.HotelName });
+
         // Group for efficient pushing
         const rateGroups = groupRatesByRange(rates);
         const availGroups = groupAvailabilityByRange(availability);
-        
-        console.log(`  Grouped into ${rateGroups.length} rate ranges, ${availGroups.length} availability ranges`);
-        
+
+        logger.info(`[PriceUpdate] Grouped into ${rateGroups.length} rate ranges, ${availGroups.length} availability ranges`, { hotel: hotel.HotelName });
+
         let rateSuccess = 0;
         let rateFail = 0;
         let availSuccess = 0;
         let availFail = 0;
-        
-        // Push availability first
-        for (const group of availGroups) {
-            try {
-                await zenithPushService.pushAvailability({
+
+        // Push availability with retry and concurrency limit
+        const availResults = await withConcurrencyLimit(availGroups, async (group) => {
+            return withRetry(
+                () => zenithPushService.pushAvailability({
                     hotelCode: hotel.ZenithHotelCode,
                     invTypeCode: group.roomCode,
                     startDate: group.startDate,
                     endDate: group.endDate,
                     available: group.availableRooms
-                });
-                availSuccess++;
-            } catch (err) {
-                console.error(`  Availability push failed: ${err.message}`);
+                }),
+                { maxRetries: 3, baseDelay: 1000, operationName: `Availability push ${hotel.HotelName}/${group.roomCode}` }
+            );
+        }, 5);
+
+        for (const result of availResults) {
+            if (result && result.error) {
                 availFail++;
+            } else {
+                availSuccess++;
             }
-            
-            // Small delay to avoid rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
-        // Push rates
-        for (const group of rateGroups) {
-            try {
-                await zenithPushService.pushRates({
+
+        // Push rates with retry and concurrency limit
+        const rateResults = await withConcurrencyLimit(rateGroups, async (group) => {
+            return withRetry(
+                () => zenithPushService.pushRates({
                     hotelCode: hotel.ZenithHotelCode,
                     invTypeCode: group.roomCode,
                     startDate: group.startDate,
                     endDate: group.endDate,
                     amount: group.rate,
                     currency: 'EUR'
-                });
-                rateSuccess++;
-            } catch (err) {
-                console.error(`  Rate push failed: ${err.message}`);
+                }),
+                { maxRetries: 3, baseDelay: 1000, operationName: `Rate push ${hotel.HotelName}/${group.roomCode}` }
+            );
+        }, 5);
+
+        for (const result of rateResults) {
+            if (result && result.error) {
                 rateFail++;
+            } else {
+                rateSuccess++;
             }
-            
-            await new Promise(resolve => setTimeout(resolve, 100));
         }
-        
+
         // Update last sync time
         await pool.request()
             .input('hotelId', hotel.Id)
             .query(`
-                UPDATE Med_Hotels 
+                UPDATE Med_Hotels
                 SET LastPriceSync = GETDATE()
                 WHERE id = @hotelId
             `);
-        
-        console.log(`[PriceUpdate] ✓ ${hotel.HotelName}: Rates ${rateSuccess}/${rateGroups.length}, Avail ${availSuccess}/${availGroups.length}`);
-        
+
+        logger.info(`[PriceUpdate] Completed ${hotel.HotelName}: Rates ${rateSuccess}/${rateGroups.length}, Avail ${availSuccess}/${availGroups.length}`);
+
         return {
             success: true,
             rates: { success: rateSuccess, failed: rateFail },
             availability: { success: availSuccess, failed: availFail }
         };
-        
+
     } catch (error) {
-        console.error(`[PriceUpdate] ✗ Failed to sync ${hotel.HotelName}:`, error.message);
-        
+        logger.error(`[PriceUpdate] Failed to sync ${hotel.HotelName}`, { error: error.message });
+
         await SlackService.sendError({
             type: 'Price Sync Failed',
             hotel: hotel.HotelName,
             error: error.message
         });
-        
+
         return {
             success: false,
             error: error.message
@@ -292,20 +298,19 @@ async function syncHotelToZenith(pool, hotel) {
  * Main worker function
  */
 async function runWorker() {
-    console.log(`[PriceUpdate] Starting worker at ${new Date().toISOString()}`);
-    
-    let pool;
+    logger.info(`[PriceUpdate] Starting worker at ${new Date().toISOString()}`);
+
     try {
-        pool = await sql.connect(dbConfig);
-        
+        const pool = await getPool();
+
         const hotels = await getHotelsForUpdate(pool);
-        console.log(`[PriceUpdate] Found ${hotels.length} hotels needing sync`);
-        
+        logger.info(`[PriceUpdate] Found ${hotels.length} hotels needing sync`);
+
         let successCount = 0;
         let failCount = 0;
         let totalRates = 0;
         let totalAvail = 0;
-        
+
         for (const hotel of hotels) {
             const result = await syncHotelToZenith(pool, hotel);
             if (result.success) {
@@ -315,15 +320,13 @@ async function runWorker() {
             } else {
                 failCount++;
             }
-            
+
             // Delay between hotels
             await new Promise(resolve => setTimeout(resolve, 500));
         }
-        
-        console.log(`[PriceUpdate] Completed: ${successCount} hotels synced, ${failCount} failed`);
-        console.log(`  Total rates pushed: ${totalRates}`);
-        console.log(`  Total availability pushed: ${totalAvail}`);
-        
+
+        logger.info(`[PriceUpdate] Completed: ${successCount} hotels synced, ${failCount} failed. Rates: ${totalRates}, Avail: ${totalAvail}`);
+
         // Send summary notification
         if (hotels.length > 0) {
             await SlackService.sendNotification(
@@ -333,35 +336,35 @@ async function runWorker() {
                 `Availability updates: ${totalAvail}`
             );
         }
-        
+
     } catch (error) {
-        console.error('[PriceUpdate] Worker error:', error);
+        logger.error('[PriceUpdate] Worker error', { error: error.message, stack: error.stack });
         await SlackService.sendError({
             type: 'PriceUpdate Worker Error',
             error: error.message
         });
-    } finally {
-        if (pool) {
-            await pool.close();
-        }
     }
 }
 
 // Check if running as main script
 if (require.main === module) {
     if (process.argv.includes('--once')) {
-        console.log('[PriceUpdate] Running once...');
+        logger.info('[PriceUpdate] Running once...');
         runWorker().then(() => {
-            console.log('[PriceUpdate] Done');
+            logger.info('[PriceUpdate] Done');
             process.exit(0);
         }).catch(err => {
-            console.error('[PriceUpdate] Error:', err);
+            logger.error('[PriceUpdate] Error', { error: err.message });
             process.exit(1);
         });
     } else {
-        console.log(`[PriceUpdate] Starting scheduled worker (${CRON_SCHEDULE})`);
-        cron.schedule(CRON_SCHEDULE, runWorker);
-        
+        logger.info(`[PriceUpdate] Starting scheduled worker (${CRON_SCHEDULE})`);
+        cron.schedule(CRON_SCHEDULE, () => {
+            runWorker().catch(err => {
+                logger.error('[PriceUpdate] Cron execution error', { error: err.message });
+            });
+        });
+
         // Run immediately on start
         runWorker();
     }

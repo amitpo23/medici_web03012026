@@ -6,6 +6,7 @@
 
 const express = require('express');
 const router = express.Router();
+const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const slackService = require('../services/slack-service');
 
@@ -102,7 +103,7 @@ function parseReservationXML(xml) {
       }
     };
   } catch (error) {
-    console.error('[Zenith] XML Parse error:', error.message);
+    logger.error('[Zenith] XML Parse error', { error: error.message });
     return { success: false, error: error.message };
   }
 }
@@ -165,13 +166,13 @@ function generateCancelResponse(success, uniqueID, message = '') {
  * Receive new reservation from Zenith
  */
 router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
-  console.log('[Zenith] Received OTA_HotelResNotifRQ');
-  
+  logger.info('[Zenith] Received OTA_HotelResNotifRQ');
+
   try {
     const xml = req.rawBody;
-    
+
     // Log the incoming request
-    console.log('[Zenith] Raw XML:', xml.substring(0, 500) + '...');
+    logger.info('[Zenith] Raw XML received', { xmlPreview: xml.substring(0, 500) });
 
     // Parse the XML
     const parseResult = parseReservationXML(xml);
@@ -183,7 +184,7 @@ router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
     }
 
     const reservation = parseResult.reservation;
-    console.log('[Zenith] Parsed reservation:', reservation);
+    logger.info('[Zenith] Parsed reservation', { reservation });
 
     const pool = await getPool();
 
@@ -274,7 +275,7 @@ router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
     res.send(response);
 
   } catch (error) {
-    console.error('[Zenith] Error processing reservation:', error);
+    logger.error('[Zenith] Error processing reservation', { error: error.message });
     
     // Notify error via Slack
     await slackService.sendAlert('Zenith Reservation Error', error.message);
@@ -290,7 +291,7 @@ router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
  * Receive cancellation request from Zenith
  */
 router.post('/OTA_CancelRQ', parseXML, async (req, res) => {
-  console.log('[Zenith] Received OTA_CancelRQ');
+  logger.info('[Zenith] Received OTA_CancelRQ');
   
   try {
     const xml = req.rawBody;
@@ -305,7 +306,7 @@ router.post('/OTA_CancelRQ', parseXML, async (req, res) => {
       return res.status(400).send(errorResponse);
     }
 
-    console.log('[Zenith] Cancelling reservation:', uniqueID);
+    logger.info('[Zenith] Cancelling reservation', { uniqueID });
 
     const pool = await getPool();
 
@@ -347,7 +348,7 @@ router.post('/OTA_CancelRQ', parseXML, async (req, res) => {
     res.send(response);
 
   } catch (error) {
-    console.error('[Zenith] Error processing cancellation:', error);
+    logger.error('[Zenith] Error processing cancellation', { error: error.message });
     
     await slackService.sendAlert('Zenith Cancel Error', error.message);
     
@@ -393,7 +394,7 @@ router.post('/push-batch', async (req, res) => {
       });
     }
 
-    console.log(`[Zenith Batch] Processing ${opportunityIds.length} opportunities with action: ${action}`);
+    logger.info('[Zenith Batch] Processing opportunities', { count: opportunityIds.length, action });
 
     const pool = await getPool();
     const zenithPushService = require('../services/zenith-push-service');
@@ -417,8 +418,8 @@ router.post('/push-batch', async (req, res) => {
         h.RatePlanCode as DefaultRatePlanCode,
         h.InvTypeCode as DefaultInvTypeCode,
         h.Name as HotelName,
-        b.BoardName as MealPlan
-      FROM MED_Opportunities o
+        b.BoardCode as MealPlan
+      FROM [MED_ֹOֹֹpportunities] o
       LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
       LEFT JOIN MED_Board b ON o.BoardId = b.BoardId
       WHERE o.OpportunityId IN (${placeholders})
@@ -463,7 +464,7 @@ router.post('/push-batch', async (req, res) => {
           mealPlan: overrides.mealPlan || opp.MealPlan
         };
 
-        console.log(`[Zenith Batch] Pushing opportunity ${opp.OpportunityId} - ${opp.HotelName}`);
+        logger.info('[Zenith Batch] Pushing opportunity', { opportunityId: opp.OpportunityId, hotelName: opp.HotelName });
 
         // Call zenith push service
         let result;
@@ -479,8 +480,8 @@ router.post('/push-batch', async (req, res) => {
             .input('oppId', opp.OpportunityId)
             .input('datePush', new Date())
             .query(`
-              UPDATE MED_Opportunities 
-              SET IsPush = 1, DatePush = @datePush
+              UPDATE [MED_ֹOֹֹpportunities]
+              SET IsPush = 1, Lastupdate = @datePush
               WHERE OpportunityId = @oppId
             `);
 
@@ -513,7 +514,7 @@ router.post('/push-batch', async (req, res) => {
         await new Promise(resolve => setTimeout(resolve, 500));
 
       } catch (error) {
-        console.error(`[Zenith Batch] Error pushing opportunity ${opp.OpportunityId}:`, error);
+        logger.error('[Zenith Batch] Error pushing opportunity', { opportunityId: opp.OpportunityId, error: error.message });
         errors.push({
           opportunityId: opp.OpportunityId,
           hotelName: opp.HotelName,
@@ -545,7 +546,7 @@ router.post('/push-batch', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[Zenith Batch] Fatal error:', error);
+    logger.error('[Zenith Batch] Fatal error', { error: error.message });
     res.status(500).json({
       success: false,
       error: 'Failed to process batch push',

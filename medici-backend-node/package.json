@@ -8,7 +8,9 @@
     "dev": "nodemon server.js",
     "worker:buyroom": "node workers/buyroom-worker.js",
     "worker:cancellation": "node workers/auto-cancellation-worker.js",
-    "worker:priceupdate": "node workers/price-update-worker.js"
+    "worker:priceupdate": "node workers/price-update-worker.js",
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:coverage": "jest --forceExit --detectOpenHandles --coverage"
   },
   "dependencies": {
     "@azure/core-auth": "^1.10.1",
@@ -43,7 +45,9 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "jest": "^30.2.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^7.2.2"
   },
   "keywords": [
     "medici",

@@ -1,9 +1,11 @@
 /**
  * Enhanced Dashboard API - Advanced KPIs and Metrics
+ * Uses actual DB schema: MED_Book, Med_Hotels, Med_Reservation
  */
 
 const express = require('express');
 const router = express.Router();
+const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 
 /**
@@ -11,73 +13,77 @@ const { getPool } = require('../config/database');
  */
 router.get('/Stats', async (req, res) => {
   try {
-    const { period = '30' } = req.query; // Days
+    const { period = '30' } = req.query;
     const pool = await getPool();
-    
+
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(period));
 
-    // Total statistics
-    const totalStats = await pool.request()
+    // Booking statistics from MED_Book
+    const bookStats = await pool.request()
       .input('startDate', startDate)
       .query(`
-        SELECT 
-          COUNT(DISTINCT r.Id) as TotalBookings,
-          SUM(r.TotalPrice) as TotalRevenue,
-          SUM(ISNULL(r.SupplierPrice, 0)) as TotalCost,
-          SUM(r.TotalPrice - ISNULL(r.SupplierPrice, 0)) as TotalProfit,
-          AVG((r.TotalPrice - ISNULL(r.SupplierPrice, 0)) / NULLIF(r.TotalPrice, 0) * 100) as AvgMargin,
-          AVG(r.TotalPrice) as AvgBookingValue
-        FROM Med_Reservations r
-        WHERE r.CheckIn >= @startDate
-        AND r.Status IN ('CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT')
+        SELECT
+          COUNT(b.id) as TotalBookings,
+          SUM(b.price) as TotalCost,
+          SUM(ISNULL(b.lastPrice, 0)) as TotalPushPrice,
+          SUM(ISNULL(b.lastPrice, 0) - b.price) as TotalExpectedProfit,
+          AVG(CASE WHEN b.lastPrice > 0 THEN ((b.lastPrice - b.price) / b.lastPrice * 100) END) as AvgMargin,
+          AVG(b.price) as AvgBookingCost,
+          SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as SoldCount,
+          SUM(CASE WHEN b.IsActive = 1 AND b.IsSold = 0 THEN 1 ELSE 0 END) as ActiveCount,
+          SUM(CASE WHEN b.IsActive = 0 AND b.IsSold = 0 THEN 1 ELSE 0 END) as CancelledCount
+        FROM MED_Book b
+        WHERE b.DateInsert >= @startDate
+        AND b.price > 0
       `);
 
-    // Opportunities statistics
-    const oppStats = await pool.request()
+    // Reservation (sales) statistics from Med_Reservation
+    const resStats = await pool.request()
       .input('startDate', startDate)
       .query(`
-        SELECT 
-          COUNT(*) as TotalOpportunities,
-          SUM(CASE WHEN Status = 'ACTIVE' THEN 1 ELSE 0 END) as ActiveOpps,
-          SUM(CASE WHEN Status = 'SOLD' THEN 1 ELSE 0 END) as SoldOpps,
-          SUM(CASE WHEN Status = 'CANCELLED' THEN 1 ELSE 0 END) as CancelledOpps,
-          AVG(PushPrice - BuyPrice) as AvgProfitPerOpp
-        FROM MED_Opportunities
-        WHERE DateInsert >= @startDate
+        SELECT
+          COUNT(r.Id) as TotalReservations,
+          SUM(r.AmountAfterTax) as TotalRevenue,
+          SUM(CASE WHEN r.IsCanceled = 1 THEN 1 ELSE 0 END) as CancelledReservations
+        FROM Med_Reservation r
+        WHERE r.DateInsert >= @startDate
       `);
 
     // Conversion rate
-    const conversionRate = oppStats.recordset[0].TotalOpportunities > 0
-      ? (oppStats.recordset[0].SoldOpps / oppStats.recordset[0].TotalOpportunities * 100).toFixed(2)
+    const totalBookings = bookStats.recordset[0].TotalBookings || 0;
+    const soldCount = bookStats.recordset[0].SoldCount || 0;
+    const conversionRate = totalBookings > 0
+      ? (soldCount / totalBookings * 100).toFixed(2)
       : 0;
 
-    // Daily trend
+    // Daily trend from MED_Book
     const dailyTrend = await pool.request()
       .input('startDate', startDate)
       .query(`
         SELECT TOP 7
-          CONVERT(DATE, CheckIn) as Date,
-          COUNT(*) as Bookings,
-          SUM(TotalPrice) as Revenue
-        FROM Med_Reservations
-        WHERE CheckIn >= @startDate
-        AND Status IN ('CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT')
-        GROUP BY CONVERT(DATE, CheckIn)
+          CONVERT(DATE, b.DateInsert) as Date,
+          COUNT(b.id) as Bookings,
+          SUM(b.price) as Cost,
+          SUM(ISNULL(b.lastPrice, 0)) as PushPrice
+        FROM MED_Book b
+        WHERE b.DateInsert >= @startDate
+        AND b.price > 0
+        GROUP BY CONVERT(DATE, b.DateInsert)
         ORDER BY Date DESC
       `);
 
     res.json({
       overview: {
-        ...totalStats.recordset[0],
+        ...bookStats.recordset[0],
         ConversionRate: conversionRate
       },
-      opportunities: oppStats.recordset[0],
+      reservations: resStats.recordset[0],
       dailyTrend: dailyTrend.recordset.reverse()
     });
 
   } catch (err) {
-    console.error('Error fetching dashboard stats:', err);
+    logger.error('Error fetching dashboard stats', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -90,38 +96,40 @@ router.get('/Alerts', async (req, res) => {
     const pool = await getPool();
     const alerts = [];
 
-    // Check for expiring opportunities
-    const expiringOpps = await pool.request().query(`
+    // Check for bookings nearing cancellation deadline
+    const expiringBookings = await pool.request().query(`
       SELECT COUNT(*) as Count
-      FROM MED_Opportunities
-      WHERE Status = 'ACTIVE'
-      AND DateFrom <= DATEADD(DAY, 2, GETDATE())
-      AND DateFrom >= GETDATE()
+      FROM MED_Book
+      WHERE IsActive = 1
+      AND IsSold = 0
+      AND CancellationTo IS NOT NULL
+      AND CancellationTo <= DATEADD(DAY, 2, GETDATE())
+      AND CancellationTo >= GETDATE()
     `);
 
-    if (expiringOpps.recordset[0].Count > 0) {
+    if (expiringBookings.recordset[0].Count > 0) {
       alerts.push({
         type: 'warning',
-        title: 'Expiring Opportunities',
-        message: `${expiringOpps.recordset[0].Count} opportunities expire within 48 hours`,
+        title: 'Expiring Bookings',
+        message: `${expiringBookings.recordset[0].Count} bookings have cancellation deadline within 48 hours`,
         priority: 'high'
       });
     }
 
-    // Check for pending purchases
-    const pendingPurchases = await pool.request().query(`
+    // Check for unsold active bookings
+    const unsoldActive = await pool.request().query(`
       SELECT COUNT(*) as Count
-      FROM Med_Reservations
-      WHERE Status = 'CONFIRMED'
-      AND SupplierBookingId IS NULL
-      AND CheckIn >= GETDATE()
+      FROM MED_Book
+      WHERE IsActive = 1
+      AND IsSold = 0
+      AND startDate >= GETDATE()
     `);
 
-    if (pendingPurchases.recordset[0].Count > 0) {
+    if (unsoldActive.recordset[0].Count > 0) {
       alerts.push({
         type: 'info',
-        title: 'Pending Purchases',
-        message: `${pendingPurchases.recordset[0].Count} reservations need supplier booking`,
+        title: 'Unsold Inventory',
+        message: `${unsoldActive.recordset[0].Count} active bookings waiting to be sold`,
         priority: 'medium'
       });
     }
@@ -129,10 +137,12 @@ router.get('/Alerts', async (req, res) => {
     // Check for low margin bookings
     const lowMargin = await pool.request().query(`
       SELECT COUNT(*) as Count
-      FROM Med_Reservations
-      WHERE Status = 'CONFIRMED'
-      AND (TotalPrice - ISNULL(SupplierPrice, 0)) / NULLIF(TotalPrice, 0) < 0.10
-      AND CheckIn >= GETDATE()
+      FROM MED_Book
+      WHERE IsActive = 1
+      AND lastPrice IS NOT NULL
+      AND lastPrice > 0
+      AND ((lastPrice - price) / lastPrice) < 0.10
+      AND startDate >= GETDATE()
     `);
 
     if (lowMargin.recordset[0].Count > 0) {
@@ -147,7 +157,7 @@ router.get('/Alerts', async (req, res) => {
     res.json(alerts);
 
   } catch (err) {
-    console.error('Error fetching alerts:', err);
+    logger.error('Error fetching alerts', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -164,31 +174,31 @@ router.get('/HotelPerformance', async (req, res) => {
       .input('limit', parseInt(limit))
       .query(`
         SELECT TOP (@limit)
-          h.HotelName,
-          h.id as HotelId,
-          COUNT(r.Id) as TotalBookings,
-          SUM(r.TotalPrice) as Revenue,
-          SUM(r.TotalPrice - ISNULL(r.SupplierPrice, 0)) as Profit,
-          AVG((r.TotalPrice - ISNULL(r.SupplierPrice, 0)) / NULLIF(r.TotalPrice, 0) * 100) as MarginPercent,
-          AVG(DATEDIFF(DAY, r.CreatedAt, r.CheckIn)) as AvgBookingWindow
-        FROM Med_Reservations r
-        INNER JOIN Med_Hotels h ON r.HotelId = h.id
-        WHERE r.CheckIn >= DATEADD(DAY, -30, GETDATE())
-        AND r.Status IN ('CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT')
-        GROUP BY h.HotelName, h.id
+          h.name as HotelName,
+          h.HotelId,
+          COUNT(b.id) as TotalBookings,
+          SUM(b.price) as TotalCost,
+          SUM(ISNULL(b.lastPrice, 0) - b.price) as Profit,
+          AVG(CASE WHEN b.lastPrice > 0 THEN ((b.lastPrice - b.price) / b.lastPrice * 100) END) as MarginPercent,
+          SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as SoldCount
+        FROM MED_Book b
+        INNER JOIN Med_Hotels h ON b.HotelId = h.HotelId
+        WHERE b.DateInsert >= DATEADD(DAY, -30, GETDATE())
+        AND b.price > 0
+        GROUP BY h.name, h.HotelId
         ORDER BY Profit DESC
       `);
 
     res.json(result.recordset);
 
   } catch (err) {
-    console.error('Error fetching hotel performance:', err);
+    logger.error('Error fetching hotel performance', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
 
 /**
- * Get revenue forecast based on confirmed bookings
+ * Get revenue forecast based on active bookings
  */
 router.get('/Forecast', async (req, res) => {
   try {
@@ -198,28 +208,30 @@ router.get('/Forecast', async (req, res) => {
     const result = await pool.request()
       .input('days', parseInt(days))
       .query(`
-        SELECT 
-          CONVERT(DATE, CheckIn) as Date,
-          COUNT(*) as BookingCount,
-          SUM(TotalPrice) as ExpectedRevenue,
-          SUM(TotalPrice - ISNULL(SupplierPrice, 0)) as ExpectedProfit
-        FROM Med_Reservations
-        WHERE CheckIn BETWEEN GETDATE() AND DATEADD(DAY, @days, GETDATE())
-        AND Status IN ('CONFIRMED', 'CHECKED_IN')
-        GROUP BY CONVERT(DATE, CheckIn)
+        SELECT
+          CONVERT(DATE, b.startDate) as Date,
+          COUNT(b.id) as BookingCount,
+          SUM(ISNULL(b.lastPrice, b.price)) as ExpectedRevenue,
+          SUM(ISNULL(b.lastPrice, 0) - b.price) as ExpectedProfit
+        FROM MED_Book b
+        WHERE b.startDate BETWEEN GETDATE() AND DATEADD(DAY, @days, GETDATE())
+        AND b.IsActive = 1
+        AND b.price > 0
+        GROUP BY CONVERT(DATE, b.startDate)
         ORDER BY Date
       `);
 
     const summary = await pool.request()
       .input('days', parseInt(days))
       .query(`
-        SELECT 
-          SUM(TotalPrice) as TotalExpectedRevenue,
-          SUM(TotalPrice - ISNULL(SupplierPrice, 0)) as TotalExpectedProfit,
-          COUNT(*) as TotalBookings
-        FROM Med_Reservations
-        WHERE CheckIn BETWEEN GETDATE() AND DATEADD(DAY, @days, GETDATE())
-        AND Status IN ('CONFIRMED', 'CHECKED_IN')
+        SELECT
+          SUM(ISNULL(b.lastPrice, b.price)) as TotalExpectedRevenue,
+          SUM(ISNULL(b.lastPrice, 0) - b.price) as TotalExpectedProfit,
+          COUNT(b.id) as TotalBookings
+        FROM MED_Book b
+        WHERE b.startDate BETWEEN GETDATE() AND DATEADD(DAY, @days, GETDATE())
+        AND b.IsActive = 1
+        AND b.price > 0
       `);
 
     res.json({
@@ -228,7 +240,7 @@ router.get('/Forecast', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Error fetching forecast:', err);
+    logger.error('Error fetching forecast', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -236,54 +248,21 @@ router.get('/Forecast', async (req, res) => {
 /**
  * Get worker status and activity
  */
-router.get('/WorkerStatus', async (req, res) => {
-  try {
-    const pool = await getPool();
-
-    // Get last activity logs
-    const buyRoomActivity = await pool.request().query(`
-      SELECT TOP 1 CreatedAt, Details
-      FROM MED_ReservationLogs
-      WHERE Action = 'ROOM_PURCHASED'
-      ORDER BY CreatedAt DESC
-    `);
-
-    const cancelActivity = await pool.request().query(`
-      SELECT TOP 1 CreatedAt, Details
-      FROM MED_OpportunityLogs
-      WHERE Action = 'AUTO_CANCELLED'
-      ORDER BY CreatedAt DESC
-    `);
-
-    const priceUpdateActivity = await pool.request().query(`
-      SELECT TOP 1 LastPriceSync
-      FROM Med_Hotels
-      WHERE LastPriceSync IS NOT NULL
-      ORDER BY LastPriceSync DESC
-    `);
-
-    res.json({
-      buyroom: {
-        enabled: process.env.BUYROOM_WORKER_ENABLED === 'true',
-        lastActivity: buyRoomActivity.recordset[0]?.CreatedAt || null,
-        status: buyRoomActivity.recordset[0] ? 'active' : 'idle'
-      },
-      cancellation: {
-        enabled: process.env.AUTO_CANCEL_WORKER_ENABLED === 'true',
-        lastActivity: cancelActivity.recordset[0]?.CreatedAt || null,
-        status: cancelActivity.recordset[0] ? 'active' : 'idle'
-      },
-      priceUpdate: {
-        enabled: process.env.PRICE_UPDATE_WORKER_ENABLED === 'true',
-        lastActivity: priceUpdateActivity.recordset[0]?.LastPriceSync || null,
-        status: priceUpdateActivity.recordset[0] ? 'active' : 'idle'
-      }
-    });
-
-  } catch (err) {
-    console.error('Error fetching worker status:', err);
-    res.status(500).json({ error: 'Database error' });
-  }
+router.get('/WorkerStatus', (req, res) => {
+  res.json({
+    buyroom: {
+      enabled: process.env.BUYROOM_WORKER_ENABLED === 'true',
+      status: 'configured'
+    },
+    cancellation: {
+      enabled: process.env.AUTO_CANCEL_WORKER_ENABLED === 'true',
+      status: 'configured'
+    },
+    priceUpdate: {
+      enabled: process.env.PRICE_UPDATE_WORKER_ENABLED === 'true',
+      status: 'configured'
+    }
+  });
 });
 
 module.exports = router;

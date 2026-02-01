@@ -4,14 +4,19 @@
  */
 
 const axios = require('axios');
+const logger = require('../config/logger');
 
 class ZenithPushService {
   constructor() {
-    this.serviceUrl = process.env.ZENITH_SERVICE_URL || 'https://hotel.tools/service/Medici%20new';
-    this.username = process.env.ZENITH_USERNAME || 'APIMedici:Medici Live';
-    this.password = process.env.ZENITH_API_PASSWORD || '12345';
-    this.agentName = process.env.ZENITH_AGENT_NAME || 'Zvi';
-    this.agentPassword = process.env.ZENITH_AGENT_PASSWORD || 'karpad66';
+    this.serviceUrl = process.env.ZENITH_SERVICE_URL;
+    this.username = process.env.ZENITH_USERNAME;
+    this.password = process.env.ZENITH_API_PASSWORD;
+    this.agentName = process.env.ZENITH_AGENT_NAME;
+    this.agentPassword = process.env.ZENITH_AGENT_PASSWORD;
+
+    if (!this.serviceUrl || !this.username || !this.password || !this.agentName || !this.agentPassword) {
+      logger.warn('[ZenithPushService] Missing Zenith credentials in environment variables. Push operations will fail.');
+    }
   }
 
   /**
@@ -115,7 +120,7 @@ class ZenithPushService {
     try {
       const xml = this.generateAvailabilityXML(params);
       
-      console.log(`[Zenith Push] Pushing availability for hotel ${params.hotelCode}`);
+      logger.info(`[Zenith Push] Pushing availability for hotel ${params.hotelCode}`);
 
       const response = await axios.post(this.serviceUrl, xml, {
         headers: this.getSoapHeaders(),
@@ -133,7 +138,7 @@ class ZenithPushService {
         response: response.data
       };
     } catch (error) {
-      console.error('[Zenith Push] Availability error:', error.message);
+      logger.error('[Zenith Push] Availability error:', { error: error.message });
       return {
         success: false,
         error: error.message,
@@ -150,7 +155,7 @@ class ZenithPushService {
     try {
       const xml = this.generateRateXML(params);
       
-      console.log(`[Zenith Push] Pushing rate for hotel ${params.hotelCode}: €${params.price}`);
+      logger.info(`[Zenith Push] Pushing rate for hotel ${params.hotelCode}: EUR${params.price}`);
 
       const response = await axios.post(this.serviceUrl, xml, {
         headers: this.getSoapHeaders(),
@@ -167,13 +172,31 @@ class ZenithPushService {
         response: response.data
       };
     } catch (error) {
-      console.error('[Zenith Push] Rate error:', error.message);
+      logger.error('[Zenith Push] Rate error:', { error: error.message });
       return {
         success: false,
         error: error.message,
         details: error.response?.data
       };
     }
+  }
+
+  /**
+   * Push rate to Zenith (alias for pushRate with different parameter names)
+   * Accepts { hotelCode, invTypeCode, startDate, endDate, amount, currency }
+   * @param {Object} params - Rate parameters
+   */
+  async pushRates(params) {
+    return this.pushRate({
+      hotelCode: params.hotelCode,
+      invTypeCode: params.invTypeCode,
+      ratePlanCode: params.ratePlanCode || 'STD',
+      startDate: params.startDate,
+      endDate: params.endDate,
+      price: params.amount || params.price,
+      currency: params.currency || 'EUR',
+      mealPlan: params.mealPlan
+    });
   }
 
   /**

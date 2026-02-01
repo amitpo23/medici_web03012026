@@ -1,0 +1,325 @@
+<div class="reports-container">
+  <!-- Header -->
+  <div class="reports-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>assessment</mat-icon>
+        Reports
+      </h1>
+      <p class="subtitle">Financial reports and performance analysis</p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>Start Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" [(ngModel)]="startDate" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="date-field">
+        <mat-label>End Date</mat-label>
+        <input matInput [matDatepicker]="endPicker" [(ngModel)]="endDate" (dateChange)="onDateChange()">
+        <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+        <mat-datepicker #endPicker></mat-datepicker>
+      </mat-form-field>
+
+      <button mat-stroked-button class="refresh-btn" (click)="refreshData()" type="button">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading reports...</p>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" [selectedIndex]="selectedTabIndex" *ngIf="!loading">
+
+    <!-- Tab 1: P&L Summary -->
+    <mat-tab label="P&L Summary">
+      <ng-template matTabLabel>
+        <mat-icon>account_balance</mat-icon>
+        <span>P&L Summary</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="profitLossData.length > 0; else noDataPL">
+          <table mat-table [dataSource]="profitLossData" class="mat-elevation-z2 report-table">
+            <ng-container matColumnDef="TotalRevenue">
+              <th mat-header-cell *matHeaderCellDef>Total Revenue</th>
+              <td mat-cell *matCellDef="let row" class="profit-positive">
+                {{ row.TotalRevenue | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalCost">
+              <th mat-header-cell *matHeaderCellDef>Total Cost</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.TotalCost | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalProfit">
+              <th mat-header-cell *matHeaderCellDef>Total Profit</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.TotalProfit)">
+                {{ row.TotalProfit | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="MarginPercent">
+              <th mat-header-cell *matHeaderCellDef>Margin %</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.MarginPercent)">
+                {{ row.MarginPercent | number:'1.2-2' }}%
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalBookings">
+              <th mat-header-cell *matHeaderCellDef>Total Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.TotalBookings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="ProfitableBookings">
+              <th mat-header-cell *matHeaderCellDef>Profitable</th>
+              <td mat-cell *matCellDef="let row" class="profit-positive">{{ row.ProfitableBookings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="LossBookings">
+              <th mat-header-cell *matHeaderCellDef>Loss-Making</th>
+              <td mat-cell *matCellDef="let row" class="profit-negative">{{ row.LossBookings }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="profitLossColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: profitLossColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDataPL>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No P&L data available for the selected date range.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Margin by Hotel -->
+    <mat-tab label="Margin by Hotel">
+      <ng-template matTabLabel>
+        <mat-icon>hotel</mat-icon>
+        <span>Margin by Hotel</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="marginByHotelData.length > 0; else noDataHotel">
+          <table mat-table [dataSource]="marginByHotelData" class="mat-elevation-z2 report-table">
+            <ng-container matColumnDef="HotelName">
+              <th mat-header-cell *matHeaderCellDef>Hotel Name</th>
+              <td mat-cell *matCellDef="let row">{{ row.HotelName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalBookings">
+              <th mat-header-cell *matHeaderCellDef>Total Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.TotalBookings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalCost">
+              <th mat-header-cell *matHeaderCellDef>Cost</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.TotalCost | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalRevenue">
+              <th mat-header-cell *matHeaderCellDef>Revenue</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.TotalRevenue | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalProfit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.TotalProfit)">
+                {{ row.TotalProfit | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="MarginPercent">
+              <th mat-header-cell *matHeaderCellDef>Margin %</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.MarginPercent)">
+                {{ row.MarginPercent | number:'1.2-2' }}%
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="marginByHotelColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: marginByHotelColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDataHotel>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No hotel margin data available for the selected date range.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Daily Trends -->
+    <mat-tab label="Daily Trends">
+      <ng-template matTabLabel>
+        <mat-icon>trending_up</mat-icon>
+        <span>Daily Trends</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="dailyTrendsData.length > 0; else noDataDaily">
+          <table mat-table [dataSource]="dailyTrendsData" class="mat-elevation-z2 report-table">
+            <ng-container matColumnDef="Date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let row">{{ row.Date }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="Bookings">
+              <th mat-header-cell *matHeaderCellDef>Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.Bookings }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalCost">
+              <th mat-header-cell *matHeaderCellDef>Cost</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.TotalCost | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalRevenue">
+              <th mat-header-cell *matHeaderCellDef>Revenue</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.TotalRevenue | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalProfit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.TotalProfit)">
+                {{ row.TotalProfit | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="dailyTrendsColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: dailyTrendsColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDataDaily>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No daily trend data available for the selected date range.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 4: Top Hotels -->
+    <mat-tab label="Top Hotels">
+      <ng-template matTabLabel>
+        <mat-icon>star</mat-icon>
+        <span>Top Hotels</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="topHotelsData.length > 0; else noDataTop">
+          <table mat-table [dataSource]="topHotelsData" class="mat-elevation-z2 report-table">
+            <ng-container matColumnDef="Rank">
+              <th mat-header-cell *matHeaderCellDef>Rank</th>
+              <td mat-cell *matCellDef="let row; let i = index">{{ i + 1 }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="HotelName">
+              <th mat-header-cell *matHeaderCellDef>Hotel Name</th>
+              <td mat-cell *matCellDef="let row">{{ row.HotelName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalProfit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.TotalProfit)">
+                {{ row.TotalProfit | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="MarginPercent">
+              <th mat-header-cell *matHeaderCellDef>Margin %</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.MarginPercent)">
+                {{ row.MarginPercent | number:'1.2-2' }}%
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="TotalBookings">
+              <th mat-header-cell *matHeaderCellDef>Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.TotalBookings }}</td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="topHotelsColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: topHotelsColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDataTop>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No top hotels data available.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 5: Loss Report -->
+    <mat-tab label="Loss Report">
+      <ng-template matTabLabel>
+        <mat-icon>warning</mat-icon>
+        <span>Loss Report</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="lossReportData.length > 0; else noDataLoss">
+          <table mat-table [dataSource]="lossReportData" class="mat-elevation-z2 report-table">
+            <ng-container matColumnDef="HotelName">
+              <th mat-header-cell *matHeaderCellDef>Hotel</th>
+              <td mat-cell *matCellDef="let row">{{ row.HotelName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="BookingId">
+              <th mat-header-cell *matHeaderCellDef>Booking ID</th>
+              <td mat-cell *matCellDef="let row">{{ row.BookingId }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="Cost">
+              <th mat-header-cell *matHeaderCellDef>Cost</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.Cost | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="SellPrice">
+              <th mat-header-cell *matHeaderCellDef>Sell Price</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.SellPrice | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="LossAmount">
+              <th mat-header-cell *matHeaderCellDef>Loss Amount</th>
+              <td mat-cell *matCellDef="let row" class="profit-negative">
+                {{ row.LossAmount | currency:'EUR':'symbol':'1.2-2' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="lossReportColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: lossReportColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDataLoss>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No loss-making bookings found.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

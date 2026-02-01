@@ -5,7 +5,8 @@ import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition
 import { AgGridAngular } from 'ag-grid-angular';
 import { GridApi, ColumnApi, CellClickedEvent, ColDef, FirstDataRenderedEvent, GridReadyEvent } from 'ag-grid-community';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Observable, Subject, startWith, map } from 'rxjs';
+import { Observable, Subject, startWith, map, debounceTime } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CockpitCommon } from 'src/app/common';
 import { MedHotel } from 'src/app/core/models/med-hotel';
 import { environment } from 'src/app/environments/environment';
@@ -245,7 +246,6 @@ export class RoomsComponent implements OnInit, OnDestroy {
 
           let result = '';
 
-          console.log(params.data.price);
           if (params.data.price == params.value) {
             result = txt;
           } else {
@@ -341,7 +341,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
     this.gridApi.paginationSetPageSize(Number(value));
   }
 
-  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _unsubscribeAll: Subject<void> = new Subject<void>();
 
   displayFn(hotel: MedHotel): string {
     let currentName = hotel && hotel.name ? hotel.name : '';
@@ -415,12 +415,14 @@ export class RoomsComponent implements OnInit, OnDestroy {
     this.lastPriceFilter = this.lastValueOptions[0];
 
     this.http.get<MedHotel[]>(this.baseUrl + 'Opportunity/Hotels')
+      .pipe(takeUntil(this._unsubscribeAll))
       .subscribe((data: MedHotel[]) => {
         this.options = data;
       });
 
     this.filteredOptions = this.composeForm.controls['hotel'].valueChanges.pipe(
       startWith(''),
+      debounceTime(300),
       map(value => {
         if (typeof value !== 'string') {
           this.applyFilter(value);
@@ -439,7 +441,12 @@ export class RoomsComponent implements OnInit, OnDestroy {
       //   navigation.toggle();
       // }
     }
-    var columnState = JSON.parse(localStorage.getItem('column_defs_booking')!);
+    let columnState = null;
+    try {
+      columnState = JSON.parse(localStorage.getItem('column_defs_booking') || 'null');
+    } catch {
+      localStorage.removeItem('column_defs_booking');
+    }
 
     if (columnState) {
       columnState.forEach((element: any) => {
@@ -453,7 +460,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
       this.columnDefs = this.defaultColumnDefs;
     }
 
-    this.comm.comm.subscribe((i: any) => {
+    this.comm.comm.pipe(takeUntil(this._unsubscribeAll)).subscribe((i: any) => {
       if (i != '') {
         // console.log(i);
         let split = i.split(':');
@@ -582,8 +589,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
    * On destroy
    */
   ngOnDestroy(): void {
-    // Unsubscribe from all subscriptions
-    // this._unsubscribeAll.next();
+    this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
   }
 

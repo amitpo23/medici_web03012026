@@ -3,6 +3,7 @@
  */
 
 const sgMail = require('@sendgrid/mail');
+const logger = require('../config/logger');
 
 class EmailService {
   constructor() {
@@ -25,7 +26,7 @@ class EmailService {
    */
   async sendEmail(options) {
     if (!this.apiKey) {
-      console.warn('[Email] SendGrid API key not configured');
+      logger.warn('[Email] SendGrid API key not configured');
       return { success: false, error: 'API key not configured' };
     }
 
@@ -39,10 +40,10 @@ class EmailService {
       };
 
       await sgMail.send(msg);
-      console.log('[Email] Sent successfully to:', msg.to);
+      logger.info('[Email] Sent successfully to:', msg.to);
       return { success: true };
     } catch (error) {
-      console.error('[Email] Error sending:', error.message);
+      logger.error('[Email] Error sending:', { error: error.message });
       return { success: false, error: error.message };
     }
   }

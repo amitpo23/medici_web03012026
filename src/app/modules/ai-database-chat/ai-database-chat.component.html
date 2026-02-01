@@ -130,7 +130,7 @@
           <div *ngIf="message.role === 'assistant'" class="message assistant">
             <mat-icon class="message-avatar">smart_toy</mat-icon>
             <div class="message-bubble">
-              <div class="message-content markdown-content" [innerHTML]="message.content"></div>
+              <div class="message-content markdown-content" [innerHTML]="message.content | safeHtml"></div>
               
               <!-- SQL Query (if available and showSqlQuery is true) -->
               <div *ngIf="showSqlQuery && message.sqlQuery" class="sql-query-box mt-3">
@@ -156,7 +156,7 @@
                     </thead>
                     <tbody>
                       <tr *ngFor="let row of message.results | slice:0:10">
-                        <td *ngFor="let key of row | keyvalue | slice:0:10">{{ row[key.key] }}</td>
+                        <td *ngFor="let key of row | keyvalue | slice:0:10">{{ key.value }}</td>
                       </tr>
                     </tbody>
                   </table>

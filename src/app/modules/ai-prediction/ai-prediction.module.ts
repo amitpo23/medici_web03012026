@@ -9,6 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialogModule } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -25,6 +26,7 @@ import { AgentStatusComponent } from './components/agent-status/agent-status.com
 import { DemandForecastComponent } from './components/demand-forecast/demand-forecast.component';
 import { MarketAnalysisComponent } from './components/market-analysis/market-analysis.component';
 import { OpportunityCardComponent } from './components/opportunity-card/opportunity-card.component';
+import { ZenithPushDialogComponent } from './components/zenith-push-dialog/zenith-push-dialog.component';
 
 const routes: Routes = [
   { path: '', component: AIPredictionComponent }
@@ -36,7 +38,8 @@ const routes: Routes = [
     OpportunityCardComponent,
     AgentStatusComponent,
     MarketAnalysisComponent,
-    DemandForecastComponent
+    DemandForecastComponent,
+    ZenithPushDialogComponent
   ],
   imports: [
     CommonModule,
@@ -57,7 +60,8 @@ const routes: Routes = [
     MatTooltipModule,
     MatExpansionModule,
     MatSliderModule,
-    MatButtonToggleModule
+    MatButtonToggleModule,
+    MatDialogModule
   ],
   exports: [
     AIPredictionComponent

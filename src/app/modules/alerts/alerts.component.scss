@@ -1,0 +1,237 @@
+.alerts-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Status Indicator
+.status-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+
+  &.status-running {
+    background-color: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    animation: pulse-green 2s infinite;
+  }
+
+  &.status-stopped {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+}
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+  }
+  100% {
+    box-shadow: 0 0 4px rgba(34, 197, 94, 0.4);
+  }
+}
+
+// Auto-Refresh Active
+.auto-refresh-active {
+  border-color: #22c55e !important;
+  color: #22c55e !important;
+}
+
+// Stats Cards
+.stat-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  mat-card-content {
+    padding: 1rem !important;
+  }
+}
+
+.stat-icon {
+  font-size: 36px;
+  width: 36px;
+  height: 36px;
+}
+
+// Scan Range Card
+.scan-range-card {
+  mat-card-content {
+    padding: 0.75rem !important;
+  }
+}
+
+.scan-days-field {
+  width: 100px;
+}
+
+// Alerts Table
+.alerts-table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead {
+    background: #f1f5f9;
+
+    :host-context(.dark) & {
+      background: #1e293b;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+
+      :host-context(.dark) & {
+        color: #94a3b8;
+        border-color: #334155;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.15s ease;
+
+      :host-context(.dark) & {
+        border-color: #334155;
+      }
+
+      &:hover {
+        background: #f8fafc;
+
+        :host-context(.dark) & {
+          background: #1e293b;
+        }
+      }
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      color: #334155;
+
+      :host-context(.dark) & {
+        color: #cbd5e1;
+      }
+    }
+  }
+}
+
+// Severity Badges
+.severity-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.severity-error {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.severity-warning {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.severity-info {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+// Priority Badges
+.priority-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priority-high {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.priority-medium {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.priority-low {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+// Status Badges
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.status-enabled {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.status-disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+  }
+}
+
+// Resolved Badges
+.resolved-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.resolved {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.unresolved {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .alerts-table {
+    font-size: 0.8rem;
+
+    th, td {
+      padding: 0.5rem;
+    }
+  }
+}

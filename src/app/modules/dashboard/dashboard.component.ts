@@ -1,8 +1,14 @@
-import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject } from 'rxjs';
+import { Subject, forkJoin } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import {
+  DashboardService,
+  DashboardStats,
+  DashboardAlert,
+  HotelPerformance,
+  ForecastResponse,
+  WorkerStatus
+} from '../../services/dashboard.service';
 
 interface Activity {
   type: string;
@@ -19,27 +25,45 @@ interface Activity {
   styleUrls: ['./dashboard.component.scss']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  baseUrl = environment.baseUrl;
   loading = true;
   dateRange: 'today' | 'week' | 'month' = 'month';
   private destroy$ = new Subject<void>();
 
-  // KPI Data
+  // KPI Data from backend
   kpiData = {
     totalRevenue: 0,
     totalProfit: 0,
-    averageOccupancy: 0,
+    averageMargin: 0,
     activeBookings: 0,
+    soldCount: 0,
+    cancelledCount: 0,
     profitMargin: 0,
-    todayRevenue: 0,
+    conversionRate: 0,
+    totalReservations: 0,
+    reservationRevenue: 0,
     revenueChange: 0,
     profitChange: 0
   };
 
-  // Recent Activity
+  // Alerts from backend
+  alerts: DashboardAlert[] = [];
+
+  // Hotel performance
+  topHotels: HotelPerformance[] = [];
+
+  // Forecast
+  forecast: ForecastResponse | null = null;
+
+  // Worker status
+  workers: WorkerStatus | null = null;
+
+  // Daily trend for charts
+  dailyTrend: { Date: string; Bookings: number; Cost: number; PushPrice: number }[] = [];
+
+  // Recent Activity (derived from daily trend)
   recentActivity: Activity[] = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private dashboardService: DashboardService) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
@@ -57,117 +81,64 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadDashboardData(): void {
     this.loading = true;
-    
-    this.http.get<any[]>(this.baseUrl + 'Book/Bookings')
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (bookings) => {
-          this.calculateKPIs(bookings);
-          this.generateRecentActivity(bookings);
-          this.loading = false;
-        },
-        error: (err) => {
-          console.error('Error loading dashboard data:', err);
-          this.loading = false;
-        }
-      });
-  }
+    const period = this.getPeriodDays();
 
-  calculateKPIs(bookings: any[]): void {
-    const now = new Date();
-    const startDate = this.getStartDate();
-    
-    const activeBookings = bookings.filter(b => !b.IsCanceled && b.IsSold);
-    const filteredBookings = activeBookings.filter(b => new Date(b.dateInsert) >= startDate);
-    
-    // Previous period for comparison
-    const previousStart = new Date(startDate);
-    const periodLength = now.getTime() - startDate.getTime();
-    previousStart.setTime(previousStart.getTime() - periodLength);
-    
-    const previousBookings = activeBookings.filter(b => {
-      const date = new Date(b.dateInsert);
-      return date >= previousStart && date < startDate;
+    forkJoin({
+      stats: this.dashboardService.getStats(period),
+      alerts: this.dashboardService.getAlerts(),
+      hotels: this.dashboardService.getHotelPerformance(10),
+      forecast: this.dashboardService.getForecast(30),
+      workers: this.dashboardService.getWorkerStatus()
+    })
+    .pipe(takeUntil(this.destroy$))
+    .subscribe({
+      next: ({ stats, alerts, hotels, forecast, workers }) => {
+        this.processStats(stats);
+        this.alerts = alerts;
+        this.topHotels = hotels;
+        this.forecast = forecast;
+        this.workers = workers;
+        this.dailyTrend = stats.dailyTrend || [];
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
     });
-
-    // Calculate current period
-    this.kpiData.activeBookings = activeBookings.length;
-    this.kpiData.totalRevenue = filteredBookings.reduce((sum, b) => sum + (b.lastPrice || b.pushPrice || 0), 0);
-    this.kpiData.totalProfit = filteredBookings.reduce((sum, b) => {
-      const revenue = b.lastPrice || b.pushPrice || 0;
-      const cost = b.price || 0;
-      return sum + (revenue - cost);
-    }, 0);
-    
-    if (this.kpiData.totalRevenue > 0) {
-      this.kpiData.profitMargin = (this.kpiData.totalProfit / this.kpiData.totalRevenue) * 100;
-    }
-
-    // Calculate previous period for comparison
-    const prevRevenue = previousBookings.reduce((sum, b) => sum + (b.lastPrice || b.pushPrice || 0), 0);
-    const prevProfit = previousBookings.reduce((sum, b) => {
-      const revenue = b.lastPrice || b.pushPrice || 0;
-      const cost = b.price || 0;
-      return sum + (revenue - cost);
-    }, 0);
-
-    // Calculate change percentages
-    this.kpiData.revenueChange = prevRevenue > 0 
-      ? ((this.kpiData.totalRevenue - prevRevenue) / prevRevenue) * 100 
-      : 0;
-    this.kpiData.profitChange = prevProfit > 0 
-      ? ((this.kpiData.totalProfit - prevProfit) / prevProfit) * 100 
-      : 0;
   }
 
-  getStartDate(): Date {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    
+  processStats(stats: DashboardStats): void {
+    const overview = stats.overview;
+    const reservations = stats.reservations;
+
+    this.kpiData.totalRevenue = overview.TotalPushPrice || 0;
+    this.kpiData.totalProfit = overview.TotalExpectedProfit || 0;
+    this.kpiData.activeBookings = overview.ActiveCount || 0;
+    this.kpiData.soldCount = overview.SoldCount || 0;
+    this.kpiData.cancelledCount = overview.CancelledCount || 0;
+    this.kpiData.averageMargin = overview.AvgMargin || 0;
+    this.kpiData.profitMargin = overview.AvgMargin || 0;
+    this.kpiData.conversionRate = parseFloat(overview.ConversionRate) || 0;
+    this.kpiData.totalReservations = reservations.TotalReservations || 0;
+    this.kpiData.reservationRevenue = reservations.TotalRevenue || 0;
+
+    // Change percentages based on daily trend
+    if (stats.dailyTrend && stats.dailyTrend.length >= 2) {
+      const latest = stats.dailyTrend[stats.dailyTrend.length - 1];
+      const previous = stats.dailyTrend[stats.dailyTrend.length - 2];
+      if (previous.PushPrice > 0) {
+        this.kpiData.revenueChange = ((latest.PushPrice - previous.PushPrice) / previous.PushPrice) * 100;
+      }
+    }
+  }
+
+  getPeriodDays(): number {
     switch (this.dateRange) {
-      case 'today':
-        return now;
-      case 'week':
-        now.setDate(now.getDate() - 7);
-        return now;
-      case 'month':
-      default:
-        now.setMonth(now.getMonth() - 1);
-        return now;
+      case 'today': return 1;
+      case 'week': return 7;
+      case 'month': return 30;
+      default: return 30;
     }
-  }
-
-  generateRecentActivity(bookings: any[]): void {
-    const sorted = [...bookings]
-      .sort((a, b) => new Date(b.dateInsert).getTime() - new Date(a.dateInsert).getTime())
-      .slice(0, 5);
-
-    this.recentActivity = sorted.map(b => {
-      const profit = (b.lastPrice || b.pushPrice || 0) - (b.price || 0);
-      const isProfit = profit >= 0;
-      
-      return {
-        type: b.IsCanceled ? 'cancel' : b.IsSold ? 'sale' : 'booking',
-        icon: b.IsCanceled ? 'cancel' : b.IsSold ? 'sell' : 'book',
-        title: `${b.hotelName || 'Hotel'} - ${b.roomType || 'Room'}`,
-        time: this.getRelativeTime(new Date(b.dateInsert)),
-        value: isProfit ? `+$${profit.toFixed(0)}` : `-$${Math.abs(profit).toFixed(0)}`,
-        valueClass: isProfit ? 'positive' : 'negative'
-      };
-    });
-  }
-
-  getRelativeTime(date: Date): string {
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 60) return `${diffMins} minutes ago`;
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays < 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
   }
 
   refreshData(): void {

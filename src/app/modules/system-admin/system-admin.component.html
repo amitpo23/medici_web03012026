@@ -1,0 +1,440 @@
+<div class="system-admin-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-indigo-600">admin_panel_settings</mat-icon>
+        System Administration
+        <span class="health-indicator" [ngClass]="{
+          'indicator-healthy': overallStatus === 'healthy',
+          'indicator-degraded': overallStatus === 'degraded',
+          'indicator-unhealthy': overallStatus === 'unhealthy'
+        }"></span>
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Monitor system health, view logs, and manage operational mode
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <mat-slide-toggle
+        [checked]="autoRefreshEnabled"
+        (change)="toggleAutoRefresh()"
+        matTooltip="Auto-refresh health data every {{ autoRefreshInterval }}s">
+        Auto-refresh
+      </mat-slide-toggle>
+      <button mat-stroked-button (click)="refreshAll()" matTooltip="Refresh all data" type="button">
+        <mat-icon>refresh</mat-icon>
+        <span class="hidden md:inline ml-1">Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group
+    [selectedIndex]="selectedTabIndex"
+    (selectedIndexChange)="onTabChange($event)"
+    animationDuration="0ms">
+
+    <!-- Tab 1: Health & Status -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">monitor_heart</mat-icon>
+        Health &amp; Status
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Status Cards Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Server Status -->
+          <mat-card class="status-card">
+            <mat-card-content class="text-center py-4">
+              <mat-icon class="status-icon text-5xl" [ngClass]="getStatusClass(healthStatus?.status || 'DOWN')">
+                {{ getStatusIcon(healthStatus?.status || 'DOWN') }}
+              </mat-icon>
+              <div class="text-lg font-bold mt-2">Server Status</div>
+              <div class="text-xl font-semibold mt-1" [ngClass]="getStatusClass(healthStatus?.status || 'DOWN')">
+                {{ healthStatus?.status || 'UNKNOWN' }}
+              </div>
+              <div class="text-sm text-gray-500 mt-1" *ngIf="healthStatus?.uptime">
+                Uptime: {{ formatUptime(healthStatus!.uptime) }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Database Status -->
+          <mat-card class="status-card">
+            <mat-card-content class="text-center py-4">
+              <ng-container *ngIf="healthStatus?.checks as checks">
+                <ng-container *ngFor="let check of checks">
+                  <ng-container *ngIf="check.name === 'database' || check.name === 'db'">
+                    <mat-icon class="status-icon text-5xl" [ngClass]="getStatusClass(check.status)">
+                      {{ getStatusIcon(check.status) }}
+                    </mat-icon>
+                    <div class="text-lg font-bold mt-2">Database</div>
+                    <div class="text-xl font-semibold mt-1" [ngClass]="getStatusClass(check.status)">
+                      {{ check.status }}
+                    </div>
+                    <div class="text-sm text-gray-500 mt-1" *ngIf="check.responseTime">
+                      Response: {{ formatMs(check.responseTime) }}
+                    </div>
+                  </ng-container>
+                </ng-container>
+              </ng-container>
+              <ng-container *ngIf="!healthStatus?.checks || healthStatus!.checks.length === 0">
+                <mat-icon class="status-icon text-5xl status-unhealthy">help_outline</mat-icon>
+                <div class="text-lg font-bold mt-2">Database</div>
+                <div class="text-xl font-semibold mt-1 text-gray-400">UNKNOWN</div>
+              </ng-container>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Avg Latency -->
+          <mat-card class="status-card">
+            <mat-card-content class="text-center py-4">
+              <mat-icon class="status-icon text-5xl text-blue-600">speed</mat-icon>
+              <div class="text-lg font-bold mt-2">Avg Response Time</div>
+              <div class="text-xl font-semibold mt-1 text-blue-600">
+                {{ healthMetrics ? formatMs(healthMetrics.avgLatency) : 'N/A' }}
+              </div>
+              <div class="text-sm text-gray-500 mt-1" *ngIf="healthMetrics?.p95Latency">
+                P95: {{ formatMs(healthMetrics!.p95Latency) }}
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Metrics Cards Row -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" *ngIf="healthMetrics">
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-indigo-600 text-3xl">analytics</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ healthMetrics.totalRequests | number }}
+              </div>
+              <div class="text-sm text-gray-500">Total Requests</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-3xl" [ngClass]="healthMetrics.errorRate > 0.05 ? 'text-red-600' : 'text-green-600'">
+                {{ healthMetrics.errorRate > 0.05 ? 'error' : 'verified' }}
+              </mat-icon>
+              <div class="text-2xl font-bold mt-1" [ngClass]="healthMetrics.errorRate > 0.05 ? 'text-red-600' : 'text-green-600'">
+                {{ formatPercent(healthMetrics.errorRate) }}
+              </div>
+              <div class="text-sm text-gray-500">Error Rate</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-amber-600 text-3xl">timer</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ formatMs(healthMetrics.avgLatency) }}
+              </div>
+              <div class="text-sm text-gray-500">Avg Latency</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-teal-600 text-3xl">trending_up</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ healthMetrics.requestsPerMinute | number:'1.1-1' }}
+              </div>
+              <div class="text-sm text-gray-500">Requests/min</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Reset Metrics Button -->
+        <div class="flex justify-end" *ngIf="healthMetrics">
+          <button mat-stroked-button color="warn" (click)="resetMetrics()" type="button">
+            <mat-icon>restart_alt</mat-icon>
+            Reset Metrics
+          </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div *ngIf="isLoadingHealth || isLoadingMetrics" class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Dependency Health Details -->
+        <mat-card *ngIf="healthStatus?.checks && healthStatus!.checks.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>fact_check</mat-icon>
+              Dependency Health Details
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="dependency-list">
+              <div *ngFor="let check of healthStatus!.checks" class="dependency-item">
+                <div class="flex items-center gap-3">
+                  <mat-icon [ngClass]="getStatusClass(check.status)">
+                    {{ getStatusIcon(check.status) }}
+                  </mat-icon>
+                  <div class="flex-1">
+                    <div class="font-semibold text-gray-900 dark:text-white">{{ check.name }}</div>
+                    <div class="text-sm text-gray-500" *ngIf="check.message">{{ check.message }}</div>
+                  </div>
+                  <div class="text-right">
+                    <span class="dependency-status-badge" [ngClass]="getStatusClass(check.status)">
+                      {{ check.status }}
+                    </span>
+                    <div class="text-xs text-gray-400 mt-1" *ngIf="check.responseTime">
+                      {{ formatMs(check.responseTime) }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Logs -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">description</mat-icon>
+        Logs
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <!-- Log Stats Summary -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" *ngIf="logStats">
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-indigo-600 text-3xl">folder_open</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ logStats.totalFiles }}
+              </div>
+              <div class="text-sm text-gray-500">Log Files</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-blue-600 text-3xl">storage</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ formatFileSize(logStats.totalSize) }}
+              </div>
+              <div class="text-sm text-gray-500">Total Size</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card" *ngIf="logStats.levels && logStats.levels['error']">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-red-600 text-3xl">error</mat-icon>
+              <div class="text-2xl font-bold text-red-600 mt-1">
+                {{ logStats.levels['error'] | number }}
+              </div>
+              <div class="text-sm text-gray-500">Errors</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card" *ngIf="logStats.levels && logStats.levels['warn']">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-amber-600 text-3xl">warning</mat-icon>
+              <div class="text-2xl font-bold text-amber-600 mt-1">
+                {{ logStats.levels['warn'] | number }}
+              </div>
+              <div class="text-sm text-gray-500">Warnings</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Search Bar -->
+        <mat-card class="search-card">
+          <mat-card-content>
+            <div class="flex flex-col md:flex-row gap-3 items-end">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Search logs</mat-label>
+                <input matInput [(ngModel)]="logSearchQuery" placeholder="Enter search query..." (keydown.enter)="searchLogs()">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-40">
+                <mat-label>Level</mat-label>
+                <mat-select [(ngModel)]="logSearchLevel">
+                  <mat-option value="">All</mat-option>
+                  <mat-option *ngFor="let level of logLevels" [value]="level">
+                    {{ level | uppercase }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <button mat-flat-button color="primary" (click)="searchLogs()" type="button" class="search-btn">
+                <mat-icon>search</mat-icon>
+                Search
+              </button>
+
+              <mat-slide-toggle
+                [checked]="tailMode"
+                (change)="toggleTailMode()"
+                matTooltip="Show last {{ tailLines }} lines">
+                Tail Mode
+              </mat-slide-toggle>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <!-- Log File List -->
+          <mat-card class="log-file-list-card">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2 text-base">
+                <mat-icon>folder</mat-icon>
+                Log Files
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="mt-2">
+              <div *ngIf="isLoadingLogs" class="flex justify-center py-4">
+                <mat-spinner diameter="30"></mat-spinner>
+              </div>
+              <mat-nav-list *ngIf="!isLoadingLogs">
+                <mat-list-item
+                  *ngFor="let file of logFiles"
+                  (click)="selectLogFile(file.filename)"
+                  [class.selected-file]="selectedLogFile === file.filename">
+                  <mat-icon matListItemIcon>insert_drive_file</mat-icon>
+                  <div matListItemTitle class="log-file-name">{{ file.filename }}</div>
+                  <div matListItemLine class="text-xs text-gray-500">
+                    {{ formatFileSize(file.size) }}
+                  </div>
+                </mat-list-item>
+              </mat-nav-list>
+              <div *ngIf="!isLoadingLogs && logFiles.length === 0" class="text-center text-gray-500 py-4">
+                No log files found
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Log Content Viewer -->
+          <mat-card class="log-viewer-card flex-1">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2 text-base">
+                <mat-icon>terminal</mat-icon>
+                {{ selectedLogFile || 'Select a log file' }}
+                <span *ngIf="tailMode" class="tail-badge">TAIL</span>
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="isLoadingLogContent" class="flex justify-center py-8">
+                <mat-spinner diameter="40"></mat-spinner>
+              </div>
+              <div *ngIf="!isLoadingLogContent && !logContent && !selectedLogFile" class="log-placeholder">
+                <mat-icon class="text-6xl text-gray-300">description</mat-icon>
+                <p class="text-gray-400 mt-2">Select a log file from the list to view its contents</p>
+              </div>
+              <pre *ngIf="!isLoadingLogContent && logContent" class="log-content-viewer">{{ logContent }}</pre>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Operational Mode -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">tune</mat-icon>
+        Operational Mode
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Current Mode Display -->
+        <mat-card class="current-mode-card">
+          <mat-card-content class="text-center py-8">
+            <div *ngIf="isLoadingMode" class="flex justify-center py-4">
+              <mat-spinner diameter="40"></mat-spinner>
+            </div>
+            <div *ngIf="!isLoadingMode && currentMode">
+              <mat-icon class="current-mode-icon" [ngClass]="{
+                'mode-read-only': currentMode.mode === 'READ_ONLY',
+                'mode-write-enabled': currentMode.mode === 'WRITE_ENABLED',
+                'mode-purchase-enabled': currentMode.mode === 'PURCHASE_ENABLED'
+              }">
+                {{ getModeIcon(currentMode.mode) }}
+              </mat-icon>
+              <div class="text-lg text-gray-500 mt-2">Current Operational Mode</div>
+              <div class="current-mode-label" [ngClass]="{
+                'mode-read-only': currentMode.mode === 'READ_ONLY',
+                'mode-write-enabled': currentMode.mode === 'WRITE_ENABLED',
+                'mode-purchase-enabled': currentMode.mode === 'PURCHASE_ENABLED'
+              }">
+                {{ currentMode.mode }}
+              </div>
+              <div class="text-sm text-gray-400 mt-2" *ngIf="currentMode.changedAt">
+                Last changed: {{ currentMode.changedAt | date:'medium' }}
+              </div>
+            </div>
+            <div *ngIf="!isLoadingMode && !currentMode" class="text-gray-400">
+              Unable to retrieve operational mode
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Mode Selection Buttons -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <mat-card *ngFor="let mode of modes"
+                    class="mode-selection-card"
+                    [class.mode-active]="isModeActive(mode.value)"
+                    [ngClass]="{
+                      'mode-card-read-only': mode.value === 'READ_ONLY',
+                      'mode-card-write-enabled': mode.value === 'WRITE_ENABLED',
+                      'mode-card-purchase-enabled': mode.value === 'PURCHASE_ENABLED'
+                    }">
+            <mat-card-content class="text-center py-6">
+              <mat-icon class="mode-card-icon">{{ mode.icon }}</mat-icon>
+              <div class="text-xl font-bold mt-3">{{ mode.label }}</div>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-2 px-4 mode-description">
+                {{ mode.description }}
+              </p>
+              <div class="mt-4">
+                <button mat-flat-button
+                        [color]="mode.color"
+                        [disabled]="isModeActive(mode.value) || isSwitchingMode"
+                        (click)="changeMode(mode.value)"
+                        type="button"
+                        class="mode-activate-btn">
+                  <mat-icon class="mr-1">{{ isModeActive(mode.value) ? 'check_circle' : 'power_settings_new' }}</mat-icon>
+                  {{ isModeActive(mode.value) ? 'Active' : 'Activate' }}
+                </button>
+              </div>
+              <div *ngIf="isModeActive(mode.value)" class="active-indicator mt-3">
+                Currently Active
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Loading overlay for mode switching -->
+        <div *ngIf="isSwitchingMode" class="flex justify-center py-4">
+          <mat-spinner diameter="36"></mat-spinner>
+          <span class="ml-3 text-gray-500">Switching mode...</span>
+        </div>
+
+        <!-- Mode Warning -->
+        <mat-card class="warning-card">
+          <mat-card-content class="flex items-start gap-3 py-4">
+            <mat-icon class="text-amber-600 mt-1">warning</mat-icon>
+            <div>
+              <div class="font-bold text-gray-900 dark:text-white">Important Notice</div>
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                Changing the operational mode affects the entire system immediately.
+                <strong>READ_ONLY</strong> mode will prevent all write operations and purchases.
+                <strong>WRITE_ENABLED</strong> mode allows data modifications but blocks purchases.
+                <strong>PURCHASE_ENABLED</strong> mode allows full operation including financial transactions.
+                Always confirm with your team before changing the mode in production.
+              </p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

@@ -310,7 +310,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _unsubscribeAll: Subject<void> = new Subject<void>();
 
   openSnackBar(message: string, close: boolean = true) {
     if (close) {
@@ -439,7 +439,12 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
     //   }
     // }
 
-    var columnState = JSON.parse(localStorage.getItem('column_defs')!);
+    let columnState = null;
+    try {
+      columnState = JSON.parse(localStorage.getItem('column_defs') || 'null');
+    } catch {
+      localStorage.removeItem('column_defs');
+    }
 
     if (columnState) {
       columnState.forEach((element: any) => {
@@ -563,8 +568,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
    * On destroy
    */
   ngOnDestroy(): void {
-    // Unsubscribe from all subscriptions
-    // this._unsubscribeAll.next();
+    this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
   }
 

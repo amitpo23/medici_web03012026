@@ -7,6 +7,7 @@ const logger = require('../config/logger');
 const os = require('os');
 const fs = require('fs').promises;
 const path = require('path');
+const axios = require('axios');
 
 class HealthMonitor {
   constructor() {
@@ -146,23 +147,75 @@ class HealthMonitor {
     // We don't fail health check if external services are down
     // These are checked but marked as "optional"
 
-    try {
-      // Innstant API check (optional)
-      services.innstant = {
-        status: 'unknown',
-        message: 'Check not implemented'
-      };
-
-      // Zenith API check (optional)
-      services.zenith = {
-        status: 'unknown',
-        message: 'Check not implemented'
-      };
-    } catch (error) {
-      logger.debug('External services check skipped', { error: error.message });
-    }
+    services.innstant = await this.checkInnstant();
+    services.zenith = await this.checkZenith();
 
     return services;
+  }
+
+  /**
+   * Probe Innstant API reachability
+   */
+  async checkInnstant() {
+    const url = process.env.INNSTANT_SEARCH_URL;
+    if (!url) {
+      return { status: 'unconfigured', message: 'INNSTANT_SEARCH_URL not set' };
+    }
+    const startTime = Date.now();
+    try {
+      await axios.get(url, { timeout: 5000 });
+      return {
+        status: 'healthy',
+        responseTime: Date.now() - startTime,
+        message: 'Innstant API reachable'
+      };
+    } catch (error) {
+      // A non-2xx response still means the service is reachable
+      if (error.response) {
+        return {
+          status: 'healthy',
+          responseTime: Date.now() - startTime,
+          message: `Innstant API reachable (HTTP ${error.response.status})`
+        };
+      }
+      return {
+        status: 'unhealthy',
+        responseTime: Date.now() - startTime,
+        message: error.message
+      };
+    }
+  }
+
+  /**
+   * Probe Zenith API reachability
+   */
+  async checkZenith() {
+    const url = process.env.ZENITH_SERVICE_URL;
+    if (!url) {
+      return { status: 'unconfigured', message: 'ZENITH_SERVICE_URL not set' };
+    }
+    const startTime = Date.now();
+    try {
+      await axios.get(url, { timeout: 5000 });
+      return {
+        status: 'healthy',
+        responseTime: Date.now() - startTime,
+        message: 'Zenith API reachable'
+      };
+    } catch (error) {
+      if (error.response) {
+        return {
+          status: 'healthy',
+          responseTime: Date.now() - startTime,
+          message: `Zenith API reachable (HTTP ${error.response.status})`
+        };
+      }
+      return {
+        status: 'unhealthy',
+        responseTime: Date.now() - startTime,
+        message: error.message
+      };
+    }
   }
 
   /**

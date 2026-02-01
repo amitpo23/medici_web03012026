@@ -6,7 +6,9 @@
 const express = require('express');
 const router = express.Router();
 const fs = require('fs').promises;
+const fsSync = require('fs');
 const path = require('path');
+const readline = require('readline');
 const logger = require('../config/logger');
 
 const logsDir = path.join(__dirname, '../logs');
@@ -55,13 +57,14 @@ router.get('/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
     const { lines = 100, search } = req.query;
-    
-    // Security: Only allow log files
-    if (!filename.endsWith('.log')) {
+
+    // Security: Strip directory traversal and only allow .log files
+    const safeName = path.basename(filename);
+    if (!safeName.endsWith('.log') || safeName !== filename) {
       return res.status(400).json({ error: 'Invalid log file' });
     }
-    
-    const filepath = path.join(logsDir, filename);
+
+    const filepath = path.join(logsDir, safeName);
     
     // Check if file exists
     try {
@@ -107,24 +110,46 @@ router.get('/:filename', async (req, res) => {
 });
 
 /**
- * GET /logs/tail/:filename - Stream log file (last N lines, real-time)
+ * GET /logs/tail/:filename - Stream last N lines using readline (memory-efficient)
  */
 router.get('/tail/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
-    const lines = parseInt(req.query.lines) || 50;
-    
-    if (!filename.endsWith('.log')) {
+    const maxLines = parseInt(req.query.lines, 10) || 50;
+
+    const safeName = path.basename(filename);
+    if (!safeName.endsWith('.log') || safeName !== filename) {
       return res.status(400).json({ error: 'Invalid log file' });
     }
-    
-    const filepath = path.join(logsDir, filename);
-    const content = await fs.readFile(filepath, 'utf-8');
-    const lastLines = content.split('\n').filter(line => line.trim()).slice(-lines);
-    
+
+    const filepath = path.join(logsDir, safeName);
+
+    // Check file exists
+    try {
+      await fs.access(filepath);
+    } catch {
+      return res.status(404).json({ error: 'Log file not found' });
+    }
+
+    // Use readline stream to read lines without loading entire file into memory
+    const buffer = [];
+    const rl = readline.createInterface({
+      input: fsSync.createReadStream(filepath, { encoding: 'utf-8' }),
+      crlfDelay: Infinity
+    });
+
+    for await (const line of rl) {
+      if (line.trim()) {
+        buffer.push(line);
+        if (buffer.length > maxLines) {
+          buffer.shift();
+        }
+      }
+    }
+
     res.json({
       filename,
-      lines: lastLines.map(line => {
+      lines: buffer.map(line => {
         try {
           return JSON.parse(line);
         } catch {
@@ -132,8 +157,9 @@ router.get('/tail/:filename', async (req, res) => {
         }
       })
     });
-    
+
   } catch (error) {
+    logger.error('Failed to tail log file', { error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
@@ -164,57 +190,64 @@ router.post('/search', async (req, res) => {
     const end = endDate ? new Date(endDate) : null;
     
     for (const file of logFiles) {
-      const content = await fs.readFile(path.join(logsDir, file), 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim());
-      
-      for (const line of lines) {
+      if (results.length >= limit) break;
+
+      const filepath = path.join(logsDir, file);
+      const rl = readline.createInterface({
+        input: fsSync.createReadStream(filepath, { encoding: 'utf-8' }),
+        crlfDelay: Infinity
+      });
+
+      for await (const line of rl) {
+        if (!line.trim()) continue;
         try {
           const logEntry = JSON.parse(line);
-          
+
           // Filter by text query
           if (query) {
             const lineStr = JSON.stringify(logEntry).toLowerCase();
             if (!lineStr.includes(query.toLowerCase())) continue;
           }
-          
+
           // Filter by level
           if (level && logEntry.level !== level) continue;
-          
+
           // Filter by date range
           if (start && new Date(logEntry.timestamp) < start) continue;
           if (end && new Date(logEntry.timestamp) > end) continue;
-          
+
           // Filter by hotel name
           if (hotelName) {
             const lineStr = JSON.stringify(logEntry).toLowerCase();
             if (!lineStr.includes(hotelName.toLowerCase())) continue;
           }
-          
+
           // Filter by booking ID
           if (bookingId) {
             const lineStr = JSON.stringify(logEntry);
             if (!lineStr.includes(bookingId.toString())) continue;
           }
-          
+
           // Filter by source (scraper, zenith, etc.)
           if (source) {
             const lineStr = JSON.stringify(logEntry).toLowerCase();
             if (!lineStr.includes(source.toLowerCase())) continue;
           }
-          
+
           results.push({
             file,
             ...logEntry
           });
-          
-          if (results.length >= limit) break;
-          
+
+          if (results.length >= limit) {
+            rl.close();
+            break;
+          }
+
         } catch {
           // Skip invalid JSON lines
         }
       }
-      
-      if (results.length >= limit) break;
     }
     
     res.json({
@@ -301,19 +334,20 @@ router.get('/stats/summary', async (req, res) => {
 router.delete('/:filename', async (req, res) => {
   try {
     const { filename } = req.params;
-    
-    // Security checks
-    if (!filename.endsWith('.log')) {
+
+    // Security: Strip directory traversal and only allow .log files
+    const safeName = path.basename(filename);
+    if (!safeName.endsWith('.log') || safeName !== filename) {
       return res.status(400).json({ error: 'Invalid log file' });
     }
-    
+
     // Don't delete today's logs
     const today = new Date().toISOString().split('T')[0];
-    if (filename.includes(today)) {
+    if (safeName.includes(today)) {
       return res.status(403).json({ error: 'Cannot delete current day logs' });
     }
-    
-    const filepath = path.join(logsDir, filename);
+
+    const filepath = path.join(logsDir, safeName);
     await fs.unlink(filepath);
     
     logger.warn('Log file deleted', { filename, deletedBy: 'admin' });

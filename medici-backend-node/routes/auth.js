@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { getPool } = require('../config/database');
+const logger = require('../config/logger');
 
 // Sign-in endpoint
 router.post('/', async (req, res) => {
@@ -47,7 +48,7 @@ router.post('/', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Sign-in error:', err);
+    logger.error('Sign-in error', { error: err.message });
     res.status(500).json({ error: 'Internal server error' });
   }
 });

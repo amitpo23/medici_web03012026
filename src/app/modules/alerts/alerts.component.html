@@ -1,0 +1,222 @@
+<div class="alerts-container p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-red-600">notifications_active</mat-icon>
+        System Alerts
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Monitor and manage booking engine alert rules and history
+      </p>
+      <div class="flex items-center gap-2 mt-2" *ngIf="alertStatus">
+        <span class="status-indicator"
+              [class.status-running]="alertStatus.running"
+              [class.status-stopped]="!alertStatus.running">
+        </span>
+        <span class="text-sm font-semibold"
+              [class.text-green-600]="alertStatus.running"
+              [class.text-red-600]="!alertStatus.running">
+          {{ alertStatus.running ? 'Service Running' : 'Service Stopped' }}
+        </span>
+        <span class="text-xs text-gray-400 ml-2" *ngIf="alertStatus.intervalMinutes">
+          (interval: {{ alertStatus.intervalMinutes }}min)
+        </span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex flex-wrap items-center gap-3">
+      <button mat-flat-button color="primary" (click)="scanNow()" [disabled]="isLoading" type="button">
+        <mat-icon>search</mat-icon>
+        Scan Now
+      </button>
+      <button mat-flat-button color="accent" (click)="startService()" [disabled]="isLoading || alertStatus?.running === true" type="button">
+        <mat-icon>play_arrow</mat-icon>
+        Start Service
+      </button>
+      <button mat-flat-button color="warn" (click)="stopService()" [disabled]="isLoading || alertStatus?.running === false" type="button">
+        <mat-icon>stop</mat-icon>
+        Stop Service
+      </button>
+      <button mat-stroked-button (click)="toggleAutoRefresh()" type="button"
+              [class.auto-refresh-active]="autoRefresh">
+        <mat-icon>{{ autoRefresh ? 'sync' : 'sync_disabled' }}</mat-icon>
+        Auto-Refresh
+      </button>
+      <button mat-stroked-button (click)="loadAllData()" [disabled]="isLoading" type="button">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center py-4">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4" *ngIf="alertStats">
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-blue-600 stat-icon">notifications</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ alertStats.totalAlerts }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">Total Alerts</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card stat-card-active">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-orange-600 stat-icon">warning</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ alertStats.activeAlerts }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">Active</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card stat-card-resolved">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-green-600 stat-icon">check_circle</mat-icon>
+        <div class="stat-value text-2xl font-bold text-gray-900 dark:text-white mt-2">
+          {{ alertStats.resolvedAlerts }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">Resolved</div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="stat-card">
+      <mat-card-content class="text-center">
+        <mat-icon class="text-purple-600 stat-icon">schedule</mat-icon>
+        <div class="stat-value text-sm font-bold text-gray-900 dark:text-white mt-2">
+          {{ alertStats.lastScan ? (alertStats.lastScan | date:'short') : 'Never' }}
+        </div>
+        <div class="stat-label text-sm text-gray-500 dark:text-gray-400">Last Scan</div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Scan Range -->
+  <mat-card class="scan-range-card">
+    <mat-card-content>
+      <div class="flex flex-wrap items-center gap-4">
+        <span class="font-semibold text-gray-700 dark:text-gray-300">Scan Date Range:</span>
+        <mat-form-field appearance="outline" class="scan-days-field">
+          <mat-label>Days</mat-label>
+          <input matInput type="number" [(ngModel)]="scanDays" min="1" max="90">
+        </mat-form-field>
+        <button mat-flat-button color="primary" (click)="scanRange()" [disabled]="isLoading" type="button">
+          <mat-icon>date_range</mat-icon>
+          Scan Range
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Alert Rules Table -->
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title class="flex items-center gap-2">
+        <mat-icon class="text-blue-600">rule</mat-icon>
+        Alert Rules
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="alertRules.length === 0 && !isLoading" class="text-center py-8 text-gray-500">
+        No alert rules configured
+      </div>
+      <div class="overflow-x-auto" *ngIf="alertRules.length > 0">
+        <table class="alerts-table w-full">
+          <thead>
+            <tr>
+              <th>Rule Name</th>
+              <th>Description</th>
+              <th>Severity</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let rule of alertRules">
+              <td class="font-semibold">{{ rule.name }}</td>
+              <td>{{ rule.description }}</td>
+              <td>
+                <span class="severity-badge" [ngClass]="getSeverityClass(rule.severity)">
+                  {{ rule.severity }}
+                </span>
+              </td>
+              <td>
+                <span class="status-badge" [class.status-enabled]="rule.enabled" [class.status-disabled]="!rule.enabled">
+                  {{ rule.enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Alert History Table -->
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title class="flex items-center gap-2">
+        <mat-icon class="text-orange-600">history</mat-icon>
+        Alert History
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="alertHistory.length === 0 && !isLoading" class="text-center py-8 text-gray-500">
+        No alert history found
+      </div>
+      <div class="overflow-x-auto" *ngIf="alertHistory.length > 0">
+        <table class="alerts-table w-full">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Message</th>
+              <th>Priority</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let alert of alertHistory" [ngClass]="getSeverityClass(alert.priority)">
+              <td class="whitespace-nowrap">{{ alert.createdAt | date:'short' }}</td>
+              <td>
+                <span class="severity-badge" [ngClass]="getSeverityClass(alert.type)">
+                  {{ alert.type }}
+                </span>
+              </td>
+              <td>{{ alert.message }}</td>
+              <td>
+                <span class="priority-badge" [ngClass]="getPriorityClass(alert.priority)">
+                  {{ alert.priority }}
+                </span>
+              </td>
+              <td>
+                <span class="resolved-badge" [class.resolved]="alert.resolved" [class.unresolved]="!alert.resolved">
+                  {{ alert.resolved ? 'Resolved' : 'Active' }}
+                </span>
+              </td>
+              <td>
+                <button mat-icon-button color="primary"
+                        (click)="resolveAlert(alert.alertId)"
+                        [disabled]="alert.resolved"
+                        matTooltip="Resolve this alert"
+                        type="button">
+                  <mat-icon>check_circle_outline</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

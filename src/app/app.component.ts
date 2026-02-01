@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { environment } from './environments/environment';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ThemeService } from './services/theme.service';
+import { DashboardService } from './services/dashboard.service';
 
 interface QuickStats {
   todayProfit: number;
@@ -15,14 +16,16 @@ interface QuickStats {
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, OnDestroy {
   title = 'Medici Booking Engine';
   isDarkMode = false;
   quickStats: QuickStats | null = null;
+  private _destroy$ = new Subject<void>();
+  private _statsIntervalId: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     public router: Router,
-    private http: HttpClient,
+    private dashboardService: DashboardService,
     private themeService: ThemeService
   ) {
     this.isDarkMode = this.themeService.isDarkMode();
@@ -32,8 +35,16 @@ export class AppComponent implements OnInit {
     if (this.isActive()) {
       this.loadQuickStats();
       // Refresh stats every 5 minutes
-      setInterval(() => this.loadQuickStats(), 300000);
+      this._statsIntervalId = setInterval(() => this.loadQuickStats(), 300000);
     }
+  }
+
+  ngOnDestroy(): void {
+    if (this._statsIntervalId) {
+      clearInterval(this._statsIntervalId);
+    }
+    this._destroy$.next();
+    this._destroy$.complete();
   }
 
   isActive(): boolean {
@@ -45,27 +56,19 @@ export class AppComponent implements OnInit {
   }
 
   loadQuickStats(): void {
-    this.http.get<any[]>(environment.baseUrl + 'Book/Bookings').subscribe({
-      next: (bookings) => {
-        const activeBookings = bookings.filter(b => !b.IsCanceled && b.IsSold);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const todayBookings = activeBookings.filter(b => new Date(b.dateInsert) >= today);
-        
-        this.quickStats = {
-          activeBookings: activeBookings.length,
-          todayRevenue: todayBookings.reduce((sum, b) => sum + (b.lastPrice || b.pushPrice || 0), 0),
-          todayProfit: todayBookings.reduce((sum, b) => {
-            const revenue = b.lastPrice || b.pushPrice || 0;
-            const cost = b.price || 0;
-            return sum + (revenue - cost);
-          }, 0)
-        };
-      },
-      error: () => {
-        this.quickStats = { todayProfit: 0, activeBookings: 0, todayRevenue: 0 };
-      }
-    });
+    this.dashboardService.getStats(1)
+      .pipe(takeUntil(this._destroy$))
+      .subscribe({
+        next: (stats) => {
+          this.quickStats = {
+            activeBookings: stats.overview.ActiveCount || 0,
+            todayRevenue: stats.overview.TotalPushPrice || 0,
+            todayProfit: stats.overview.TotalExpectedProfit || 0
+          };
+        },
+        error: () => {
+          this.quickStats = { todayProfit: 0, activeBookings: 0, todayRevenue: 0 };
+        }
+      });
   }
 }

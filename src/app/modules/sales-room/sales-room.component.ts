@@ -266,7 +266,7 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
   ];
   public rowData$!: Observable<any[]>;
 
-  private _unsubscribeAll: Subject<any> = new Subject<any>();
+  private _unsubscribeAll: Subject<void> = new Subject<void>();
 
   private _filter(value: string): MedHotel[] {
     const filterValue = value.toLowerCase();
@@ -431,7 +431,12 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
     //   }
     // }
 
-    var columnState = JSON.parse(localStorage.getItem('column_defs_sales_room')!);
+    let columnState = null;
+    try {
+      columnState = JSON.parse(localStorage.getItem('column_defs_sales_room') || 'null');
+    } catch {
+      localStorage.removeItem('column_defs_sales_room');
+    }
 
     if (columnState) {
       columnState.forEach((element: any) => {
@@ -467,8 +472,7 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
    * On destroy
    */
   ngOnDestroy(): void {
-    // Unsubscribe from all subscriptions
-    // this._unsubscribeAll.next();
+    this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
   }
 }

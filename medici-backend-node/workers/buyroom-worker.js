@@ -15,6 +15,7 @@ const sql = require('mssql');
 const InnstantClient = require('../services/innstant-client');
 const SlackService = require('../services/slack-service');
 const dbConfig = require('../config/database');
+const logger = require('../config/logger');
 
 const innstantClient = new InnstantClient();
 
@@ -58,7 +59,7 @@ async function getPendingReservations(pool) {
  * Purchase room from Innstant for a reservation
  */
 async function purchaseRoom(pool, reservation) {
-    console.log(`[BuyRoom] Processing reservation ${reservation.ReservationId} for ${reservation.HotelName}`);
+    logger.info(`[BuyRoom] Processing reservation ${reservation.ReservationId} for ${reservation.HotelName}`);
     
     try {
         // Step 1: Search for available rooms
@@ -137,9 +138,9 @@ async function purchaseRoom(pool, reservation) {
             profit: reservation.TotalPrice - bookingResult.totalPrice
         });
         
-        console.log(`[BuyRoom] ✓ Successfully purchased room for reservation ${reservation.ReservationId}`);
-        console.log(`  Supplier Booking: ${bookingResult.bookingId || bookingResult.confirmationNumber}`);
-        console.log(`  Profit: $${(reservation.TotalPrice - (bookingResult.totalPrice || bookingResult.price)).toFixed(2)}`);
+        logger.info(`[BuyRoom] Successfully purchased room for reservation ${reservation.ReservationId}`);
+        logger.info(`  Supplier Booking: ${bookingResult.bookingId || bookingResult.confirmationNumber}`);
+        logger.info(`  Profit: $${(reservation.TotalPrice - (bookingResult.totalPrice || bookingResult.price)).toFixed(2)}`);
         
         return {
             success: true,
@@ -147,7 +148,7 @@ async function purchaseRoom(pool, reservation) {
         };
         
     } catch (error) {
-        console.error(`[BuyRoom] ✗ Failed to purchase room for reservation ${reservation.ReservationId}:`, error.message);
+        logger.error(`[BuyRoom] Failed to purchase room for reservation ${reservation.ReservationId}:`, { error: error.message });
         
         // Log the error
         await pool.request()
@@ -181,14 +182,14 @@ async function purchaseRoom(pool, reservation) {
  * Main worker function
  */
 async function runWorker() {
-    console.log(`[BuyRoom] Starting worker at ${new Date().toISOString()}`);
+    logger.info(`[BuyRoom] Starting worker at ${new Date().toISOString()}`);
     
     let pool;
     try {
         pool = await sql.connect(dbConfig);
         
         const pendingReservations = await getPendingReservations(pool);
-        console.log(`[BuyRoom] Found ${pendingReservations.length} pending reservations`);
+        logger.info(`[BuyRoom] Found ${pendingReservations.length} pending reservations`);
         
         let successCount = 0;
         let failCount = 0;
@@ -205,10 +206,10 @@ async function runWorker() {
             await new Promise(resolve => setTimeout(resolve, 2000));
         }
         
-        console.log(`[BuyRoom] Completed: ${successCount} success, ${failCount} failed`);
+        logger.info(`[BuyRoom] Completed: ${successCount} success, ${failCount} failed`);
         
     } catch (error) {
-        console.error('[BuyRoom] Worker error:', error);
+        logger.error('[BuyRoom] Worker error:', { error: error.message });
         await SlackService.sendError({
             type: 'BuyRoom Worker Error',
             error: error.message
@@ -224,17 +225,17 @@ async function runWorker() {
 if (require.main === module) {
     // Check for --once flag to run once and exit
     if (process.argv.includes('--once')) {
-        console.log('[BuyRoom] Running once...');
+        logger.info('[BuyRoom] Running once...');
         runWorker().then(() => {
-            console.log('[BuyRoom] Done');
+            logger.info('[BuyRoom] Done');
             process.exit(0);
         }).catch(err => {
-            console.error('[BuyRoom] Error:', err);
+            logger.error('[BuyRoom] Error:', { error: err.message });
             process.exit(1);
         });
     } else {
         // Run on schedule
-        console.log(`[BuyRoom] Starting scheduled worker (${CRON_SCHEDULE})`);
+        logger.info(`[BuyRoom] Starting scheduled worker (${CRON_SCHEDULE})`);
         cron.schedule(CRON_SCHEDULE, runWorker);
         
         // Run immediately on start

@@ -7,17 +7,17 @@
     </h1>
     <div class="header-actions">
       <div class="date-range-selector">
-        <button mat-stroked-button [class.mat-primary]="dateRange === 'today'" (click)="setDateRange('today')">
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'today'" (click)="setDateRange('today')" type="button">
           Today
         </button>
-        <button mat-stroked-button [class.mat-primary]="dateRange === 'week'" (click)="setDateRange('week')">
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'week'" (click)="setDateRange('week')" type="button">
           This Week
         </button>
-        <button mat-stroked-button [class.mat-primary]="dateRange === 'month'" (click)="setDateRange('month')">
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'month'" (click)="setDateRange('month')" type="button">
           This Month
         </button>
       </div>
-      <button mat-raised-button color="primary" (click)="refreshData()">
+      <button mat-raised-button color="primary" (click)="refreshData()" type="button">
         <mat-icon>refresh</mat-icon>
         Refresh
       </button>
@@ -26,19 +26,19 @@
 
   <!-- Quick Actions -->
   <div class="quick-actions">
-    <button class="action-btn" routerLink="/options">
+    <button class="action-btn" routerLink="/options" type="button">
       <mat-icon>add_circle</mat-icon>
       <span>New Opportunity</span>
     </button>
-    <button class="action-btn" routerLink="/rooms">
+    <button class="action-btn" routerLink="/rooms" type="button">
       <mat-icon>hotel</mat-icon>
       <span>View Rooms</span>
     </button>
-    <button class="action-btn" routerLink="/analytics">
-      <mat-icon>insights</mat-icon>
-      <span>Analytics</span>
+    <button class="action-btn" routerLink="/reports" type="button">
+      <mat-icon>assessment</mat-icon>
+      <span>Reports</span>
     </button>
-    <button class="action-btn" routerLink="/reservation">
+    <button class="action-btn" routerLink="/reservation" type="button">
       <mat-icon>book_online</mat-icon>
       <span>Reservations</span>
     </button>
@@ -52,6 +52,19 @@
 
   <!-- Dashboard Content -->
   <div *ngIf="!loading" class="dashboard-content">
+
+    <!-- Alerts Banner -->
+    <div class="alerts-section" *ngIf="alerts.length > 0">
+      <div class="alert-item" *ngFor="let alert of alerts" [ngClass]="'alert-' + alert.type">
+        <mat-icon>{{ alert.type === 'warning' ? 'warning' : 'info' }}</mat-icon>
+        <div class="alert-content">
+          <strong>{{ alert.title }}</strong>
+          <span>{{ alert.message }}</span>
+        </div>
+        <span class="alert-priority" [ngClass]="'priority-' + alert.priority">{{ alert.priority }}</span>
+      </div>
+    </div>
+
     <!-- KPI Cards -->
     <div class="kpi-grid">
       <!-- Total Revenue -->
@@ -65,7 +78,7 @@
             {{ kpiData.revenueChange | number:'1.1-1' }}%
           </div>
         </div>
-        <div class="kpi-value">{{ kpiData.totalRevenue | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-value">{{ kpiData.totalRevenue | currency:'EUR':'symbol':'1.0-0' }}</div>
         <div class="kpi-label">Total Revenue</div>
       </div>
 
@@ -75,12 +88,12 @@
           <div class="kpi-icon profit">
             <mat-icon>trending_up</mat-icon>
           </div>
-          <div class="kpi-trend" [ngClass]="kpiData.profitChange >= 0 ? 'positive' : 'negative'">
-            <mat-icon>{{ kpiData.profitChange >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
-            {{ kpiData.profitChange | number:'1.1-1' }}%
+          <div class="kpi-trend" [ngClass]="kpiData.profitMargin >= 10 ? 'positive' : 'negative'">
+            <mat-icon>{{ kpiData.profitMargin >= 10 ? 'check_circle' : 'warning' }}</mat-icon>
+            {{ kpiData.profitMargin | number:'1.1-1' }}% margin
           </div>
         </div>
-        <div class="kpi-value">{{ kpiData.totalProfit | currency:'USD':'symbol':'1.0-0' }}</div>
+        <div class="kpi-value">{{ kpiData.totalProfit | currency:'EUR':'symbol':'1.0-0' }}</div>
         <div class="kpi-label">Total Profit</div>
       </div>
 
@@ -91,28 +104,53 @@
             <mat-icon>book</mat-icon>
           </div>
           <div class="kpi-trend positive">
-            <mat-icon>schedule</mat-icon>
-            Live
+            <mat-icon>sell</mat-icon>
+            {{ kpiData.soldCount }} sold
           </div>
         </div>
         <div class="kpi-value">{{ kpiData.activeBookings | number }}</div>
         <div class="kpi-label">Active Bookings</div>
       </div>
 
-      <!-- Profit Margin -->
-      <div class="kpi-card margin" role="region" aria-label="Profit Margin">
+      <!-- Conversion Rate -->
+      <div class="kpi-card margin" role="region" aria-label="Conversion Rate">
         <div class="kpi-header">
           <div class="kpi-icon margin">
             <mat-icon>percent</mat-icon>
           </div>
-          <div class="kpi-trend" [ngClass]="kpiData.profitMargin >= 15 ? 'positive' : 'negative'">
-            <mat-icon>{{ kpiData.profitMargin >= 15 ? 'check_circle' : 'warning' }}</mat-icon>
-            {{ kpiData.profitMargin >= 15 ? 'Good' : 'Low' }}
+          <div class="kpi-trend" [ngClass]="kpiData.conversionRate >= 50 ? 'positive' : 'negative'">
+            <mat-icon>{{ kpiData.conversionRate >= 50 ? 'check_circle' : 'warning' }}</mat-icon>
+            {{ kpiData.conversionRate >= 50 ? 'Good' : 'Low' }}
           </div>
         </div>
-        <div class="kpi-value">{{ kpiData.profitMargin | number:'1.1-1' }}%</div>
-        <div class="kpi-label">Profit Margin</div>
+        <div class="kpi-value">{{ kpiData.conversionRate | number:'1.1-1' }}%</div>
+        <div class="kpi-label">Conversion Rate</div>
       </div>
+    </div>
+
+    <!-- Forecast Summary -->
+    <div class="forecast-section" *ngIf="forecast?.summary">
+      <mat-card class="forecast-card">
+        <mat-card-header>
+          <mat-card-title>30-Day Forecast</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="forecast-stats">
+            <div class="forecast-stat">
+              <span class="forecast-value">{{ forecast!.summary.TotalExpectedRevenue | currency:'EUR':'symbol':'1.0-0' }}</span>
+              <span class="forecast-label">Expected Revenue</span>
+            </div>
+            <div class="forecast-stat">
+              <span class="forecast-value">{{ forecast!.summary.TotalExpectedProfit | currency:'EUR':'symbol':'1.0-0' }}</span>
+              <span class="forecast-label">Expected Profit</span>
+            </div>
+            <div class="forecast-stat">
+              <span class="forecast-value">{{ forecast!.summary.TotalBookings }}</span>
+              <span class="forecast-label">Upcoming Bookings</span>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
     </div>
 
     <!-- Charts Row -->
@@ -136,34 +174,76 @@
       </mat-card>
     </div>
 
-    <!-- Top Hotels and Recent Activity -->
+    <!-- Top Hotels and Worker Status -->
     <div class="charts-row">
       <mat-card class="chart-card">
         <mat-card-header>
           <mat-card-title>Top Performing Hotels</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <app-top-hotels></app-top-hotels>
+          <div class="hotel-performance-list" *ngIf="topHotels.length > 0">
+            <div class="hotel-perf-item" *ngFor="let hotel of topHotels">
+              <div class="hotel-info">
+                <span class="hotel-name">{{ hotel.HotelName }}</span>
+                <span class="hotel-bookings">{{ hotel.TotalBookings }} bookings, {{ hotel.SoldCount }} sold</span>
+              </div>
+              <div class="hotel-metrics">
+                <span class="hotel-profit" [ngClass]="hotel.Profit >= 0 ? 'positive' : 'negative'">
+                  {{ hotel.Profit | currency:'EUR':'symbol':'1.0-0' }}
+                </span>
+                <span class="hotel-margin">{{ hotel.MarginPercent | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+          <div *ngIf="topHotels.length === 0" class="no-data">No hotel data available</div>
         </mat-card-content>
       </mat-card>
 
       <mat-card class="chart-card">
         <mat-card-header>
-          <mat-card-title>Recent Activity</mat-card-title>
+          <mat-card-title>System Status</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <div class="activity-list">
-            <div class="activity-item" *ngFor="let activity of recentActivity">
-              <div class="activity-icon" [ngClass]="activity.type">
-                <mat-icon>{{ activity.icon }}</mat-icon>
-              </div>
-              <div class="activity-content">
-                <div class="activity-title">{{ activity.title }}</div>
-                <div class="activity-time">{{ activity.time }}</div>
-              </div>
-              <div class="activity-value" [ngClass]="activity.valueClass">
-                {{ activity.value }}
-              </div>
+          <div class="worker-status" *ngIf="workers">
+            <div class="worker-item">
+              <mat-icon [ngClass]="workers.buyroom.enabled ? 'status-ok' : 'status-off'">
+                {{ workers.buyroom.enabled ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>BuyRoom Worker</span>
+              <span class="worker-badge" [ngClass]="workers.buyroom.enabled ? 'enabled' : 'disabled'">
+                {{ workers.buyroom.enabled ? 'Active' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="worker-item">
+              <mat-icon [ngClass]="workers.cancellation.enabled ? 'status-ok' : 'status-off'">
+                {{ workers.cancellation.enabled ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>Auto-Cancellation</span>
+              <span class="worker-badge" [ngClass]="workers.cancellation.enabled ? 'enabled' : 'disabled'">
+                {{ workers.cancellation.enabled ? 'Active' : 'Disabled' }}
+              </span>
+            </div>
+            <div class="worker-item">
+              <mat-icon [ngClass]="workers.priceUpdate.enabled ? 'status-ok' : 'status-off'">
+                {{ workers.priceUpdate.enabled ? 'check_circle' : 'cancel' }}
+              </mat-icon>
+              <span>Price Update</span>
+              <span class="worker-badge" [ngClass]="workers.priceUpdate.enabled ? 'enabled' : 'disabled'">
+                {{ workers.priceUpdate.enabled ? 'Active' : 'Disabled' }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Reservation Stats -->
+          <div class="reservation-summary">
+            <h4>Reservations</h4>
+            <div class="res-stat">
+              <span>Total:</span>
+              <strong>{{ kpiData.totalReservations }}</strong>
+            </div>
+            <div class="res-stat">
+              <span>Revenue:</span>
+              <strong>{{ kpiData.reservationRevenue | currency:'EUR':'symbol':'1.0-0' }}</strong>
             </div>
           </div>
         </mat-card-content>

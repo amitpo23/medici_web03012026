@@ -44,3 +44,5 @@ Thumbs.db
 node_modules/
 
 medici-backend-node/node_modules/
+.vercel
+.env*.local

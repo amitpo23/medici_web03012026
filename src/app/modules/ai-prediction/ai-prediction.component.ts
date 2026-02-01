@@ -1,8 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AIAnalysisResult, AIOpportunity, AIPredictionService, City, Hotel } from '../../services/ai-prediction.service';
+import { ZenithPushDialogComponent, ZenithPushDialogResult } from './components/zenith-push-dialog/zenith-push-dialog.component';
 
 @Component({
   selector: 'app-ai-prediction',
@@ -60,7 +62,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
     avgConfidence: 0
   };
 
-  constructor(private aiService: AIPredictionService) {}
+  constructor(
+    private aiService: AIPredictionService,
+    private dialog: MatDialog
+  ) {}
 
   ngOnInit(): void {
     this.loadInitialData();
@@ -80,7 +85,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
           this.cities = response.cities;
         }
       },
-      error: (err) => console.error('Error loading cities:', err)
+      error: () => {}
     });
 
     // Load hotels
@@ -91,7 +96,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
           this.filteredHotels = this.hotels;
         }
       },
-      error: (err) => console.error('Error loading hotels:', err)
+      error: () => {}
     });
 
     // Get AI status
@@ -99,7 +104,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       next: (status) => {
         this.agentStatus = status;
       },
-      error: (err) => console.error('Error getting AI status:', err)
+      error: () => {}
     });
 
     // Load initial opportunities
@@ -161,8 +166,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         }
         this.isLoadingOpportunities = false;
       },
-      error: (err) => {
-        console.error('Error loading opportunities:', err);
+      error: () => {
         this.isLoadingOpportunities = false;
       }
     });
@@ -195,8 +199,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: (err) => {
-        console.error('Error running analysis:', err);
+      error: () => {
         this.isLoading = false;
       }
     });
@@ -233,10 +236,9 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   clearCache(): void {
     this.aiService.clearCache().pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
-        console.log('Cache cleared');
         this.loadOpportunities();
       },
-      error: (err) => console.error('Error clearing cache:', err)
+      error: () => {}
     });
   }
 
@@ -297,9 +299,19 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // TODO: Open Material Dialog for push confirmation and options
-    // For now, directly call push
-    this.pushToZenith('publish', {});
+    const dialogRef = this.dialog.open(ZenithPushDialogComponent, {
+      width: '420px',
+      data: {
+        count: this.selectedOpportunities.size,
+        action: 'publish'
+      }
+    });
+
+    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: ZenithPushDialogResult | undefined) => {
+      if (result?.confirmed) {
+        this.pushToZenith(result.action, {});
+      }
+    });
   }
 
   /**
@@ -315,18 +327,15 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.isPushingToZenith = false;
           if (response.success) {
-            console.log('✅ Push successful:', response.summary);
             alert(`הצלחה! ${response.summary?.successful || 0} הזדמנויות נדחפו ל-Zenith`);
             this.clearSelection();
-            this.loadOpportunities(); // Reload to update status
+            this.loadOpportunities();
           } else {
-            console.error('❌ Push failed:', response);
             alert(`שגיאה: ${response.error}`);
           }
         },
         error: (err) => {
           this.isPushingToZenith = false;
-          console.error('Error pushing to Zenith:', err);
           alert(`שגיאה בדחיפה ל-Zenith: ${err.message}`);
         }
       });

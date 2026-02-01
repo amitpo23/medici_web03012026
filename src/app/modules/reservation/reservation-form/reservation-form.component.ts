@@ -25,12 +25,12 @@ export class ReservationFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get(this.baseUrl + `Reservation/GetDetails?soldId=${this.item.soldId}`)
+    const id = this.item.soldId || this.item.Id || this.item.id;
+    this.http.get(this.baseUrl + `Reservation/GetDetails?id=${id}`)
       .subscribe((result: any) => {
-        // console.log(result);
-        this.newOrder = result.newOrder;
-        this.oldOrders = result.oldOrders;
-        if (this.oldOrders.length == 0) {
+        if (result) {
+          this.newOrder = result;
+          this.oldOrders = [];
           this.showTabs = false;
         }
       });

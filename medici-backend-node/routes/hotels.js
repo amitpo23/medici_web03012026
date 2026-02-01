@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 
 // Get all hotels
@@ -23,7 +24,7 @@ router.get('/', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching hotels:', err);
+    logger.error('Error fetching hotels', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });

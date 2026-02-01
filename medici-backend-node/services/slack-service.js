@@ -4,6 +4,7 @@
  */
 
 const axios = require('axios');
+const logger = require('../config/logger');
 
 class SlackService {
   constructor() {
@@ -18,12 +19,12 @@ class SlackService {
    */
   async sendMessage(message, options = {}) {
     if (!this.enabled) {
-      console.log('[Slack] Disabled - skipping message');
+      logger.info('[Slack] Disabled - skipping message');
       return { success: true, skipped: true };
     }
 
     if (!this.webhookUrl) {
-      console.warn('[Slack] Webhook URL not configured');
+      logger.warn('[Slack] Webhook URL not configured');
       return { success: false, error: 'Webhook not configured' };
     }
 
@@ -36,10 +37,10 @@ class SlackService {
       };
 
       await axios.post(this.webhookUrl, payload);
-      console.log('[Slack] Message sent successfully');
+      logger.info('[Slack] Message sent successfully');
       return { success: true };
     } catch (error) {
-      console.error('[Slack] Error sending message:', error.message);
+      logger.error('[Slack] Error sending message:', { error: error.message });
       return { success: false, error: error.message };
     }
   }

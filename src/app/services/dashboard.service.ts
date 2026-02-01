@@ -1,51 +1,104 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
 
-// Temporary interfaces - will move to models later
-export interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  condition: string;
-  lastVisit: string;
-  status: 'stable' | 'critical' | 'improving';
+export interface DashboardOverview {
+  TotalBookings: number;
+  TotalCost: number;
+  TotalPushPrice: number;
+  TotalExpectedProfit: number;
+  AvgMargin: number;
+  AvgBookingCost: number;
+  SoldCount: number;
+  ActiveCount: number;
+  CancelledCount: number;
+  ConversionRate: string;
 }
 
-export interface Appointment {
-  id: string;
-  patientId: string;
-  patientName: string;
-  doctorName: string;
-  dateTime: string;
-  type: string;
-  status: 'scheduled' | 'completed' | 'cancelled';
+export interface DashboardReservations {
+  TotalReservations: number;
+  TotalRevenue: number;
+  CancelledReservations: number;
+}
+
+export interface DailyTrend {
+  Date: string;
+  Bookings: number;
+  Cost: number;
+  PushPrice: number;
 }
 
 export interface DashboardStats {
-  totalPatients: number;
-  todayAppointments: number;
-  pendingConsultations: number;
-  criticalCases: number;
+  overview: DashboardOverview;
+  reservations: DashboardReservations;
+  dailyTrend: DailyTrend[];
+}
+
+export interface DashboardAlert {
+  type: 'warning' | 'info' | 'error';
+  title: string;
+  message: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
+export interface HotelPerformance {
+  HotelName: string;
+  HotelId: number;
+  TotalBookings: number;
+  TotalCost: number;
+  Profit: number;
+  MarginPercent: number;
+  SoldCount: number;
+}
+
+export interface ForecastDay {
+  Date: string;
+  BookingCount: number;
+  ExpectedRevenue: number;
+  ExpectedProfit: number;
+}
+
+export interface ForecastResponse {
+  summary: {
+    TotalExpectedRevenue: number;
+    TotalExpectedProfit: number;
+    TotalBookings: number;
+  };
+  daily: ForecastDay[];
+}
+
+export interface WorkerStatus {
+  buyroom: { enabled: boolean; status: string };
+  cancellation: { enabled: boolean; status: string };
+  priceUpdate: { enabled: boolean; status: string };
 }
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardService {
-  private apiUrl = 'https://medici-backend-dev.azurewebsites.net/api';
+  private baseUrl = environment.baseUrl;
 
   constructor(private http: HttpClient) {}
 
-  getStats(): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${this.apiUrl}/dashboard/stats`);
+  getStats(period: number = 30): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.baseUrl}dashboard/Stats?period=${period}`);
   }
 
-  getPatients(): Observable<Patient[]> {
-    return this.http.get<Patient[]>(`${this.apiUrl}/patients`);
+  getAlerts(): Observable<DashboardAlert[]> {
+    return this.http.get<DashboardAlert[]>(`${this.baseUrl}dashboard/Alerts`);
   }
 
-  getTodayAppointments(): Observable<Appointment[]> {
-    return this.http.get<Appointment[]>(`${this.apiUrl}/appointments/today`);
+  getHotelPerformance(limit: number = 10): Observable<HotelPerformance[]> {
+    return this.http.get<HotelPerformance[]>(`${this.baseUrl}dashboard/HotelPerformance?limit=${limit}`);
+  }
+
+  getForecast(days: number = 30): Observable<ForecastResponse> {
+    return this.http.get<ForecastResponse>(`${this.baseUrl}dashboard/Forecast?days=${days}`);
+  }
+
+  getWorkerStatus(): Observable<WorkerStatus> {
+    return this.http.get<WorkerStatus>(`${this.baseUrl}dashboard/WorkerStatus`);
   }
 }

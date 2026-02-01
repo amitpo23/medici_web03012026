@@ -4,6 +4,7 @@
  */
 
 const axios = require('axios');
+const logger = require('../config/logger');
 
 class InnstantClient {
   constructor() {
@@ -49,7 +50,7 @@ class InnstantClient {
         currency: 'EUR'
       };
 
-      console.log(`[Innstant] Searching hotel ${hotelId} for ${dateFrom} - ${dateTo}`);
+      logger.info(`[Innstant] Searching hotel ${hotelId} for ${dateFrom} - ${dateTo}`);
 
       const response = await axios.post(
         `${this.searchUrl}/api/v1/hotels/search`,
@@ -63,7 +64,7 @@ class InnstantClient {
         hotels: response.data.hotels || []
       };
     } catch (error) {
-      console.error('[Innstant] Search error:', error.message);
+      logger.error('[Innstant] Search error:', { error: error.message });
       return {
         success: false,
         error: error.message,
@@ -95,7 +96,7 @@ class InnstantClient {
         }]
       };
 
-      console.log(`[Innstant] PreBooking hotel ${hotelId}`);
+      logger.info(`[Innstant] PreBooking hotel ${hotelId}`);
 
       const response = await axios.post(
         `${this.bookUrl}/api/v1/booking/prebook`,
@@ -114,7 +115,7 @@ class InnstantClient {
         data: response.data
       };
     } catch (error) {
-      console.error('[Innstant] PreBook error:', error.message);
+      logger.error('[Innstant] PreBook error:', { error: error.message });
       return {
         success: false,
         error: error.message,
@@ -146,7 +147,7 @@ class InnstantClient {
         paymentInfo: paymentInfo || null
       };
 
-      console.log(`[Innstant] Confirming booking for ${guest.firstName} ${guest.lastName}`);
+      logger.info(`[Innstant] Confirming booking for ${guest.firstName} ${guest.lastName}`);
 
       const response = await axios.post(
         `${this.bookUrl}/api/v1/booking/confirm`,
@@ -163,7 +164,7 @@ class InnstantClient {
         data: response.data
       };
     } catch (error) {
-      console.error('[Innstant] Booking error:', error.message);
+      logger.error('[Innstant] Booking error:', { error: error.message });
       return {
         success: false,
         error: error.message,
@@ -178,7 +179,7 @@ class InnstantClient {
    */
   async cancelBooking(bookingId) {
     try {
-      console.log(`[Innstant] Cancelling booking ${bookingId}`);
+      logger.info(`[Innstant] Cancelling booking ${bookingId}`);
 
       const response = await axios.post(
         `${this.bookUrl}/api/v1/booking/cancel`,
@@ -193,7 +194,7 @@ class InnstantClient {
         data: response.data
       };
     } catch (error) {
-      console.error('[Innstant] Cancel error:', error.message);
+      logger.error('[Innstant] Cancel error:', { error: error.message });
       return {
         success: false,
         error: error.message,
@@ -218,7 +219,7 @@ class InnstantClient {
         data: response.data
       };
     } catch (error) {
-      console.error('[Innstant] Get booking error:', error.message);
+      logger.error('[Innstant] Get booking error:', { error: error.message });
       return {
         success: false,
         error: error.message

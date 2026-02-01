@@ -10,10 +10,11 @@
 
 require('dotenv').config();
 const cron = require('node-cron');
-const sql = require('mssql');
 const InnstantClient = require('../services/innstant-client');
 const SlackService = require('../services/slack-service');
-const dbConfig = require('../config/database');
+const { getPool } = require('../config/database');
+const logger = require('../config/logger');
+const { withRetry } = require('../services/retry-helper');
 
 const innstantClient = new InnstantClient();
 
@@ -33,25 +34,25 @@ async function getUnsoldRooms(pool) {
     const result = await pool.request()
         .input('deadlineDate', deadlineDate)
         .query(`
-            SELECT 
-                o.Id as OpportunityId,
-                o.SupplierBookingId,
-                o.BuyPrice as PurchasePrice,
-                o.DateFrom as CheckIn,
+            SELECT
+                o.OpportunityId,
+                o.PreBookId as SupplierBookingId,
+                o.Price as PurchasePrice,
+                o.DateForm as CheckIn,
                 o.DateTo as CheckOut,
-                o.DateInsert as CreatedAt,
-                h.id as HotelId,
-                h.HotelName,
-                rc.CategoryCode as RoomCode,
-                rc.CategoryName as RoomName
-            FROM MED_Opportunities o
-            INNER JOIN Med_Hotels h ON o.HotelId = h.id
-            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.id
-            WHERE o.Status = 'ACTIVE'
-            AND o.ReservationId IS NULL
-            AND o.DateFrom <= @deadlineDate
-            AND o.AutoCancelEnabled = 1
-            ORDER BY o.DateFrom ASC
+                o.DateCreate as CreatedAt,
+                h.HotelId,
+                h.name as HotelName,
+                rc.PMS_Code as RoomCode,
+                rc.Name as RoomName
+            FROM [MED_ֹOֹֹpportunities] o
+            INNER JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
+            WHERE o.IsActive = 1
+            AND o.IsSale = 0
+            AND o.DateForm <= @deadlineDate
+            AND o.FreeCancelation = 1
+            ORDER BY o.DateForm ASC
         `);
     
     return result.recordset;
@@ -61,17 +62,20 @@ async function getUnsoldRooms(pool) {
  * Cancel a room purchase
  */
 async function cancelRoom(pool, purchase) {
-    console.log(`[AutoCancel] Processing opportunity ${purchase.OpportunityId} for ${purchase.HotelName}`);
-    
+    logger.info(`[AutoCancel] Processing opportunity ${purchase.OpportunityId} for ${purchase.HotelName}`);
+
     try {
-        // Step 1: Cancel with Innstant (if supplier booking exists)
+        // Step 1: Cancel with Innstant (if supplier booking exists) - with retry
         let cancelResult = { cancellationId: 'N/A', refundAmount: 0 };
-        
+
         if (purchase.SupplierBookingId) {
-            cancelResult = await innstantClient.cancelBooking({
-                bookingId: purchase.SupplierBookingId,
-                reason: 'Auto-cancellation - room not sold before deadline'
-            });
+            cancelResult = await withRetry(
+                () => innstantClient.cancelBooking({
+                    bookingId: purchase.SupplierBookingId,
+                    reason: 'Auto-cancellation - room not sold before deadline'
+                }),
+                { maxRetries: 3, baseDelay: 1000, operationName: `Cancel booking ${purchase.SupplierBookingId}` }
+            );
         }
         
         // Step 2: Update opportunity status
@@ -79,13 +83,10 @@ async function cancelRoom(pool, purchase) {
             .input('opportunityId', purchase.OpportunityId)
             .input('cancellationId', cancelResult.cancellationId || 'N/A')
             .query(`
-                UPDATE MED_Opportunities 
-                SET Status = 'CANCELLED',
-                    CancellationId = @cancellationId,
-                    CancelledAt = GETDATE(),
-                    CancellationReason = 'Auto-cancellation - not sold before deadline',
-                    UpdatedAt = GETDATE()
-                WHERE Id = @opportunityId
+                UPDATE [MED_ֹOֹֹpportunities]
+                SET IsActive = 0,
+                    Lastupdate = GETDATE()
+                WHERE OpportunityId = @opportunityId
             `);
         
         // Step 3: Log the cancellation
@@ -99,8 +100,8 @@ async function cancelRoom(pool, purchase) {
                 lostAmount: purchase.PurchasePrice - (cancelResult.refundAmount || 0)
             }))
             .query(`
-                INSERT INTO MED_OpportunityLogs (OpportunityId, Action, Details, CreatedAt)
-                VALUES (@opportunityId, @action, @details, GETDATE())
+                INSERT INTO MED_OpportunitiesLog (OpportunityId, ActionType, RequestJson, DateTimeUTC)
+                VALUES (@opportunityId, @action, @details, GETUTCDATE())
             `);
         
         // Send Slack notification
@@ -115,8 +116,9 @@ async function cancelRoom(pool, purchase) {
             refundAmount: cancelResult.refundAmount || 0
         });
         
-        console.log(`[AutoCancel] ✓ Successfully cancelled opportunity ${purchase.OpportunityId}`);
-        console.log(`  Refund: $${(cancelResult.refundAmount || 0).toFixed(2)}`);
+        logger.info(`[AutoCancel] Successfully cancelled opportunity ${purchase.OpportunityId}`, {
+            refund: (cancelResult.refundAmount || 0).toFixed(2)
+        });
         
         return {
             success: true,
@@ -124,7 +126,7 @@ async function cancelRoom(pool, purchase) {
         };
         
     } catch (error) {
-        console.error(`[AutoCancel] ✗ Failed to cancel opportunity ${purchase.OpportunityId}:`, error.message);
+        logger.error(`[AutoCancel] Failed to cancel opportunity ${purchase.OpportunityId}`, { error: error.message });
         
         // Log the error
         await pool.request()
@@ -135,8 +137,8 @@ async function cancelRoom(pool, purchase) {
                 timestamp: new Date().toISOString()
             }))
             .query(`
-                INSERT INTO MED_OpportunityLogs (OpportunityId, Action, Details, CreatedAt)
-                VALUES (@opportunityId, @action, @details, GETDATE())
+                INSERT INTO MED_OpportunitiesLog (OpportunityId, ActionType, RequestJson, DateTimeUTC)
+                VALUES (@opportunityId, @action, @details, GETUTCDATE())
             `);
         
         // Send error notification
@@ -168,22 +170,21 @@ async function getExpiringRooms(pool) {
         .input('warningDate', warningDate)
         .input('deadlineDate', deadlineDate)
         .query(`
-            SELECT 
-                o.Id as OpportunityId,
-                o.BuyPrice as PurchasePrice,
-                o.DateFrom as CheckIn,
-                h.HotelName,
-                rc.CategoryName as RoomName,
-                DATEDIFF(HOUR, GETDATE(), o.DateFrom) - ${CANCELLATION_DEADLINE_HOURS} as HoursUntilCancel
-            FROM MED_Opportunities o
-            INNER JOIN Med_Hotels h ON o.HotelId = h.id
-            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.id
-            WHERE o.Status = 'ACTIVE'
-            AND o.ReservationId IS NULL
-            AND o.DateFrom BETWEEN @deadlineDate AND @warningDate
-            AND o.AutoCancelEnabled = 1
-            AND o.WarningNotificationSent = 0
-            ORDER BY o.DateFrom ASC
+            SELECT
+                o.OpportunityId,
+                o.Price as PurchasePrice,
+                o.DateForm as CheckIn,
+                h.name as HotelName,
+                rc.Name as RoomName,
+                DATEDIFF(HOUR, GETDATE(), o.DateForm) - ${CANCELLATION_DEADLINE_HOURS} as HoursUntilCancel
+            FROM [MED_ֹOֹֹpportunities] o
+            INNER JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+            INNER JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
+            WHERE o.IsActive = 1
+            AND o.IsSale = 0
+            AND o.DateForm BETWEEN @deadlineDate AND @warningDate
+            AND o.FreeCancelation = 1
+            ORDER BY o.DateForm ASC
         `);
     
     return result.recordset;
@@ -196,7 +197,7 @@ async function sendWarningNotifications(pool) {
     const expiringRooms = await getExpiringRooms(pool);
     
     if (expiringRooms.length > 0) {
-        console.log(`[AutoCancel] Sending warnings for ${expiringRooms.length} expiring rooms`);
+        logger.info(`[AutoCancel] Sending warnings for ${expiringRooms.length} expiring rooms`);
         
         for (const room of expiringRooms) {
             await SlackService.sendNotification(
@@ -212,9 +213,9 @@ async function sendWarningNotifications(pool) {
             await pool.request()
                 .input('opportunityId', room.OpportunityId)
                 .query(`
-                    UPDATE MED_Opportunities 
-                    SET WarningNotificationSent = 1
-                    WHERE Id = @opportunityId
+                    UPDATE [MED_ֹOֹֹpportunities]
+                    SET Lastupdate = GETDATE()
+                    WHERE OpportunityId = @opportunityId
                 `);
         }
     }
@@ -224,23 +225,22 @@ async function sendWarningNotifications(pool) {
  * Main worker function
  */
 async function runWorker() {
-    console.log(`[AutoCancel] Starting worker at ${new Date().toISOString()}`);
-    
-    let pool;
+    logger.info(`[AutoCancel] Starting worker at ${new Date().toISOString()}`);
+
     try {
-        pool = await sql.connect(dbConfig);
-        
+        const pool = await getPool();
+
         // Send warnings first
         await sendWarningNotifications(pool);
-        
+
         // Get and cancel unsold rooms
         const unsoldRooms = await getUnsoldRooms(pool);
-        console.log(`[AutoCancel] Found ${unsoldRooms.length} unsold rooms past deadline`);
-        
+        logger.info(`[AutoCancel] Found ${unsoldRooms.length} unsold rooms past deadline`);
+
         let successCount = 0;
         let failCount = 0;
         let totalLost = 0;
-        
+
         for (const room of unsoldRooms) {
             const result = await cancelRoom(pool, room);
             if (result.success) {
@@ -249,13 +249,13 @@ async function runWorker() {
                 failCount++;
                 totalLost += room.PurchasePrice;
             }
-            
+
             // Small delay between cancellations
             await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        
-        console.log(`[AutoCancel] Completed: ${successCount} cancelled, ${failCount} failed`);
-        
+
+        logger.info(`[AutoCancel] Completed: ${successCount} cancelled, ${failCount} failed`);
+
         // Send summary if any cancellations
         if (successCount > 0 || failCount > 0) {
             await SlackService.sendNotification(
@@ -265,35 +265,35 @@ async function runWorker() {
                 `Total at risk: $${totalLost.toFixed(2)}`
             );
         }
-        
+
     } catch (error) {
-        console.error('[AutoCancel] Worker error:', error);
+        logger.error('[AutoCancel] Worker error', { error: error.message, stack: error.stack });
         await SlackService.sendError({
             type: 'AutoCancel Worker Error',
             error: error.message
         });
-    } finally {
-        if (pool) {
-            await pool.close();
-        }
     }
 }
 
 // Check if running as main script
 if (require.main === module) {
     if (process.argv.includes('--once')) {
-        console.log('[AutoCancel] Running once...');
+        logger.info('[AutoCancel] Running once...');
         runWorker().then(() => {
-            console.log('[AutoCancel] Done');
+            logger.info('[AutoCancel] Done');
             process.exit(0);
         }).catch(err => {
-            console.error('[AutoCancel] Error:', err);
+            logger.error('[AutoCancel] Error', { error: err.message });
             process.exit(1);
         });
     } else {
-        console.log(`[AutoCancel] Starting scheduled worker (${CRON_SCHEDULE})`);
-        cron.schedule(CRON_SCHEDULE, runWorker);
-        
+        logger.info(`[AutoCancel] Starting scheduled worker (${CRON_SCHEDULE})`);
+        cron.schedule(CRON_SCHEDULE, () => {
+            runWorker().catch(err => {
+                logger.error('[AutoCancel] Cron execution error', { error: err.message });
+            });
+        });
+
         // Run immediately on start
         runWorker();
     }

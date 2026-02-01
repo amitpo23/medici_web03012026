@@ -130,6 +130,33 @@
                 <mat-icon class="nav-icon">business</mat-icon>
                 <span class="nav-text">Hotels</span>
             </a>
+
+            <!-- Reports Link -->
+            <a mat-list-item [routerLink]="['/reports']" routerLinkActive="active-link"
+               class="nav-item" aria-label="Reports">
+                <mat-icon class="nav-icon">assessment</mat-icon>
+                <span class="nav-text">Reports</span>
+            </a>
+
+            <!-- System Section -->
+            <mat-expansion-panel class="nav-panel" hideToggle>
+                <mat-expansion-panel-header>
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">admin_panel_settings</mat-icon>
+                        <span class="nav-text">System</span>
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/alerts']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">notifications_active</mat-icon>
+                        Alerts
+                    </a>
+                    <a mat-list-item [routerLink]="['/system-admin']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">settings</mat-icon>
+                        Admin Panel
+                    </a>
+                </mat-nav-list>
+            </mat-expansion-panel>
         </nav>
 
         <!-- Sidebar Footer -->

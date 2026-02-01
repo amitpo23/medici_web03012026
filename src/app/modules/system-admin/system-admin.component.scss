@@ -1,0 +1,409 @@
+.system-admin-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// --- Health Indicator (header dot) ---
+
+.health-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-left: 8px;
+
+  &.indicator-healthy {
+    background-color: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+  }
+
+  &.indicator-degraded {
+    background-color: #eab308;
+    box-shadow: 0 0 8px rgba(234, 179, 8, 0.6);
+  }
+
+  &.indicator-unhealthy {
+    background-color: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  }
+}
+
+// --- Status Colors ---
+
+.status-healthy {
+  color: #22c55e !important;
+}
+
+.status-degraded {
+  color: #eab308 !important;
+}
+
+.status-unhealthy {
+  color: #ef4444 !important;
+}
+
+// --- Status Cards ---
+
+.status-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .status-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.metric-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  mat-card-content {
+    padding: 0.75rem !important;
+  }
+}
+
+// --- Dependency List ---
+
+.dependency-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dependency-item {
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    border-color: #334155;
+  }
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+
+    :host-context(.dark) & {
+      background: #334155;
+      border-color: #475569;
+    }
+  }
+}
+
+.dependency-status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.status-healthy {
+    background: #dcfce7;
+    color: #166534;
+
+    :host-context(.dark) & {
+      background: #14532d;
+      color: #86efac;
+    }
+  }
+
+  &.status-degraded {
+    background: #fef9c3;
+    color: #854d0e;
+
+    :host-context(.dark) & {
+      background: #713f12;
+      color: #fde047;
+    }
+  }
+
+  &.status-unhealthy {
+    background: #fee2e2;
+    color: #991b1b;
+
+    :host-context(.dark) & {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+  }
+}
+
+// --- Logs Tab ---
+
+.search-card {
+  mat-card-content {
+    padding: 1rem !important;
+  }
+}
+
+.search-btn {
+  height: 56px;
+}
+
+.log-file-list-card {
+  width: 280px;
+  min-width: 280px;
+  max-height: 600px;
+  overflow-y: auto;
+
+  mat-nav-list {
+    padding-top: 0;
+  }
+}
+
+.log-file-name {
+  font-size: 0.85rem;
+  word-break: break-all;
+}
+
+.selected-file {
+  background-color: rgba(63, 81, 181, 0.08) !important;
+  border-left: 3px solid #3f51b5;
+
+  :host-context(.dark) & {
+    background-color: rgba(63, 81, 181, 0.2) !important;
+  }
+}
+
+.tail-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #22c55e;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.log-viewer-card {
+  min-height: 500px;
+}
+
+.log-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.log-content-viewer {
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 500px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+  border: 1px solid #1e293b;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #475569;
+    border-radius: 4px;
+
+    &:hover {
+      background: #64748b;
+    }
+  }
+}
+
+// --- Operational Mode Tab ---
+
+.current-mode-card {
+  border-top: 4px solid #6366f1;
+}
+
+.current-mode-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+
+  &.mode-read-only {
+    color: #ef4444;
+  }
+
+  &.mode-write-enabled {
+    color: #eab308;
+  }
+
+  &.mode-purchase-enabled {
+    color: #22c55e;
+  }
+}
+
+.current-mode-label {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-top: 0.5rem;
+
+  &.mode-read-only {
+    color: #ef4444;
+  }
+
+  &.mode-write-enabled {
+    color: #eab308;
+  }
+
+  &.mode-purchase-enabled {
+    color: #22c55e;
+  }
+}
+
+// Mode Selection Cards
+
+.mode-selection-card {
+  transition: all 0.3s ease;
+  cursor: default;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  &.mode-active {
+    border-width: 2px;
+    border-style: solid;
+  }
+
+  &.mode-card-read-only {
+    &.mode-active {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.04);
+
+      :host-context(.dark) & {
+        background: rgba(239, 68, 68, 0.1);
+      }
+    }
+
+    .mode-card-icon {
+      color: #ef4444;
+    }
+  }
+
+  &.mode-card-write-enabled {
+    &.mode-active {
+      border-color: #eab308;
+      background: rgba(234, 179, 8, 0.04);
+
+      :host-context(.dark) & {
+        background: rgba(234, 179, 8, 0.1);
+      }
+    }
+
+    .mode-card-icon {
+      color: #eab308;
+    }
+  }
+
+  &.mode-card-purchase-enabled {
+    &.mode-active {
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.04);
+
+      :host-context(.dark) & {
+        background: rgba(34, 197, 94, 0.1);
+      }
+    }
+
+    .mode-card-icon {
+      color: #22c55e;
+    }
+  }
+}
+
+.mode-card-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+}
+
+.mode-description {
+  min-height: 60px;
+}
+
+.mode-activate-btn {
+  min-width: 140px;
+}
+
+.active-indicator {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #22c55e;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+// Warning Card
+
+.warning-card {
+  border-left: 4px solid #eab308;
+  background: #fffbeb;
+
+  :host-context(.dark) & {
+    background: #422006;
+  }
+}
+
+// --- Tab Content ---
+
+.tab-content {
+  padding-bottom: 2rem;
+}
+
+// --- Responsive ---
+
+@media (max-width: 768px) {
+  .log-file-list-card {
+    width: 100%;
+    min-width: 100%;
+    max-height: 300px;
+  }
+
+  .current-mode-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .current-mode-label {
+    font-size: 1.5rem;
+  }
+}

@@ -2,6 +2,8 @@
  * Base AI Agent Class
  * Foundation for all prediction agents
  */
+const logger = require('../../config/logger');
+
 class BaseAgent {
     constructor(name, description) {
         this.name = name;
@@ -69,7 +71,7 @@ class BaseAgent {
      * Log agent activity
      */
     log(message) {
-        console.log(`[${this.name}] ${message}`);
+        logger.info(`[${this.name}] ${message}`);
     }
 }
 

@@ -89,7 +89,7 @@ class CompetitorScraper {
             if (extracted.price) {
               price = extracted.price;
               currency = extracted.currency;
-              console.log(`✅ Found price with selector ${selector}: ${price} ${currency}`);
+              logger.info(`Found price with selector ${selector}: ${price} ${currency}`);
               logger.info('Price found', { selector, price, currency });
             }
           }
@@ -129,7 +129,7 @@ class CompetitorScraper {
       };
       
     } catch (error) {
-      console.error('❌ Scraping failed:', error.message);
+      logger.error('Scraping failed:', { error: error.message });
       logger.error('Scraping failed', { 
         hotelName, 
         error: error.message,
@@ -156,7 +156,7 @@ class CompetitorScraper {
     const page = await context.newPage();
     
     try {
-      console.log(`🔍 Scraping Hotels.com for: ${hotelName}`);
+      logger.info(`Scraping Hotels.com for: ${hotelName}`);
       
       const searchUrl = `https://www.hotels.com/search.do?q-destination=${encodeURIComponent(hotelName)}&q-check-in=${checkIn}&q-check-out=${checkOut}&q-rooms=1&q-room-0-adults=${guests}`;
       
@@ -194,7 +194,7 @@ class CompetitorScraper {
    * Compare prices across multiple platforms
    */
   async comparePrices(hotelName, checkIn, checkOut, guests = 2) {
-    console.log(`💰 Comparing prices for: ${hotelName}`);
+    logger.info(`Comparing prices for: ${hotelName}`);
     
     const results = await Promise.allSettled([
       this.scrapeBookingCom(hotelName, checkIn, checkOut, guests),

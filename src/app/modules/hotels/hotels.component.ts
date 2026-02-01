@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormGroup, FormBuilder } from '@angular/forms';
 import { MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition, MatSnackBar } from '@angular/material/snack-bar';
 import { AgGridAngular } from 'ag-grid-angular';
 import { GridApi, ColumnApi, ColDef, GridReadyEvent, FirstDataRenderedEvent, CellClickedEvent } from 'ag-grid-community';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Observable, startWith, map } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CockpitCommon } from 'src/app/common';
 import { MedHotel } from 'src/app/core/models/med-hotel';
 import { environment } from 'src/app/environments/environment';
@@ -18,7 +19,8 @@ import { ProviderRendererComponent } from '../shared/provider-renderer/provider-
   templateUrl: './hotels.component.html',
   styleUrls: ['./hotels.component.scss']
 })
-export class HotelsComponent {
+export class HotelsComponent implements OnInit, OnDestroy {
+  private _unsubscribeAll: Subject<void> = new Subject<void>();
   @ViewChild(AgGridAngular) agGrid!: AgGridAngular;
   private gridApi!: GridApi<any>;
   private columnApi!: ColumnApi;
@@ -224,8 +226,13 @@ export class HotelsComponent {
     }
   }
 
+  ngOnDestroy(): void {
+    this._unsubscribeAll.next();
+    this._unsubscribeAll.complete();
+  }
+
   ngOnInit(): void {
-    this.comm.comm.subscribe((i: any) => {
+    this.comm.comm.pipe(takeUntil(this._unsubscribeAll)).subscribe((i: any) => {
       if (i != '') {
         let split = i.split(':');
         let op = split[0];
@@ -246,7 +253,12 @@ export class HotelsComponent {
     //     navigation.toggle();
     //   }
     // }
-    var columnState = JSON.parse(localStorage.getItem('column_defs_reservation')!);
+    let columnState = null;
+    try {
+      columnState = JSON.parse(localStorage.getItem('column_defs_reservation') || 'null');
+    } catch {
+      localStorage.removeItem('column_defs_reservation');
+    }
     if (columnState) {
       columnState.forEach((element: any) => {
         let clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
@@ -274,12 +286,9 @@ export class HotelsComponent {
     this.gridApi.paginationSetPageSize(Number(value));
   }
   onFilterChanged(params: any) {
-    // this.countStatistics();
   }
   onFirstDataRendered(params: FirstDataRenderedEvent) {
-    // this.countStatistics();
   }
   onCellClicked(e: CellClickedEvent): void {
-    // console.log('cellClicked', e);
   }
 }

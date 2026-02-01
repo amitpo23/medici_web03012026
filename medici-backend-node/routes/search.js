@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const InnstantClient = require('../services/innstant-client');
 
@@ -56,7 +57,7 @@ router.post('/Search', async (req, res) => {
         res.json(innstantResults);
         return;
       } catch (innstantError) {
-        console.error('Innstant API error, falling back to DB:', innstantError.message);
+        logger.error('Innstant API error, falling back to DB', { error: innstantError.message });
       }
     }
 
@@ -73,7 +74,7 @@ router.post('/Search', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error searching rooms:', err);
+    logger.error('Error searching rooms', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });

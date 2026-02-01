@@ -1,22 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
+const logger = require('../config/logger');
 
 // Get reservation cancellations
 router.get('/ReservationCancel', async (req, res) => {
   try {
-    const { force } = req.query;
     const pool = await getPool();
     const result = await pool.request()
       .query(`
-        SELECT * FROM MED_ReservationCancel
-        WHERE IsActive = 1
-        ORDER BY dateInsert DESC
+        SELECT * FROM Med_ReservationCancel
+        ORDER BY DateInsert DESC
       `);
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching reservation cancellations:', err);
+    logger.error('Error fetching reservation cancellations', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -24,18 +23,18 @@ router.get('/ReservationCancel', async (req, res) => {
 // Get reservation details
 router.get('/GetDetails', async (req, res) => {
   try {
-    const { soldId } = req.query;
+    const { id } = req.query;
     const pool = await getPool();
     const result = await pool.request()
-      .input('soldId', soldId)
+      .input('id', id)
       .query(`
-        SELECT * FROM MED_Reservation
-        WHERE SoldId = @soldId
+        SELECT * FROM Med_Reservation
+        WHERE Id = @id
       `);
 
     res.json(result.recordset[0] || null);
   } catch (err) {
-    console.error('Error fetching reservation details:', err);
+    logger.error('Error fetching reservation details', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -43,18 +42,16 @@ router.get('/GetDetails', async (req, res) => {
 // Get reservation modifications
 router.get('/ReservationModify', async (req, res) => {
   try {
-    const { force } = req.query;
     const pool = await getPool();
     const result = await pool.request()
       .query(`
-        SELECT * FROM MED_ReservationModify
-        WHERE IsActive = 1
-        ORDER BY dateInsert DESC
+        SELECT * FROM Med_ReservationModify
+        ORDER BY DateInsert DESC
       `);
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching reservation modifications:', err);
+    logger.error('Error fetching reservation modifications', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -65,13 +62,13 @@ router.get('/Log', async (req, res) => {
     const pool = await getPool();
     const result = await pool.request()
       .query(`
-        SELECT * FROM MED_ReservationLog
-        ORDER BY dateInsert DESC
+        SELECT * FROM Med_ReservationNotificationLog
+        ORDER BY DateInsert DESC
       `);
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching reservation log:', err);
+    logger.error('Error fetching reservation log', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });

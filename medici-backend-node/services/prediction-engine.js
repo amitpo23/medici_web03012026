@@ -8,6 +8,7 @@ const CompetitionMonitorAgent = require('./ai-agents/competition-monitor-agent')
 const OpportunityDetectorAgent = require('./ai-agents/opportunity-detector-agent');
 const DecisionMakerAgent = require('./ai-agents/decision-maker-agent');
 const { getPool } = require('../config/database');
+const logger = require('../config/logger');
 
 class PredictionEngine {
     constructor() {
@@ -100,7 +101,7 @@ class PredictionEngine {
 
             return result.recordset;
         } catch (error) {
-            console.error('Error fetching booking data:', error);
+            logger.error('Error fetching booking data:', { error: error.message });
             throw error;
         }
     }
@@ -119,7 +120,7 @@ class PredictionEngine {
             `);
             return result.recordset;
         } catch (error) {
-            console.error('Error fetching cities:', error);
+            logger.error('Error fetching cities:', { error: error.message });
             return [];
         }
     }
@@ -146,7 +147,7 @@ class PredictionEngine {
             const result = await pool.request().query(query);
             return result.recordset;
         } catch (error) {
-            console.error('Error fetching hotels:', error);
+            logger.error('Error fetching hotels:', { error: error.message });
             return [];
         }
     }
@@ -163,13 +164,13 @@ class PredictionEngine {
             futureDays = 30 
         } = options;
 
-        console.log('🤖 Starting AI Prediction Engine...');
-        console.log(`   Filters: hotel=${hotelId}, city=${city}`);
-        console.log(`   Instructions: ${userInstructions || 'none'}`);
+        logger.info('Starting AI Prediction Engine...');
+        logger.info(`   Filters: hotel=${hotelId}, city=${city}`);
+        logger.info(`   Instructions: ${userInstructions || 'none'}`);
 
         // Fetch data
         const bookings = await this.fetchBookingData({ hotelId, city });
-        console.log(`   Loaded ${bookings.length} bookings for analysis`);
+        logger.info(`   Loaded ${bookings.length} bookings for analysis`);
 
         if (bookings.length === 0) {
             return {
@@ -188,7 +189,7 @@ class PredictionEngine {
         };
 
         // Run all agents in parallel
-        console.log('   Running 5 AI agents...');
+        logger.info('   Running 5 AI agents...');
         
         const [
             marketAnalysis,
@@ -216,7 +217,7 @@ class PredictionEngine {
             riskTolerance
         });
 
-        console.log('   ✅ Analysis complete!');
+        logger.info('   Analysis complete!');
 
         return {
             success: true,
@@ -332,7 +333,7 @@ class PredictionEngine {
      */
     clearCache() {
         this.cache.clear();
-        console.log('🗑️ Prediction engine cache cleared');
+        logger.info('Prediction engine cache cleared');
     }
 }
 

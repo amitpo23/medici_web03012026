@@ -1,0 +1,207 @@
+// ========================================
+// Reports Component Styles
+// ========================================
+
+.reports-container {
+  padding: 24px;
+  background: var(--bg-secondary, #f5f7fa);
+  min-height: calc(100vh - 64px);
+}
+
+.reports-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .header-content {
+    h1 {
+      margin: 0 0 8px 0;
+      color: var(--text-primary, #1e293b);
+      font-size: 28px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #3b82f6;
+      }
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--text-secondary, #64748b);
+      font-size: 15px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .date-field {
+      width: 160px;
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+
+    .refresh-btn {
+      border-color: var(--border-color, #e2e8f0);
+      color: var(--text-secondary, #64748b);
+      height: 56px;
+
+      mat-icon {
+        margin-right: 4px;
+      }
+
+      &:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+      }
+    }
+  }
+}
+
+// Loading overlay
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+
+  p {
+    margin-top: 16px;
+    color: var(--text-secondary, #64748b);
+    font-size: 14px;
+  }
+}
+
+// Tab styling
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-panel {
+  padding: 24px 0;
+}
+
+// Table styles
+.table-container {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  th.mat-mdc-header-cell {
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-primary, #1e293b);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-color, #e2e8f0);
+  }
+
+  td.mat-mdc-cell {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary, #334155);
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--bg-secondary, #f8fafc);
+  }
+}
+
+// Profit/Loss color coding
+.profit-positive {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.profit-negative {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+// No data state
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: var(--text-secondary, #94a3b8);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+// Dark mode support
+:host-context(.dark) {
+  .report-table {
+    th.mat-mdc-header-cell {
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    tr.mat-mdc-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .reports-container {
+    padding: 16px;
+  }
+
+  .reports-header {
+    flex-direction: column;
+
+    .header-actions {
+      width: 100%;
+
+      .date-field {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .refresh-btn {
+        width: 100%;
+      }
+    }
+  }
+
+  .tab-panel {
+    padding: 16px 0;
+  }
+}

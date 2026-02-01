@@ -9,7 +9,7 @@ export interface ChatMessage {
   content: string;
   timestamp: Date;
   sqlQuery?: string;
-  results?: any[];
+  results?: Record<string, unknown>[];
   error?: string;
 }
 
@@ -22,6 +22,7 @@ export interface QuickStatsResponse {
     TotalRevenue: number;
     TotalProfit: number;
   };
+  timestamp: string;
 }
 
 export interface AskQuestionRequest {
@@ -33,10 +34,12 @@ export interface AskQuestionResponse {
   success: boolean;
   question: string;
   answer?: string;
-  sqlQuery?: string;
-  results?: any[];
   explanation?: string;
+  sqlQuery?: string;
+  results?: Record<string, unknown>[];
+  rowCount?: number;
   error?: string;
+  suggestion?: string;
   usedAzureOpenAI?: boolean;
   model?: string;
 }
@@ -47,17 +50,21 @@ export interface CustomQueryRequest {
 
 export interface CustomQueryResponse {
   success: boolean;
-  results: any[];
+  results: Record<string, unknown>[];
   rowCount: number;
   error?: string;
 }
 
+export interface SchemaTable {
+  TABLE_NAME: string;
+  COLUMNS: string;
+}
+
 export interface SchemaResponse {
   success: boolean;
-  schema: {
-    TABLE_NAME: string;
-    COLUMNS: string;
-  }[];
+  schema: SchemaTable[];
+  tables: SchemaTable[];
+  count: number;
 }
 
 export interface SuggestionsResponse {
@@ -69,49 +76,31 @@ export interface SuggestionsResponse {
   providedIn: 'root'
 })
 export class AIChatService {
-  private baseUrl = environment.apiUrl || environment.baseUrl;
+  private baseUrl = environment.baseUrl;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Get quick database statistics
-   */
   getQuickStats(): Observable<QuickStatsResponse> {
-    return this.http.get<QuickStatsResponse>(`${this.baseUrl}/ai-chat/quick-stats`);
+    return this.http.get<QuickStatsResponse>(`${this.baseUrl}ai-chat/quick-stats`);
   }
 
-  /**
-   * Ask a natural language question
-   */
   askQuestion(request: AskQuestionRequest): Observable<AskQuestionResponse> {
-    return this.http.post<AskQuestionResponse>(`${this.baseUrl}/ai-chat/ask`, request);
+    return this.http.post<AskQuestionResponse>(`${this.baseUrl}ai-chat/ask`, request);
   }
 
-  /**
-   * Execute a custom SQL query
-   */
   executeCustomQuery(request: CustomQueryRequest): Observable<CustomQueryResponse> {
-    return this.http.post<CustomQueryResponse>(`${this.baseUrl}/ai-chat/custom-query`, request);
+    return this.http.post<CustomQueryResponse>(`${this.baseUrl}ai-chat/custom-query`, request);
   }
 
-  /**
-   * Get database schema
-   */
   getDatabaseSchema(): Observable<SchemaResponse> {
-    return this.http.get<SchemaResponse>(`${this.baseUrl}/ai-chat/schema`);
+    return this.http.get<SchemaResponse>(`${this.baseUrl}ai-chat/schema`);
   }
 
-  /**
-   * Get query suggestions
-   */
   getQuerySuggestions(): Observable<SuggestionsResponse> {
-    return this.http.get<SuggestionsResponse>(`${this.baseUrl}/ai-chat/suggestions`);
+    return this.http.get<SuggestionsResponse>(`${this.baseUrl}ai-chat/suggestions`);
   }
 
-  /**
-   * Generate a unique message ID
-   */
   generateMessageId(): string {
-    return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 }

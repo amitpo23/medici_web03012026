@@ -201,7 +201,7 @@ export class AIDatabaseChatComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (response) => {
             if (response.success) {
-              this.databaseSchema = response.schema;
+              this.databaseSchema = response.schema || response.tables || [];
             }
             this.isLoadingSchema = false;
           },

@@ -3,40 +3,44 @@ import {HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest}
 import {Observable, throwError} from 'rxjs';
 import {catchError} from 'rxjs/operators';
 import {AuthService} from './auth.service';
+import {Router} from '@angular/router';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  constructor(private _authService: AuthService) {}
+  constructor(
+    private _authService: AuthService,
+    private _router: Router
+  ) {}
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     let newReq = req.clone();
 
-    // Request
-    //
-    // If the access token didn't expire, add the Authorization header.
-    // We won't add the Authorization header if the access token expired.
-    // This will force the server to return a "401 Unauthorized" response
-    // for the protected API routes which our response interceptor will
-    // catch and delete the access token from the local storage while logging
-    // the user out from the app!
-    let currentToken = localStorage.getItem('auth');
-    if (currentToken != null && currentToken != 'undefined') {
+    const currentToken = localStorage.getItem('auth');
+    if (currentToken && currentToken !== 'undefined') {
+      // Strip 'Bearer ' prefix if already present to avoid duplication
+      const token = currentToken.startsWith('Bearer ') ? currentToken.slice(7) : currentToken;
       newReq = req.clone({
         setHeaders: {
-          'Authorization': 'Bearer ' + currentToken,
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Credentials': 'true'
+          'Authorization': `Bearer ${token}`
         }
       });
     }
-    return next.handle(newReq).pipe(
-      catchError((error) => {
 
-        if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 400)) {
+    return next.handle(newReq).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 401) {
+          // Unauthorized - sign out and redirect to login
           this._authService.signOut();
+          this._router.navigate(['/sign-in']);
+        } else if (error.status === 403) {
+          // Forbidden - user doesn't have permission
+          console.error('Access forbidden:', error.url);
+        } else if (error.status === 0 || error.status === 503) {
+          // Network error or service unavailable
+          console.error('Service unavailable or network error');
         }
 
-        return throwError(error);
+        return throwError(() => error);
       })
     );
   }
