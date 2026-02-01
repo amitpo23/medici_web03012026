@@ -19,23 +19,23 @@ router.get('/Stats', async (req, res) => {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - parseInt(period));
 
-    // Booking statistics from MED_Book
+    // Booking statistics from MED_Book (simplified query)
     const bookStats = await pool.request()
       .input('startDate', startDate)
       .query(`
         SELECT
-          COUNT(b.id) as TotalBookings,
-          SUM(b.price) as TotalCost,
-          SUM(ISNULL(b.lastPrice, 0)) as TotalPushPrice,
-          SUM(ISNULL(b.lastPrice, 0) - b.price) as TotalExpectedProfit,
-          AVG(CASE WHEN b.lastPrice > 0 THEN ((b.lastPrice - b.price) / b.lastPrice * 100) END) as AvgMargin,
-          AVG(b.price) as AvgBookingCost,
-          SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as SoldCount,
-          SUM(CASE WHEN b.IsActive = 1 AND b.IsSold = 0 THEN 1 ELSE 0 END) as ActiveCount,
-          SUM(CASE WHEN b.IsActive = 0 AND b.IsSold = 0 THEN 1 ELSE 0 END) as CancelledCount
-        FROM MED_Book b
-        WHERE b.DateInsert >= @startDate
-        AND b.price > 0
+          COUNT(id) as TotalBookings,
+          SUM(price) as TotalCost,
+          SUM(ISNULL(lastPrice, 0)) as TotalPushPrice,
+          SUM(ISNULL(lastPrice, 0) - price) as TotalExpectedProfit,
+          AVG(CASE WHEN lastPrice > 0 THEN ((lastPrice - price) / lastPrice * 100) END) as AvgMargin,
+          AVG(price) as AvgBookingCost,
+          SUM(CASE WHEN IsSold = 1 THEN 1 ELSE 0 END) as SoldCount,
+          SUM(CASE WHEN IsActive = 1 AND IsSold = 0 THEN 1 ELSE 0 END) as ActiveCount,
+          SUM(CASE WHEN IsActive = 0 AND IsSold = 0 THEN 1 ELSE 0 END) as CancelledCount
+        FROM MED_Book
+        WHERE DateInsert >= @startDate
+        AND price > 0
       `);
 
     // Reservation (sales) statistics from Med_Reservation
@@ -43,11 +43,11 @@ router.get('/Stats', async (req, res) => {
       .input('startDate', startDate)
       .query(`
         SELECT
-          COUNT(r.Id) as TotalReservations,
-          SUM(r.AmountAfterTax) as TotalRevenue,
-          SUM(CASE WHEN r.IsCanceled = 1 THEN 1 ELSE 0 END) as CancelledReservations
-        FROM Med_Reservation r
-        WHERE r.DateInsert >= @startDate
+          COUNT(Id) as TotalReservations,
+          SUM(ISNULL(AmountAfterTax, 0)) as TotalRevenue,
+          SUM(CASE WHEN IsCanceled = 1 THEN 1 ELSE 0 END) as CancelledReservations
+        FROM Med_Reservation
+        WHERE DateInsert >= @startDate
       `);
 
     // Conversion rate
@@ -62,14 +62,14 @@ router.get('/Stats', async (req, res) => {
       .input('startDate', startDate)
       .query(`
         SELECT TOP 7
-          CONVERT(DATE, b.DateInsert) as Date,
-          COUNT(b.id) as Bookings,
-          SUM(b.price) as Cost,
-          SUM(ISNULL(b.lastPrice, 0)) as PushPrice
-        FROM MED_Book b
-        WHERE b.DateInsert >= @startDate
-        AND b.price > 0
-        GROUP BY CONVERT(DATE, b.DateInsert)
+          CONVERT(DATE, DateInsert) as Date,
+          COUNT(id) as Bookings,
+          SUM(price) as Cost,
+          SUM(ISNULL(lastPrice, 0)) as PushPrice
+        FROM MED_Book
+        WHERE DateInsert >= @startDate
+        AND price > 0
+        GROUP BY CONVERT(DATE, DateInsert)
         ORDER BY Date DESC
       `);
 
@@ -83,8 +83,8 @@ router.get('/Stats', async (req, res) => {
     });
 
   } catch (err) {
-    logger.error('Error fetching dashboard stats', { error: err.message });
-    res.status(500).json({ error: 'Database error' });
+    logger.error('Error fetching dashboard stats', { error: err.message, stack: err.stack });
+    res.status(500).json({ error: 'Database error', message: err.message });
   }
 });
 
