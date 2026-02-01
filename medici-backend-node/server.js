@@ -87,31 +87,28 @@ const alertsRoutes = require('./routes/alerts');
 const healthRoutes = require('./routes/health');
 const aiRagRoutes = require('./routes/ai-rag');
 
-// Public routes (no auth required)
+// Public routes (no auth required - OPEN ACCESS FOR DEVELOPMENT)
 app.use('/sign-in', authLimiter, authRoutes);
 app.use('/health', healthRoutes);
-app.use('/Dashboard', dashboardRoutes); // Temporary public access for testing
+app.use('/Dashboard', dashboardRoutes);
+app.use('/Opportunity', opportunityRoutes);
+app.use('/Book', bookingRoutes);
+app.use('/Reservation', reservationRoutes);
+app.use('/SalesRoom', salesRoomRoutes);
+app.use('/Search', searchRoutes);
+app.use('/Errors', errorsRoutes);
+app.use('/hotels', hotelsRoutes);
+app.use('/Misc', miscRoutes);
+app.use('/ZenithApi', zenithRoutes);
+app.use('/ai', aiPredictionRoutes);
+app.use('/reports', reportsRoutes);
+app.use('/ai-chat', aiChatRoutes);
+app.use('/scraper', scraperRoutes);
+app.use('/logs', logsRoutes);
+app.use('/alerts', alertsRoutes);
 
-// Protected routes (JWT auth required + operational mode enforcement)
-app.use('/Opportunity', verifyToken, enforceMode, opportunityRoutes);
-app.use('/Book', verifyToken, enforceMode, bookingRoutes);
-app.use('/Reservation', verifyToken, enforceMode, reservationRoutes);
-app.use('/SalesRoom', verifyToken, enforceMode, salesRoomRoutes);
-app.use('/Search', verifyToken, enforceMode, searchRoutes);
-app.use('/Errors', verifyToken, errorsRoutes);
-app.use('/hotels', verifyToken, hotelsRoutes);
-app.use('/Misc', verifyToken, miscRoutes);
-app.use('/ZenithApi', verifyToken, enforceMode, zenithRoutes);
-app.use('/ai', verifyToken, aiPredictionRoutes);
-app.use('/reports', verifyToken, reportsRoutes);
-// app.use('/dashboard', verifyToken, dashboardRoutes); // Moved to public routes for testing
-app.use('/ai-chat', verifyToken, aiChatRoutes);
-app.use('/scraper', verifyToken, heavyLimiter, scraperRoutes);
-
-// Admin-only routes
+// Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
-app.use('/logs', verifyToken, logsRoutes);
-app.use('/alerts', verifyToken, alertsRoutes);
 
 // Health check
 app.get('/', (req, res) => {
