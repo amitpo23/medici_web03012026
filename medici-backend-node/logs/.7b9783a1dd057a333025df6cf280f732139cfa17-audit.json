@@ -6,9 +6,9 @@
     "auditLog": "/workspaces/medici_web03012026/medici-backend-node/logs/.7b9783a1dd057a333025df6cf280f732139cfa17-audit.json",
     "files": [
         {
-            "date": 1769578785085,
-            "name": "/workspaces/medici_web03012026/medici-backend-node/logs/debug-2026-01-28.log",
-            "hash": "2d839375abc7b879c36f40026f27fa493d0ee83eb964cc4c5736b06346fb9e2c"
+            "date": 1769945044194,
+            "name": "/workspaces/medici_web03012026/medici-backend-node/logs/debug-2026-02-01.log",
+            "hash": "43e64630f819b2478320472373b4ebe2cbc20d4ce5522707bf60e2a90d0625b2"
         }
     ],
     "hashType": "sha256"

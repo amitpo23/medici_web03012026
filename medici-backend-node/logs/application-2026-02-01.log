@@ -1,0 +1,37 @@
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-01 11:24:04"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-01 11:24:47"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-01 11:26:22"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-01 11:26:23"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-01 11:26:31"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-01 11:26:33"}
+{"level":"info","message":"Database connection verified","timestamp":"2026-02-01 11:26:33"}
+{"database":"medici-db-dev-copy","environment":"development","level":"info","message":"🚀 Medici Hotels Server Started","nodeVersion":"v24.11.1","port":"3000","timestamp":"2026-02-01 11:26:33"}
+{"level":"info","message":"Starting Alerts Agent...","timestamp":"2026-02-01 11:26:33"}
+{"interval":"5 minutes","level":"info","message":"🚨 Alerts Agent Started","timestamp":"2026-02-01 11:26:33"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:26:33"}
+{"count":33,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:26:33"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:26:33","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:31:33"}
+{"count":42,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:31:33"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:31:33","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:36:33"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:36:33"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:36:33","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:41:33"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:41:33"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:41:33","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:46:33"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:46:33"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:46:33","triggeredAlerts":0}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-01 11:47:55"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-01 11:47:57"}
+{"level":"info","message":"Database connection verified","timestamp":"2026-02-01 11:47:57"}
+{"database":"medici-db-dev-copy","environment":"development","level":"info","message":"🚀 Medici Hotels Server Started","nodeVersion":"v24.11.1","port":"3000","timestamp":"2026-02-01 11:47:57"}
+{"level":"info","message":"Starting Alerts Agent...","timestamp":"2026-02-01 11:47:57"}
+{"interval":"5 minutes","level":"info","message":"🚨 Alerts Agent Started","timestamp":"2026-02-01 11:47:57"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:47:57"}
+{"count":39,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:47:57"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:47:57","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 11:52:57"}
+{"count":39,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 11:52:57"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 11:52:57","triggeredAlerts":0}
