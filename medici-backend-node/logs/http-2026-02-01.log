@@ -44,3 +44,6 @@
 {"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 12:07:57"}
 {"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 12:07:57"}
 {"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 12:07:57","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-01 12:12:57"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-01 12:12:57"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-01 12:12:57","triggeredAlerts":0}
