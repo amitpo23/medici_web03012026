@@ -28,6 +28,11 @@ jobs:
           npm run build --if-present
           npm run test --if-present || true
 
+                - name: Clean up log files before packaging
+        run: |
+          cd medici-backend-node
+          find . -name "*.log" -type f -delete
+
       - name: Zip artifact for deployment
         run: |
           cd medici-backend-node
