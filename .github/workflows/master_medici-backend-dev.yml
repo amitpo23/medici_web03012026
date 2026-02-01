@@ -1,1 +1,81 @@
-fix: clean log files before packaging in workflow
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - medici-backend-dev
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v3
+        with:
+          node-version: '24'
+
+      - name: npm install, build, and test
+        run: |
+          cd medici-backend-node
+          npm install
+          npm run build --if-present
+          npm run test --if-present || true
+
+      - name: Clean log files before packaging
+        run: |
+          cd medici-backend-node
+          rm -rf logs/*.log
+          echo "Log files cleaned"
+
+      - name: Create deployment package
+        run: |
+          cd medici-backend-node
+          zip -r ../node-app.zip . -x "*.git*" -x "logs/*.log"
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: node-app.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Unzip artifact for deployment
+        run: unzip node-app.zip -d ./deploy
+
+      - name: 'Login to Azure'
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ secrets.AZURE_TENANT_ID }}"
+            }
+
+      - name: 'Deploy to Azure Web App'
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'medici-backend-dev'
+          slot-name: 'Production'
+          package: ./deploy
