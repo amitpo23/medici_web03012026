@@ -303,10 +303,10 @@ export class ReservationComponent implements OnInit, OnDestroy {
   ];
 
   profitFormatter(params: any) {
-    let presise = 100;
+    const presise = 100;
     try {
-      let value = params.data.salePrice - params.data.pushPrice;
-      let num = Math.round((value + Number.EPSILON) * presise) / presise;
+      const value = params.data.salePrice - params.data.pushPrice;
+      const num = Math.round((value + Number.EPSILON) * presise) / presise;
       return `$${num}`;
     }
     catch (e) {
@@ -335,7 +335,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     this.applyFilter('');
   }
   applyFilter(data: any) {
-    var instance = this.gridApi.getFilterInstance('hotelName');
+    const instance = this.gridApi.getFilterInstance('hotelName');
 
     instance!.setModel({
       type: 'contains',
@@ -346,7 +346,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
   }
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
@@ -382,10 +382,10 @@ export class ReservationComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.comm.comm.pipe(takeUntil(this._unsubscribeAll)).subscribe((i: any) => {
       if (i != '') {
-        let split = i.split(':');
-        let op = split[0];
+        const split = i.split(':');
+        const op = split[0];
         if (op == 'update_new_version') {
-          let msg = 'Please Refresh you browser for new version: ' + split[1];
+          const msg = 'Please Refresh you browser for new version: ' + split[1];
           this.openSnackBar(msg, false);
         }
       }
@@ -416,7 +416,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     }
     if (columnState) {
       columnState.forEach((element: any) => {
-        let clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
+        const clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
         if (clmn) {
           this.columnDefs.push(clmn);
         }
@@ -436,7 +436,7 @@ export class ReservationComponent implements OnInit, OnDestroy {
     this.rowData$ = this.http.get<any[]>(this.baseUrl + 'SalesRoom/Reservations?force=' + force);
   }
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }

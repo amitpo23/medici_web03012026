@@ -51,7 +51,7 @@ export class SalesRoomFormComponent implements OnInit {
   updateName() {
     this.errorMessage = '';
     this.showError = false;
-    let txt = this.options.find(i => i.value == this.selected)!.text;
+    const txt = this.options.find(i => i.value == this.selected)!.text;
 
     this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -59,7 +59,7 @@ export class SalesRoomFormComponent implements OnInit {
         message: "Are you sure you want to set status of Update Name to '" + txt + "'?"
       }
     }).afterClosed().subscribe((result: any) => {
-      let toSave: UpdateNameResult = {
+      const toSave: UpdateNameResult = {
         id: this.item.id,
         result: Number.parseInt(this.selected),
       };

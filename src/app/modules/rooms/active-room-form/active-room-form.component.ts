@@ -22,9 +22,9 @@ export class ActiveRoomFormComponent implements OnInit {
   get currentPrice() { return this.composeForm.get('currentPrice'); }
 
   priceFormat(price: number) : number {
-    let presise = 100;
+    const presise = 100;
         if (price) {
-            let num = Math.round((price + Number.EPSILON) * presise) / presise;
+            const num = Math.round((price + Number.EPSILON) * presise) / presise;
             return num;
         }
         else {
@@ -37,8 +37,8 @@ export class ActiveRoomFormComponent implements OnInit {
     private http: HttpClient,
     @Inject(MAT_DIALOG_DATA) public data: any,
   ) { 
-    let buyPrice = this.priceFormat(data.item.price);
-    let currentPrice = this.priceFormat(data.item.pushPrice);
+    const buyPrice = this.priceFormat(data.item.price);
+    const currentPrice = this.priceFormat(data.item.pushPrice);
     this.composeForm = this._formBuilder.group({
       preBookId : [
         data.item.id, [

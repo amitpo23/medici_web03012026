@@ -90,7 +90,7 @@ export class SearchPriceComponent implements OnInit {
           txt = '<span style="color:red"><i class="material-icons">clear</i></span>';
         }
 
-        let result = '<div>' + txt + '</div>';
+        const result = '<div>' + txt + '</div>';
 
         return result;
       },
@@ -128,11 +128,11 @@ export class SearchPriceComponent implements OnInit {
 
         for (let index = 0; index < params.value.length; index++) {
           const element = params.value[index];
-          let txt = `Name:${element.name}, hotelId:${element.hotelId}, category:${element.category}, board:${element.board}, bedding:${element.bedding}`;
+          const txt = `Name:${element.name}, hotelId:${element.hotelId}, category:${element.category}, board:${element.board}, bedding:${element.bedding}`;
           fullText = fullText + txt + '\n';
         }
 
-        let result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
+        const result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
 
         return result;
       },
@@ -153,10 +153,10 @@ export class SearchPriceComponent implements OnInit {
         let fullText = '';
         for (let index = 0; index < params.value.length; index++) {
           const element = params.value[index];
-          let txt = `Name:${element.name}, Id:${element.id}`;
+          const txt = `Name:${element.name}, Id:${element.id}`;
           fullText = fullText + txt + '\n';
         }
-        let result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
+        const result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
         return result;
       },
       maxWidth: 150,
@@ -176,17 +176,17 @@ export class SearchPriceComponent implements OnInit {
         let fullText = '';
         //let result = '<div>Type:' + params.value.type;
         if (params.value.frames != null) {
-          let frms = params.value.frames;
+          const frms = params.value.frames;
           for (let index = 0; index < frms.length; index++) {
             const element = frms[index];
-            let txt = `From:${element.from}, To:${element.to}, Penalty:$${element.penalty.amount}`;
+            const txt = `From:${element.from}, To:${element.to}, Penalty:$${element.penalty.amount}`;
             fullText = fullText + txt + '\n';
           }
-          let result = '<div>Type:' + params.value.type + '<br/><textarea style="width:100%;height:150px;overflow-y:scroll;">' + fullText + '</textarea></div>';
+          const result = '<div>Type:' + params.value.type + '<br/><textarea style="width:100%;height:150px;overflow-y:scroll;">' + fullText + '</textarea></div>';
           return result;
         }
         else {
-          let result = '<div>Type:' + params.value.type + '</div>';
+          const result = '<div>Type:' + params.value.type + '</div>';
           return result;
         }
 
@@ -209,11 +209,11 @@ export class SearchPriceComponent implements OnInit {
 
         for (let index = 0; index < params.value.length; index++) {
           const element = params.value[index];
-          let txt = `Title:${element.title}, Type:${element.type}, Description:${element.description}`;
+          const txt = `Title:${element.title}, Type:${element.type}, Description:${element.description}`;
           fullText = fullText + txt + '\n';
         }
 
-        let result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
+        const result = '<div><textarea rows=10 style="width:100%;height:100%;">' + fullText + '</textarea></div>';
 
         return result;
       },
@@ -232,15 +232,15 @@ export class SearchPriceComponent implements OnInit {
     private _snackBar: MatSnackBar,
     private _matDialog: MatDialog,
   ) {
-    let selectedDateFrom = new Date();
+    const selectedDateFrom = new Date();
     selectedDateFrom.setDate(selectedDateFrom.getDate() + 30);
     this.selectedDateFromInput = selectedDateFrom;
 
-    let yearFrom = selectedDateFrom.getFullYear();
-    let monthFrom = selectedDateFrom.getMonth();
-    let dayFrom = selectedDateFrom.getDate();
+    const yearFrom = selectedDateFrom.getFullYear();
+    const monthFrom = selectedDateFrom.getMonth();
+    const dayFrom = selectedDateFrom.getDate();
 
-    let selectedDateTo = new Date(yearFrom, monthFrom, dayFrom);
+    const selectedDateTo = new Date(yearFrom, monthFrom, dayFrom);
     selectedDateTo.setDate(selectedDateTo.getDate() + 1);
     this.selectedDateToInput = selectedDateTo;
 
@@ -258,17 +258,17 @@ export class SearchPriceComponent implements OnInit {
   }
 
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }
 
   getDateTimeFromString(strDate: string): Date {
     try {
-      let split = strDate.split('-');
-      let year = Number.parseInt(split[0]);
-      let month = Number.parseInt(split[1]) - 1;
-      let day = Number.parseInt(split[2]);
+      const split = strDate.split('-');
+      const year = Number.parseInt(split[0]);
+      const month = Number.parseInt(split[1]) - 1;
+      const day = Number.parseInt(split[2]);
       return new Date(year, month, day);
     }
     catch (e) {
@@ -283,8 +283,8 @@ export class SearchPriceComponent implements OnInit {
       this.composeForm.controls['dateToStr'].setValue(null);
       return;
     }
-    let selectedDate = this.getDateTimeFromString(event);
-    let dtf = this.getStringFromDate(selectedDate);
+    const selectedDate = this.getDateTimeFromString(event);
+    const dtf = this.getStringFromDate(selectedDate);
     this.composeForm.controls['dateToStr'].setValue(dtf);
   }
 
@@ -295,13 +295,13 @@ export class SearchPriceComponent implements OnInit {
       this.composeForm.controls['dateFromStr'].setValue(null);
       return;
     }
-    let sd = this.getDateTimeFromString(event);
+    const sd = this.getDateTimeFromString(event);
     let dtf = this.getStringFromDate(sd);
     this.composeForm.controls['dateFromStr'].setValue(dtf);
 
 
     // update dateTo
-    let sdt = sd;
+    const sdt = sd;
     sdt.setDate(sd.getDate() + 1);
     // this.composeForm.controls['dateTo'].setValue(sdt);
     this.selectedDateToInput = sd;
@@ -310,20 +310,20 @@ export class SearchPriceComponent implements OnInit {
   }
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
   getStringFromDate(dt: Date): string {
-    let yearFrom = dt.getFullYear();
-    let monthFrom = dt.getMonth() + 1;
-    let dayFrom = dt.getDate();
+    const yearFrom = dt.getFullYear();
+    const monthFrom = dt.getMonth() + 1;
+    const dayFrom = dt.getDate();
     return `${yearFrom}-${monthFrom}-${dayFrom}`;
   }
 
   fullNameValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      let split = control.value.split(' ').filter(Boolean);
+      const split = control.value.split(' ').filter(Boolean);
       const error = split.length < 2;
       return error ? { fullName: { value: control.value } } : null;
     };
@@ -393,11 +393,11 @@ export class SearchPriceComponent implements OnInit {
 
         for (let index = 0; index < data.length; index++) {
           const element = data[index];
-          let mc = this.allCategories.find(i => i.categoryId == element.categoryId);
+          const mc = this.allCategories.find(i => i.categoryId == element.categoryId);
           if (!this.categories.some(i => i.categoryId == mc!.categoryId)) {
             this.categories.push(mc!);
           }
-          let bd = this.allBoards.find(i => i.boardId == element.boardId);
+          const bd = this.allBoards.find(i => i.boardId == element.boardId);
           if (!this.boards.some(i => i.boardId == bd!.boardId)) {
             this.boards.push(bd!);
           }
@@ -443,9 +443,9 @@ export class SearchPriceComponent implements OnInit {
           .subscribe((result) => {
             if (result != null) {
               // insert data
-              let opp = result;
+              const opp = result;
 
-              let toSave: InsertOpp = {
+              const toSave: InsertOpp = {
                 hotelId: opp.hotel.hotelId,
                 startDateStr: opp.dateFromStr,
                 endDateStr: opp.dateToStr,
@@ -460,11 +460,11 @@ export class SearchPriceComponent implements OnInit {
               };
               if (opp.dateFromStr != null && opp.dateFromStr != '') {
                 try {
-                  let split = opp.dateFromStr.split('-');
-                  let year = Number.parseInt(split[0]);
-                  let month = Number.parseInt(split[1]) - 1;
-                  let day = Number.parseInt(split[2]);
-                  let ny = new Date(year, month, day);
+                  const split = opp.dateFromStr.split('-');
+                  const year = Number.parseInt(split[0]);
+                  const month = Number.parseInt(split[1]) - 1;
+                  const day = Number.parseInt(split[2]);
+                  const ny = new Date(year, month, day);
                   this.defaultDateFrom = ny;
                 }
                 catch (e) {
@@ -474,11 +474,11 @@ export class SearchPriceComponent implements OnInit {
               }
               if (opp.dateToStr != null && opp.dateToStr != '') {
                 try {
-                  let split = opp.dateToStr.split('-');
-                  let year = Number.parseInt(split[0]);
-                  let month = Number.parseInt(split[1]) - 1;
-                  let day = Number.parseInt(split[2]);
-                  let ny = new Date(year, month, day);
+                  const split = opp.dateToStr.split('-');
+                  const year = Number.parseInt(split[0]);
+                  const month = Number.parseInt(split[1]) - 1;
+                  const day = Number.parseInt(split[2]);
+                  const ny = new Date(year, month, day);
                   this.defaultDateTo = ny;
                 }
                 catch (e) {
@@ -492,7 +492,7 @@ export class SearchPriceComponent implements OnInit {
                 this.baseUrl + 'Opportunity/InsertOpp',
                 toSave)
                 .subscribe((oppId: any) => {
-                  let newData = {
+                  const newData = {
                     id: oppId.id,
                     dateInsert: oppId.dateInsert,
                     hotelName: opp.hotel.name,
@@ -508,7 +508,7 @@ export class SearchPriceComponent implements OnInit {
                     reservationFullName: opp.reservationFullName,
                     status: true
                   };
-                  var res = this.gridApi.applyTransaction({
+                  const res = this.gridApi.applyTransaction({
                     add: [newData],
                     addIndex: 0,
                   });
@@ -523,7 +523,7 @@ export class SearchPriceComponent implements OnInit {
   search() {
     this.rowData = [];
 
-    let search: SearchHotelRequest = {
+    const search: SearchHotelRequest = {
       dateFrom: this.composeForm.value.dateFromStr,
       dateTo: this.composeForm.value.dateToStr,
       hotelId: this.composeForm.value.hotel.hotelId

@@ -197,7 +197,7 @@ export class ReservationCancelComponent implements OnInit {
         if (params.value == false) {
           txt = '<span style="color:red"><i class="material-icons">clear</i></span>';
         }
-        let result = '<div>' + txt + '</div>';
+        const result = '<div>' + txt + '</div>';
         return result;
       },
     },
@@ -206,7 +206,7 @@ export class ReservationCancelComponent implements OnInit {
   hotelNameFormatter(params: any) {
     let name = params.value;
     if (name == null) name = '';
-    let code = params.data.hotelCode;
+    const code = params.data.hotelCode;
     if (name == '') return code;
     return `${name} (${code})`;
   }
@@ -239,7 +239,7 @@ export class ReservationCancelComponent implements OnInit {
     this.rowData$ = this.http.get<any[]>(this.baseUrl + 'Reservation/ReservationCancel?force=' + force);
   }
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }

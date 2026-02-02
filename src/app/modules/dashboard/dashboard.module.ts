@@ -7,6 +7,7 @@ import { RevenueChartComponent } from './components/revenue-chart/revenue-chart.
 import { KpiCardsComponent } from './components/kpi-cards/kpi-cards.component';
 import { OccupancyTrendComponent } from './components/occupancy-trend/occupancy-trend.component';
 import { TopHotelsComponent } from './components/top-hotels/top-hotels.component';
+import { WorkerStatusComponent } from './components/worker-status/worker-status.component';
 
 @NgModule({
   declarations: [
@@ -14,12 +15,16 @@ import { TopHotelsComponent } from './components/top-hotels/top-hotels.component
     RevenueChartComponent,
     KpiCardsComponent,
     OccupancyTrendComponent,
-    TopHotelsComponent
+    TopHotelsComponent,
+    WorkerStatusComponent
   ],
   imports: [
     CommonModule,
     DashboardRoutingModule,
     MaterialModule
+  ],
+  exports: [
+    WorkerStatusComponent
   ]
 })
 export class DashboardModule { }

@@ -43,8 +43,8 @@ export class OppFormComponent implements OnInit {
       this.composeForm.controls['dateToStr'].setValue(null);
       return;
     }
-    let selectedDate = this.getDateTimeFromString(event);
-    let dtf = this.getStringFromDate(selectedDate);
+    const selectedDate = this.getDateTimeFromString(event);
+    const dtf = this.getStringFromDate(selectedDate);
     this.composeForm.controls['dateToStr'].setValue(dtf);
 
     // this.composeForm.controls['dateTo'].setValue(selectedDate);
@@ -58,14 +58,14 @@ export class OppFormComponent implements OnInit {
       this.composeForm.controls['dateFromStr'].setValue(null);
       return;
     }
-    let sd = this.getDateTimeFromString(event);
+    const sd = this.getDateTimeFromString(event);
     let dtf = this.getStringFromDate(sd);
     this.composeForm.controls['dateFromStr'].setValue(dtf);
 
     // this.composeForm.controls['dateFrom'].setValue(sd);
     // this.composeForm.controls['dateFromStr'].setValue(event);
     // update dateTo
-    let sdt = sd;
+    const sdt = sd;
     sdt.setDate(sd.getDate() + 1);
     // this.composeForm.controls['dateTo'].setValue(sdt);
     this.selectedDateToInput = sd;
@@ -74,17 +74,17 @@ export class OppFormComponent implements OnInit {
   }
 
   getStringFromDate(dt: Date): string {
-    let yearFrom = dt.getFullYear();
-    let monthFrom = dt.getMonth() + 1;
-    let dayFrom = dt.getDate();
+    const yearFrom = dt.getFullYear();
+    const monthFrom = dt.getMonth() + 1;
+    const dayFrom = dt.getDate();
     return `${yearFrom}-${monthFrom}-${dayFrom}`;
   }
   getDateTimeFromString(strDate: string): Date {
     try {
-      let split = strDate.split('-');
-      let year = Number.parseInt(split[0]);
-      let month = Number.parseInt(split[1]) - 1;
-      let day = Number.parseInt(split[2]);
+      const split = strDate.split('-');
+      const year = Number.parseInt(split[0]);
+      const month = Number.parseInt(split[1]) - 1;
+      const day = Number.parseInt(split[2]);
       return new Date(year, month, day);
     }
     catch (e) {
@@ -108,11 +108,11 @@ export class OppFormComponent implements OnInit {
       this.selectedDateFromInput = data.defaultDateFrom;
     }
 
-    let yearFrom = selectedDateFrom.getFullYear();
-    let monthFrom = selectedDateFrom.getMonth();
-    let dayFrom = selectedDateFrom.getDate();
+    const yearFrom = selectedDateFrom.getFullYear();
+    const monthFrom = selectedDateFrom.getMonth();
+    const dayFrom = selectedDateFrom.getDate();
 
-    let selectedDateTo = new Date(yearFrom, monthFrom, dayFrom);
+    const selectedDateTo = new Date(yearFrom, monthFrom, dayFrom);
     selectedDateTo.setDate(selectedDateTo.getDate() + 1);
     this.selectedDateToInput = selectedDateTo;
     if (data.defaultDateTo != null) {
@@ -177,7 +177,7 @@ export class OppFormComponent implements OnInit {
     }
 
     if (data.defaultCategoryCode != null) {
-      let category = this.allCategories.find(x => x.name.toLocaleLowerCase() == data.defaultCategoryCode.toLocaleLowerCase());
+      const category = this.allCategories.find(x => x.name.toLocaleLowerCase() == data.defaultCategoryCode.toLocaleLowerCase());
 
       console.log(data.defaultCategoryCode);
       console.log(this.allCategories);
@@ -192,7 +192,7 @@ export class OppFormComponent implements OnInit {
 
   fullNameValidator(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      let split = control.value.split(' ').filter(Boolean);
+      const split = control.value.split(' ').filter(Boolean);
       const error = split.length < 2;
       return error ? { fullName: { value: control.value } } : null;
     };
@@ -203,8 +203,8 @@ export class OppFormComponent implements OnInit {
     return error;
   }
   dateValidatorError(): boolean {
-    let dtFrom = this.getDateTimeFromString(this.composeForm.controls['dateFromStr'].value);
-    let dtTo = this.getDateTimeFromString(this.composeForm.controls['dateToStr'].value);
+    const dtFrom = this.getDateTimeFromString(this.composeForm.controls['dateFromStr'].value);
+    const dtTo = this.getDateTimeFromString(this.composeForm.controls['dateToStr'].value);
 
     const error = dtFrom >= dtTo;
     return error;
@@ -241,13 +241,13 @@ export class OppFormComponent implements OnInit {
     );
 
     this.composeForm.controls['board'].valueChanges.subscribe(data => {
-      let cc = this.selectedHotelData.filter(i => i.boardId == data.boardId);
+      const cc = this.selectedHotelData.filter(i => i.boardId == data.boardId);
       if (cc != null) {
-        let currCateg = this.category;
-        let ccc = cc.find(i => i.categoryId == currCateg!.value.categoryId);
+        const currCateg = this.category;
+        const ccc = cc.find(i => i.categoryId == currCateg!.value.categoryId);
         if (ccc == null) {
           // category is not selected yet
-          let plnCode = cc.find(i => i.boardId == data.boardId);
+          const plnCode = cc.find(i => i.boardId == data.boardId);
           if (plnCode != null) {
             this.composeForm.controls['ratePlanCode'].setValue(plnCode.ratePlanCode ?? '[N/A]');
           }
@@ -263,13 +263,13 @@ export class OppFormComponent implements OnInit {
     });
 
     this.composeForm.controls['category'].valueChanges.subscribe(data => {
-      let cc = this.selectedHotelData.filter(i => i.categoryId == data.categoryId);
+      const cc = this.selectedHotelData.filter(i => i.categoryId == data.categoryId);
       for (let index = 0; index < cc.length; index++) {
         const element = cc[index];
         let invTypeCodeStr = element.invTypeCode.toLowerCase();
         if (invTypeCodeStr == 'std') invTypeCodeStr = 'sta';
         if (invTypeCodeStr == 'apt') invTypeCodeStr = 'apa';
-        let dataName = data.name.toLowerCase();
+        const dataName = data.name.toLowerCase();
         if (dataName.indexOf(invTypeCodeStr) != -1) {
           this.composeForm.controls['invTypeCode'].setValue(element.invTypeCode);
           break;
@@ -297,7 +297,7 @@ export class OppFormComponent implements OnInit {
   get category() { return this.composeForm.get('category'); }
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
@@ -313,11 +313,11 @@ export class OppFormComponent implements OnInit {
 
         for (let index = 0; index < data.length; index++) {
           const element = data[index];
-          let mc = this.allCategories.find(i => i.categoryId == element.categoryId);
+          const mc = this.allCategories.find(i => i.categoryId == element.categoryId);
           if (!this.categories.some(i => i.categoryId == mc!.categoryId)) {
             this.categories.push(mc!);
           }
-          let bd = this.allBoards.find(i => i.boardId == element.boardId);
+          const bd = this.allBoards.find(i => i.boardId == element.boardId);
           if (!this.boards.some(i => i.boardId == bd!.boardId)) {
             this.boards.push(bd!);
           }
@@ -352,8 +352,8 @@ export class OppFormComponent implements OnInit {
     }
     // console.log('end date validation');
 
-    let buyPrice = Number.parseInt(this.buyPrice!.value);
-    let pushPrice = Number.parseInt(this.pushPrice!.value);
+    const buyPrice = Number.parseInt(this.buyPrice!.value);
+    const pushPrice = Number.parseInt(this.pushPrice!.value);
     if (buyPrice == 1 || pushPrice == 1) {
       this.dialog.open(ConfirmDialogComponent, {
         data: {

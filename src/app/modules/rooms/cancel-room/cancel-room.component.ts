@@ -170,16 +170,16 @@ export class CancelRoomComponent implements OnInit {
       hide: true,
       cellRenderer: (params: any) => {
         if (params.value) {
-          let dateAsString = params.data.dateLastPrice;
-          let dateOnly = dateAsString.split('T');
-          let dateParts = dateOnly[0].split('-');
-          let dateShow = `(${dateParts[2]}/${dateParts[1]}/${dateParts[0]})`;
+          const dateAsString = params.data.dateLastPrice;
+          const dateOnly = dateAsString.split('T');
+          const dateParts = dateOnly[0].split('-');
+          const dateShow = `(${dateParts[2]}/${dateParts[1]}/${dateParts[0]})`;
 
-          let presise = 100;
-          let num = Math.round((params.value + Number.EPSILON) * presise) / presise;
-          let txt = `$${num}`;
-          let up = '<span style="color:green"><i class="material-icons">arrow_upward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
-          let down = '<span style="color:red"><i class="material-icons">arrow_downward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
+          const presise = 100;
+          const num = Math.round((params.value + Number.EPSILON) * presise) / presise;
+          const txt = `$${num}`;
+          const up = '<span style="color:green"><i class="material-icons">arrow_upward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
+          const down = '<span style="color:red"><i class="material-icons">arrow_downward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
 
           let result = '';
 
@@ -274,7 +274,7 @@ export class CancelRoomComponent implements OnInit {
     this.applyFilter('');
   }
   applyFilter(data: any) {
-    var instance = this.gridApi.getFilterInstance('name');
+    const instance = this.gridApi.getFilterInstance('name');
 
     instance!.setModel({
       type: 'contains',
@@ -285,7 +285,7 @@ export class CancelRoomComponent implements OnInit {
   }
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
@@ -334,7 +334,7 @@ export class CancelRoomComponent implements OnInit {
     this.rowData$ = this.http.get<any[]>(this.baseUrl + 'Book/Canceled?force=' + force);
   }
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }

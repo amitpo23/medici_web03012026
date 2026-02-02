@@ -1,0 +1,123 @@
+<div class="prebook-dialog">
+  <h2 mat-dialog-title>
+    {{ step === 'prebook' ? 'Pre-Book Room' : 'Confirm Booking' }}
+  </h2>
+
+  <mat-dialog-content>
+    <!-- Hotel Info Card -->
+    <mat-card class="info-card">
+      <mat-card-content>
+        <div class="hotel-info">
+          <h3>{{ data.hotelName }}</h3>
+          <div class="date-range">
+            <mat-icon>event</mat-icon>
+            <span>{{ data.dateFrom | date:'dd/MM/yyyy' }} - {{ data.dateTo | date:'dd/MM/yyyy' }}</span>
+            <span class="nights">({{ totalNights }} nights)</span>
+          </div>
+          <div class="price-info" *ngIf="preBookResult">
+            <strong>Price per night:</strong> {{ preBookResult.price | currency:preBookResult.currency }}
+            <br>
+            <strong>Estimated total:</strong> {{ estimatedTotal | currency:preBookResult.currency }}
+          </div>
+          <div class="price-info" *ngIf="!preBookResult">
+            <strong>Estimated price:</strong> {{ data.price | currency:'EUR' }} / night
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- PreBook Form -->
+    <form [formGroup]="preBookForm" *ngIf="step === 'prebook'">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Board Type</mat-label>
+        <mat-select formControlName="boardId" required>
+          <mat-option *ngFor="let board of boardOptions" [value]="board.value">
+            {{ board.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>Board type is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Room Category</mat-label>
+        <mat-select formControlName="categoryId" required>
+          <mat-option *ngFor="let category of categoryOptions" [value]="category.value">
+            {{ category.label }}
+          </mat-option>
+        </mat-select>
+        <mat-error>Room category is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Adults</mat-label>
+        <input matInput type="number" formControlName="adults" min="1" max="10" required>
+        <mat-error>Number of adults is required (1-10)</mat-error>
+      </mat-form-field>
+
+      <div class="info-message">
+        <mat-icon>info</mat-icon>
+        <span>Pre-booking will hold the room for a short time. You'll need to confirm to complete the booking.</span>
+      </div>
+    </form>
+
+    <!-- Confirm Form -->
+    <form [formGroup]="confirmForm" *ngIf="step === 'confirm'">
+      <div class="success-message" *ngIf="preBookResult">
+        <mat-icon>check_circle</mat-icon>
+        <span>Room successfully pre-booked! PreBook ID: {{ preBookResult.preBookId }}</span>
+      </div>
+
+      <div class="cancellation-policy" *ngIf="preBookResult?.cancellationType">
+        <strong>Cancellation Policy:</strong> {{ preBookResult.cancellationType }}
+        <span *ngIf="preBookResult.cancellationDeadline">
+          (until {{ preBookResult.cancellationDeadline | date:'dd/MM/yyyy HH:mm' }})
+        </span>
+      </div>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Guest Name</mat-label>
+        <input matInput formControlName="guestName" required placeholder="John Doe">
+        <mat-error>Guest name is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Guest Email</mat-label>
+        <input matInput type="email" formControlName="guestEmail" placeholder="guest@example.com">
+        <mat-error>Invalid email address</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Guest Phone</mat-label>
+        <input matInput formControlName="guestPhone" placeholder="+972-50-1234567">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Special Requests</mat-label>
+        <textarea matInput formControlName="specialRequests" rows="3" 
+                  placeholder="Late check-in, smoking room, etc."></textarea>
+      </mat-form-field>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onCancel()" [disabled]="isPreBooking || isConfirming">
+      Cancel
+    </button>
+
+    <button mat-raised-button color="primary" 
+            *ngIf="step === 'prebook'"
+            (click)="onPreBook()" 
+            [disabled]="preBookForm.invalid || isPreBooking">
+      <mat-spinner *ngIf="isPreBooking" diameter="20"></mat-spinner>
+      <span *ngIf="!isPreBooking">Pre-Book Room</span>
+    </button>
+
+    <button mat-raised-button color="accent" 
+            *ngIf="step === 'confirm'"
+            (click)="onConfirm()" 
+            [disabled]="confirmForm.invalid || isConfirming">
+      <mat-spinner *ngIf="isConfirming" diameter="20"></mat-spinner>
+      <span *ngIf="!isConfirming">Confirm Booking</span>
+    </button>
+  </mat-dialog-actions>
+</div>

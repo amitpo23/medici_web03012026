@@ -159,8 +159,8 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
       headerName: 'Room Purchased',
       filter: false,
       valueFormatter: (params) => {
-        let total = params.data.roomToPurchase;
-        let bought = params.data.roomsBought;
+        const total = params.data.roomToPurchase;
+        const bought = params.data.roomsBought;
         return `${bought} from ${total}`
       }
     },
@@ -215,7 +215,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.composeForm.controls['hotel'].setValue('');
   }
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }
@@ -235,9 +235,9 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe((result) => {
         if (result != null) {
           // insert data
-          let opp = result;
+          const opp = result;
 
-          let toSave: InsertOpp = {
+          const toSave: InsertOpp = {
             hotelId: opp.hotel.hotelId,
             startDateStr: opp.dateFromStr,
             endDateStr: opp.dateToStr,
@@ -252,11 +252,11 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
           };
           if (opp.dateFromStr != null && opp.dateFromStr != '') {
             try {
-              let split = opp.dateFromStr.split('-');
-              let year = Number.parseInt(split[0]);
-              let month = Number.parseInt(split[1]) - 1;
-              let day = Number.parseInt(split[2]);
-              let ny = new Date(year, month, day);
+              const split = opp.dateFromStr.split('-');
+              const year = Number.parseInt(split[0]);
+              const month = Number.parseInt(split[1]) - 1;
+              const day = Number.parseInt(split[2]);
+              const ny = new Date(year, month, day);
               this.defaultDateFrom = ny;
             }
             catch (e) {
@@ -266,11 +266,11 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
           }
           if (opp.dateToStr != null && opp.dateToStr != '') {
             try {
-              let split = opp.dateToStr.split('-');
-              let year = Number.parseInt(split[0]);
-              let month = Number.parseInt(split[1]) - 1;
-              let day = Number.parseInt(split[2]);
-              let ny = new Date(year, month, day);
+              const split = opp.dateToStr.split('-');
+              const year = Number.parseInt(split[0]);
+              const month = Number.parseInt(split[1]) - 1;
+              const day = Number.parseInt(split[2]);
+              const ny = new Date(year, month, day);
               this.defaultDateTo = ny;
             }
             catch (e) {
@@ -284,7 +284,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
             this.baseUrl + 'Opportunity/InsertOpp',
             toSave)
             .subscribe((oppId: any) => {
-              let newData = {
+              const newData = {
                 id: oppId.id,
                 dateInsert: oppId.dateInsert,
                 hotelName: opp.hotel.name,
@@ -300,7 +300,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
                 reservationFullName: opp.reservationFullName,
                 status: true
               };
-              var res = this.gridApi.applyTransaction({
+              const res = this.gridApi.applyTransaction({
                 add: [newData],
                 addIndex: 0,
               });
@@ -353,7 +353,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
   // -----------------------------------------------------------------------------------------------------
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
   /**
@@ -380,18 +380,18 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.comm.comm.subscribe((i: any) => {
       if (i != '') {
         // console.log(i);
-        let split = i.split(':');
-        let op = split[0];
+        const split = i.split(':');
+        const op = split[0];
         if (op == 'update_new_version') {
-          let msg = 'Please Refresh you browser for new version: ' + split[1];
+          const msg = 'Please Refresh you browser for new version: ' + split[1];
           this.openSnackBar(msg, false);
         }
         if (op != 'delete_opp') return;
 
-        let idToUpdate = split[1];
-        var itemsToUpdate: any = [];
+        const idToUpdate = split[1];
+        const itemsToUpdate: any = [];
         this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-          var data = rowNode.data;
+          const data = rowNode.data;
           if (data.id == idToUpdate) {
             data.status = false;
             itemsToUpdate.push(data);
@@ -404,8 +404,8 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.activeOpps = this.activeOpps - 1;
           this.canceledOpps = this.canceledOpps + 1;
           // add new
-          let currItem = itemsToUpdate[0];
-          let newData = {
+          const currItem = itemsToUpdate[0];
+          const newData = {
             id: currItem.id,
             dateInsert: currItem.dateInsert,
             hotelName: currItem.hotelName,
@@ -448,7 +448,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (columnState) {
       columnState.forEach((element: any) => {
-        let clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
+        const clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
         if (clmn) {
           this.columnDefs.push(clmn);
         }
@@ -476,7 +476,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   applyFilter(data: any) {
-    var instance = this.gridApi.getFilterInstance('hotelName');
+    const instance = this.gridApi.getFilterInstance('hotelName');
     instance!.setModel({
       type: 'contains',
       filter: data.name
@@ -522,7 +522,7 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   onColumnMoved(params: any) {
-    var columnState = JSON.stringify(this.columnApi.getColumnState());
+    const columnState = JSON.stringify(this.columnApi.getColumnState());
     localStorage.setItem('column_defs', columnState);
   }
 

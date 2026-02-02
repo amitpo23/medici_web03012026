@@ -1,0 +1,65 @@
+<mat-card class="worker-status-widget">
+  <mat-card-header>
+    <mat-card-title>
+      <mat-icon>settings</mat-icon>
+      Background Workers
+    </mat-card-title>
+    <button mat-icon-button (click)="refreshNow()" [disabled]="isLoading" class="refresh-btn">
+      <mat-icon [class.spinning]="isLoading">refresh</mat-icon>
+    </button>
+  </mat-card-header>
+
+  <mat-card-content>
+    <div class="workers-list" *ngIf="!isLoading">
+      <div class="worker-item" *ngFor="let worker of workers">
+        <div class="worker-header">
+          <div class="worker-name">
+            <mat-icon [class]="'status-icon ' + getStatusColor(worker.status)">
+              {{ getStatusIcon(worker.status) }}
+            </mat-icon>
+            <span>{{ worker.name }}</span>
+          </div>
+          <mat-chip [class]="'status-chip ' + getStatusColor(worker.status)">
+            {{ worker.status | titlecase }}
+          </mat-chip>
+        </div>
+
+        <div class="worker-details">
+          <div class="detail-item" *ngIf="worker.lastRun">
+            <span class="label">Last Run:</span>
+            <span class="value">{{ getTimeSince(worker.lastRun) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="!worker.lastRun">
+            <span class="label">Last Run:</span>
+            <span class="value no-data">Never</span>
+          </div>
+
+          <div class="detail-item">
+            <span class="label">Processed Today:</span>
+            <span class="value">{{ worker.processedToday }}</span>
+          </div>
+
+          <div class="detail-item" *ngIf="worker.errors > 0">
+            <span class="label">Errors:</span>
+            <span class="value error-count">{{ worker.errors }}</span>
+          </div>
+
+          <div class="detail-item" *ngIf="!worker.enabled">
+            <span class="label">Status:</span>
+            <span class="value disabled-text">Disabled</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading worker status...</p>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && workers.length === 0">
+      <mat-icon>info</mat-icon>
+      <p>No worker information available</p>
+    </div>
+  </mat-card-content>
+</mat-card>

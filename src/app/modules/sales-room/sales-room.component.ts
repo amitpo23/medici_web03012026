@@ -275,12 +275,12 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
   }
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
   applyFilter(data: any) {
-    var instance = this.gridApi.getFilterInstance('name');
+    const instance = this.gridApi.getFilterInstance('name');
 
     instance!.setModel({
       type: 'contains',
@@ -334,7 +334,7 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
   }
 
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }
@@ -344,7 +344,7 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
   }
 
   onColumnMoved(params: any) {
-    var columnState = JSON.stringify(this.columnApi.getColumnState());
+    const columnState = JSON.stringify(this.columnApi.getColumnState());
     localStorage.setItem('column_defs_sales_room', columnState);
   }
 
@@ -373,22 +373,22 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
     this.comm.comm.subscribe((i: any) => {
       if (i != '') {
         // console.log(i);
-        let split = i.split(':');
-        let op = split[0];
+        const split = i.split(':');
+        const op = split[0];
         if (op == 'update_new_version') {
-          let msg = 'Please Refresh you browser for new version: ' + split[1];
+          const msg = 'Please Refresh you browser for new version: ' + split[1];
           this.openSnackBar(msg, false);
         }
         if (op != 'set_update_name_success') return;
 
         let strObj = split[1];
         strObj = strObj.split('@').join(':');
-        let objToUpdate = JSON.parse(strObj);
+        const objToUpdate = JSON.parse(strObj);
 
-        let idToUpdate = objToUpdate.id;
-        var itemsToUpdate: any = [];
+        const idToUpdate = objToUpdate.id;
+        const itemsToUpdate: any = [];
         this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-          var data = rowNode.data;
+          const data = rowNode.data;
           if (data.id == idToUpdate) {
             data.statusChangeName = objToUpdate.result;
             itemsToUpdate.push(data);
@@ -396,10 +396,10 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
 
         });
         if (itemsToUpdate.length > 0) {
-          let msg = 'Update Name Success';
+          const msg = 'Update Name Success';
           this.openSnackBar(msg);
           // update
-          var res = this.gridApi.applyTransaction({ update: itemsToUpdate });
+          const res = this.gridApi.applyTransaction({ update: itemsToUpdate });
         }
       }
     }
@@ -440,7 +440,7 @@ export class SalesRoomComponent implements OnInit, OnDestroy {
 
     if (columnState) {
       columnState.forEach((element: any) => {
-        let clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
+        const clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
         if (clmn) {
           this.columnDefs.push(clmn);
         }

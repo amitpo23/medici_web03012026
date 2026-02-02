@@ -1,12 +1,12 @@
 export class CockpitCommon {
     // static dateFormatter: string | ValueFormatterFunc<any>;
     static dateFormatter(params: any) {
-        let dateAsString = params.value;
+        const dateAsString = params.value;
         if (dateAsString == null) return '';
         // remove time
-        let dateOnly = dateAsString.split('T');
+        const dateOnly = dateAsString.split('T');
 
-        let dateParts = dateOnly[0].split('-');
+        const dateParts = dateOnly[0].split('-');
         return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
     }
 
@@ -15,11 +15,11 @@ export class CockpitCommon {
             return null;
         }
 
-        var yearNumber = parseInt(date.substring(6, 10));
-        var monthNumber = parseInt(date.substring(3, 5));
-        var dayNumber = parseInt(date.substring(0, 2));
+        const yearNumber = parseInt(date.substring(6, 10));
+        const monthNumber = parseInt(date.substring(3, 5));
+        const dayNumber = parseInt(date.substring(0, 2));
 
-        var result = yearNumber * 10000 + monthNumber * 100 + dayNumber;
+        const result = yearNumber * 10000 + monthNumber * 100 + dayNumber;
         return result;
     }
 
@@ -27,12 +27,12 @@ export class CockpitCommon {
         if (cellValue == null) {
             return 0;
         }
-        let dateOnly = cellValue.split('T');
-        let dateParts = dateOnly[0].split('-');
-        let year = Number(dateParts[0]);
-        let month = Number(dateParts[1]) - 1;
-        let day = Number(dateParts[2]);
-        let cellDate = new Date(year, month, day);
+        const dateOnly = cellValue.split('T');
+        const dateParts = dateOnly[0].split('-');
+        const year = Number(dateParts[0]);
+        const month = Number(dateParts[1]) - 1;
+        const day = Number(dateParts[2]);
+        const cellDate = new Date(year, month, day);
 
         if (cellDate < filterLocalDateAtMidnight) {
             return -1;
@@ -44,11 +44,11 @@ export class CockpitCommon {
     }
 
     static priceFormatter(params: any) {
-        let presise = 100;
+        const presise = 100;
 
         if (params.value) {
             //let num = Math.round((params.value + Number.EPSILON) * presise) / presise;
-            let num = params.value.toFixed(2);
+            const num = params.value.toFixed(2);
             return `$${num}`;
         }
 

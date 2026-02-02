@@ -74,7 +74,7 @@ export class BoolActionRendererComponent implements OnInit, ICellRendererAngular
               this.comm.addItem(`delete_booking_error:${this.id}`);
             }
             else {
-              let saveObj = { bookingId: this.id, result: data };
+              const saveObj = { bookingId: this.id, result: data };
 
               let toSaveStr = JSON.stringify(saveObj);
               toSaveStr = toSaveStr.split(':').join('@');
@@ -97,7 +97,7 @@ export class BoolActionRendererComponent implements OnInit, ICellRendererAngular
       .subscribe((result: any) => {
         if (result != null) {
 
-          let toSave: Booking = {
+          const toSave: Booking = {
             preBookId: result.preBookId,
             buyPrice: result.buyPrice,
             pushPrice: result.currentPrice,

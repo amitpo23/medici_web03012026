@@ -42,6 +42,13 @@ export class RoomsComponent implements OnInit, OnDestroy {
     resizable: true,
   };
   public rowData$!: Observable<any[]>;
+  
+  // Auto-refresh functionality
+  private refreshInterval: any;
+  private readonly REFRESH_INTERVAL_MS = 30000; // 30 seconds
+  public autoRefreshEnabled = true;
+  public lastRefreshTime: Date = new Date();
+  public nextRefreshIn = 30;
 
   clearInput() {
     this.composeForm.controls['hotel'].setValue('');
@@ -49,7 +56,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
   }
 
   applyFilter(data: any) {
-    var instance = this.gridApi.getFilterInstance('name');
+    const instance = this.gridApi.getFilterInstance('name');
 
     instance!.setModel({
       type: 'contains',
@@ -68,9 +75,54 @@ export class RoomsComponent implements OnInit, OnDestroy {
     this.columnApi = params.columnApi;
 
     this.refreshData(false);
+    this.startAutoRefresh();
   }
+  
   refreshData(force: boolean) {
     this.rowData$ = this.http.get<any[]>(this.baseUrl + 'Book/Bookings?force=' + force);
+    this.lastRefreshTime = new Date();
+    this.nextRefreshIn = this.REFRESH_INTERVAL_MS / 1000;
+  }
+  
+  /**
+   * Start auto-refresh timer
+   */
+  startAutoRefresh(): void {
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+
+    // Countdown timer (update every second)
+    setInterval(() => {
+      if (this.autoRefreshEnabled && this.nextRefreshIn > 0) {
+        this.nextRefreshIn--;
+      }
+    }, 1000);
+
+    // Actual refresh timer
+    this.refreshInterval = setInterval(() => {
+      if (this.autoRefreshEnabled) {
+        console.log('[Rooms] Auto-refreshing data...');
+        this.refreshData(false);
+      }
+    }, this.REFRESH_INTERVAL_MS);
+  }
+
+  /**
+   * Toggle auto-refresh
+   */
+  toggleAutoRefresh(): void {
+    this.autoRefreshEnabled = !this.autoRefreshEnabled;
+    if (this.autoRefreshEnabled) {
+      this.startAutoRefresh();
+    }
+  }
+
+  /**
+   * Manual refresh button
+   */
+  manualRefresh(): void {
+    this.refreshData(true);
   }
   onFirstDataRendered(params: FirstDataRenderedEvent) {
     // this.countStatistics();
@@ -82,7 +134,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
     // console.log('cellClicked', e);
   }
   onColumnMoved(params: any) {
-    var columnState = JSON.stringify(this.columnApi.getColumnState());
+    const columnState = JSON.stringify(this.columnApi.getColumnState());
     localStorage.setItem('column_defs_booking', columnState);
   }
   defaultColumnDefs: ColDef[] = [
@@ -232,17 +284,17 @@ export class RoomsComponent implements OnInit, OnDestroy {
       filter: LastPriceFilterComponent,
       cellRenderer: (params: any) => {
         if (params.value) {
-          let dateAsString = params.data.dateLastPrice;
-          let dateOnly = dateAsString.split('T');
-          let dateParts = dateOnly[0].split('-');
-          let dateShow = `(${dateParts[2]}/${dateParts[1]}/${dateParts[0]})`;
+          const dateAsString = params.data.dateLastPrice;
+          const dateOnly = dateAsString.split('T');
+          const dateParts = dateOnly[0].split('-');
+          const dateShow = `(${dateParts[2]}/${dateParts[1]}/${dateParts[0]})`;
 
-          let presise = 100;
+          const presise = 100;
           // let num = Math.round((params.value + Number.EPSILON) * presise) / presise;
-          let num = params.value.toFixed(2);
-          let txt = `$${num}`;
-          let up = '<span style="color:green"><sub>' + dateShow + '</sub><i class="material-icons">arrow_upward</i></span>';
-          let down = '<span style="color:red"><i class="material-icons">arrow_downward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
+          const num = params.value.toFixed(2);
+          const txt = `$${num}`;
+          const up = '<span style="color:green"><sub>' + dateShow + '</sub><i class="material-icons">arrow_upward</i></span>';
+          const down = '<span style="color:red"><i class="material-icons">arrow_downward</i><sub><span style="color:black">' + dateShow + '</span></sub></span>';
 
           let result = '';
 
@@ -336,7 +388,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
   }
 
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }
@@ -344,7 +396,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
   private _unsubscribeAll: Subject<void> = new Subject<void>();
 
   displayFn(hotel: MedHotel): string {
-    let currentName = hotel && hotel.name ? hotel.name : '';
+    const currentName = hotel && hotel.name ? hotel.name : '';
     return currentName;
   }
 
@@ -401,7 +453,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
   }
   onLastPriceFilterChange(event: any) {
     // console.log(event);
-    var instance = this.gridApi.getFilterInstance('lastPrice');
+    const instance = this.gridApi.getFilterInstance('lastPrice');
     instance!.setModel({
       type: 'contains',
       filter: 'arrow_upward'
@@ -450,7 +502,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
 
     if (columnState) {
       columnState.forEach((element: any) => {
-        let clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
+        const clmn = this.defaultColumnDefs.find(i => i.field == element.colId);
         if (clmn) {
           this.columnDefs.push(clmn);
         }
@@ -463,10 +515,10 @@ export class RoomsComponent implements OnInit, OnDestroy {
     this.comm.comm.pipe(takeUntil(this._unsubscribeAll)).subscribe((i: any) => {
       if (i != '') {
         // console.log(i);
-        let split = i.split(':');
-        let op = split[0];
+        const split = i.split(':');
+        const op = split[0];
         if (op == 'update_new_version') {
-          let msg = 'Please Refresh you browser for new version: ' + split[1];
+          const msg = 'Please Refresh you browser for new version: ' + split[1];
           this.openSnackBar(msg, false);
         }
         if (op == 'set_status_booking_error') {
@@ -475,7 +527,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
         }
         if (op == 'delete_booking_error') {
           // show error notification
-          let objId = split[1];
+          const objId = split[1];
           this._snackBar.openFromComponent(ErrorSnackbarComponent, {
             data: objId
           });
@@ -483,7 +535,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
 
           var itemsToUpdate: any = [];
           this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-            var data = rowNode.data;
+            const data = rowNode.data;
             if (data.id == objId) {
               data.isActive = false;
               data.isSold = false;
@@ -503,10 +555,10 @@ export class RoomsComponent implements OnInit, OnDestroy {
           return;
         }
         if (op == 'set_status_cancel') {
-          let idToUpdate = split[1];
+          const idToUpdate = split[1];
           var itemsToUpdate: any = [];
           this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-            var data = rowNode.data;
+            const data = rowNode.data;
             if (data.id == idToUpdate) {
               data.status = false;
               itemsToUpdate.push(data);
@@ -523,12 +575,12 @@ export class RoomsComponent implements OnInit, OnDestroy {
         if (op == 'delete_booking') {
           let strObj = split[1];
           strObj = strObj.split('@').join(':');
-          let objToDelete = JSON.parse(strObj);
+          const objToDelete = JSON.parse(strObj);
 
-          let idToUpdate = objToDelete.bookingId;
+          const idToUpdate = objToDelete.bookingId;
           var itemsToUpdate: any = [];
           this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-            var data = rowNode.data;
+            const data = rowNode.data;
             if (data.id == idToUpdate) {
               data.status = false;
               itemsToUpdate.push(data);
@@ -540,11 +592,11 @@ export class RoomsComponent implements OnInit, OnDestroy {
             var res = this.gridApi.applyTransaction({ remove: itemsToUpdate });
           }
           // show notificaion
-          let arrResults = objToDelete.result;
+          const arrResults = objToDelete.result;
           let msg = '';
           for (let index = 0; index < arrResults.length; index++) {
             const element = arrResults[index];
-            let txt = `${element.name}: ${element.result}\n`;
+            const txt = `${element.name}: ${element.result}\n`;
             msg = msg + txt;
           }
           this.openSnackBar(msg, false);
@@ -552,11 +604,11 @@ export class RoomsComponent implements OnInit, OnDestroy {
         if (op == 'update_booking') {
           let strObj = split[1];
           strObj = strObj.split('@').join(':');
-          let objToUpdate = JSON.parse(strObj);
-          let arrToUpdate = objToUpdate.booking;
+          const objToUpdate = JSON.parse(strObj);
+          const arrToUpdate = objToUpdate.booking;
           var itemsToUpdate: any = [];
           this.gridApi.forEachNodeAfterFilterAndSort(function (rowNode, index) {
-            var data = rowNode.data;
+            const data = rowNode.data;
 
             for (let index = 0; index < arrToUpdate.length; index++) {
               const element = arrToUpdate[index];
@@ -571,11 +623,11 @@ export class RoomsComponent implements OnInit, OnDestroy {
             var res = this.gridApi.applyTransaction({ update: itemsToUpdate });
           }
           // show notificaion
-          let arrResults = objToUpdate.result;
+          const arrResults = objToUpdate.result;
           let msg = '';
           for (let index = 0; index < arrResults.length; index++) {
             const element = arrResults[index];
-            let txt = `${element.name}: ${element.result}\n`;
+            const txt = `${element.name}: ${element.result}\n`;
             msg = msg + txt;
           }
           this.openSnackBar(msg, false);
@@ -589,6 +641,11 @@ export class RoomsComponent implements OnInit, OnDestroy {
    * On destroy
    */
   ngOnDestroy(): void {
+    // Clear auto-refresh interval
+    if (this.refreshInterval) {
+      clearInterval(this.refreshInterval);
+    }
+    
     this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
   }

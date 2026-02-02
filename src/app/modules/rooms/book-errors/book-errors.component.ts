@@ -120,7 +120,7 @@ export class BookErrorsComponent implements OnInit {
     this.refreshData(false);
   }
   onPageSizeChanged() {
-    var value = (document.getElementById('page-size') as HTMLInputElement)
+    const value = (document.getElementById('page-size') as HTMLInputElement)
       .value;
     this.gridApi.paginationSetPageSize(Number(value));
   }

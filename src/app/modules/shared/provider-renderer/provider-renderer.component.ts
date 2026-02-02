@@ -32,7 +32,7 @@ export class ProviderRendererComponent implements OnInit, ICellRendererAngularCo
   }
 
   openDialog() {
-    let msg = `Reference Agency: ${this.item.refAgency} <br/>Reference Voucher Email: ${this.item.refEmail}`;
+    const msg = `Reference Agency: ${this.item.refAgency} <br/>Reference Voucher Email: ${this.item.refEmail}`;
 
     this.dialog.open(ConfirmDialogComponent, {
       data: {

@@ -49,11 +49,11 @@ export class OppLogFormComponent implements OnInit {
  }
 
   dateFormatter(params:any) {
-    let dateAsString = params.value;
+    const dateAsString = params.value;
     // remove time
-    let dateOnly = dateAsString.split('T');
+    const dateOnly = dateAsString.split('T');
 
-    let dateParts = dateOnly[0].split('-');
+    const dateParts = dateOnly[0].split('-');
     return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
   }
 
@@ -61,12 +61,12 @@ export class OppLogFormComponent implements OnInit {
     if (cellValue == null) {
         return 0;
     }
-    let dateOnly = cellValue.split('T');
-    let dateParts = dateOnly[0].split('-');
-    let year = Number(dateParts[0]);
-    let month = Number(dateParts[1]) - 1;
-    let day = Number(dateParts[2]);
-    let cellDate = new Date(year, month, day);
+    const dateOnly = cellValue.split('T');
+    const dateParts = dateOnly[0].split('-');
+    const year = Number(dateParts[0]);
+    const month = Number(dateParts[1]) - 1;
+    const day = Number(dateParts[2]);
+    const cellDate = new Date(year, month, day);
 
     if (cellDate < filterLocalDateAtMidnight) {
     return -1;

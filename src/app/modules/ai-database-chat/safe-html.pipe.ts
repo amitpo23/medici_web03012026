@@ -19,7 +19,7 @@ export class SafeHtmlPipe implements PipeTransform {
     }
 
     // Strip dangerous tags and attributes before sanitizing
-    let cleaned = value
+    const cleaned = value
       // Remove script tags and content
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       // Remove event handlers
