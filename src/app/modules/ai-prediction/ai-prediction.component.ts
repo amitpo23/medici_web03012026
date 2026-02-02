@@ -27,6 +27,9 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   isPushingToZenith = false;
   activeTab = 0;
   agentStatus: any = null;
+  autoRefreshTimer: any = null;
+  lastRefreshTime: Date | null = null;
+  nextRefreshIn: number = 3600; // seconds
 
   // Selection State for Zenith Push
   selectedOpportunities: Set<number> = new Set();
@@ -70,11 +73,15 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadInitialData();
     this.setupFormListeners();
+    this.startAutoRefresh(); // Start auto-refresh every hour
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.autoRefreshTimer) {
+      clearInterval(this.autoRefreshTimer);
+    }
   }
 
   private loadInitialData(): void {
@@ -339,5 +346,104 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
           alert(`שגיאה בדחיפה ל-Zenith: ${err.message}`);
         }
       });
+  }
+
+  /**
+   * Calculate potential profit for an opportunity
+   */
+  calculateProfit(opportunity: AIOpportunity): number {
+    const buyPrice = opportunity.buyPrice || 0;
+    const sellPrice = opportunity.estimatedSellPrice || 0;
+    return sellPrice - buyPrice;
+  }
+
+  /**
+   * Calculate profit margin percentage
+   */
+  calculateMargin(opportunity: AIOpportunity): number {
+    const buyPrice = opportunity.buyPrice || 0;
+    const sellPrice = opportunity.estimatedSellPrice || 0;
+    if (sellPrice === 0) return 0;
+    return ((sellPrice - buyPrice) / sellPrice) * 100;
+  }
+
+  /**
+   * Calculate ROI percentage
+   */
+  calculateROI(opportunity: AIOpportunity): number {
+    const buyPrice = opportunity.buyPrice || 0;
+    const profit = this.calculateProfit(opportunity);
+    if (buyPrice === 0) return 0;
+    return (profit / buyPrice) * 100;
+  }
+
+  /**
+   * Insert opportunity to database
+   */
+  insertOpportunity(opportunity: AIOpportunity): void {
+    if (!opportunity.hotelId) return;
+
+    this.aiService.insertOpportunity({
+      hotelId: opportunity.hotelId,
+      checkIn: opportunity.checkIn || '',
+      checkOut: opportunity.checkOut || '',
+      buyPrice: opportunity.buyPrice || 0,
+      sellPrice: opportunity.estimatedSellPrice || 0,
+      profit: this.calculateProfit(opportunity),
+      margin: this.calculateMargin(opportunity),
+      confidence: opportunity.confidence || 0,
+      source: 'AI_PREDICTION'
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        if (response.success) {
+          alert('ההזדמנות נוספה בהצלחה!');
+          this.loadOpportunities();
+        } else {
+          alert(`שגיאה: ${response.error}`);
+        }
+      },
+      error: (err) => {
+        alert(`שגיאה בהוספת הזדמנות: ${err.message}`);
+      }
+    });
+  }
+
+  /**
+   * Start auto-refresh timer (every hour)
+   */
+  private startAutoRefresh(): void {
+    this.lastRefreshTime = new Date();
+    
+    // Update countdown every second
+    setInterval(() => {
+      if (this.lastRefreshTime) {
+        const elapsed = Math.floor((Date.now() - this.lastRefreshTime.getTime()) / 1000);
+        this.nextRefreshIn = Math.max(0, 3600 - elapsed);
+      }
+    }, 1000);
+
+    // Refresh every hour
+    this.autoRefreshTimer = setInterval(() => {
+      console.log('Auto-refreshing opportunities...');
+      this.loadOpportunities();
+      this.lastRefreshTime = new Date();
+    }, 3600000); // 60 minutes
+  }
+
+  /**
+   * Format seconds to MM:SS
+   */
+  formatTimeRemaining(): string {
+    const minutes = Math.floor(this.nextRefreshIn / 60);
+    const seconds = this.nextRefreshIn % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Manual refresh with timer reset
+   */
+  manualRefresh(): void {
+    this.loadOpportunities();
+    this.lastRefreshTime = new Date();
   }
 }

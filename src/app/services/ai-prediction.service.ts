@@ -203,6 +203,23 @@ export class AIPredictionService {
     return this.http.post(`${this.baseUrl}ai/clear-cache`, {});
   }
 
+  /**
+   * Insert opportunity to database
+   */
+  insertOpportunity(opportunity: {
+    hotelId: number;
+    checkIn: string;
+    checkOut: string;
+    buyPrice: number;
+    sellPrice: number;
+    profit: number;
+    margin: number;
+    confidence: number;
+    source: string;
+  }): Observable<{ success: boolean; error?: string; opportunityId?: number }> {
+    return this.http.post<any>(`${this.baseUrl}Opportunity/InsertOpp`, opportunity);
+  }
+
   /**   * Push opportunities to Zenith
    */
   pushToZenith(

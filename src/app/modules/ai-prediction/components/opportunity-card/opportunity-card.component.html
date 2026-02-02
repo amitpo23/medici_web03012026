@@ -40,33 +40,66 @@
     </div>
 
     <!-- Price Info -->
-    <div *ngIf="opportunity.currentPrice || opportunity.targetPrice" class="price-info mt-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <div class="flex justify-between items-center text-sm">
-        <div *ngIf="opportunity.currentPrice">
-          <span class="text-gray-500 dark:text-gray-400">מחיר נוכחי:</span>
-          <span class="font-semibold ml-1">${{ opportunity.currentPrice | number:'1.0-0' }}</span>
+    <div *ngIf="opportunity.currentPrice || opportunity.targetPrice || opportunity.buyPrice" class="price-info mt-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg space-y-2">
+      <!-- Buy/Sell Prices -->
+      <div *ngIf="opportunity.buyPrice && opportunity.estimatedSellPrice" class="flex justify-between items-center text-sm">
+        <div>
+          <span class="text-gray-500 dark:text-gray-400">מחיר קנייה:</span>
+          <span class="font-semibold ml-1">${{ opportunity.buyPrice | number:'1.0-0' }}</span>
         </div>
-        <mat-icon *ngIf="opportunity.currentPrice && opportunity.targetPrice" class="text-gray-400">arrow_forward</mat-icon>
-        <div *ngIf="opportunity.targetPrice">
-          <span class="text-gray-500 dark:text-gray-400">מחיר יעד:</span>
-          <span class="font-semibold ml-1 text-green-600">${{ opportunity.targetPrice | number:'1.0-0' }}</span>
+        <mat-icon class="text-gray-400">arrow_forward</mat-icon>
+        <div>
+          <span class="text-gray-500 dark:text-gray-400">מחיר מכירה:</span>
+          <span class="font-semibold ml-1 text-green-600">${{ opportunity.estimatedSellPrice | number:'1.0-0' }}</span>
         </div>
       </div>
-      <div *ngIf="opportunity.expectedProfit" class="mt-2 text-center">
+      
+      <!-- Profit Metrics -->
+      <div *ngIf="opportunity.buyPrice && opportunity.estimatedSellPrice" class="grid grid-cols-3 gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        <div class="text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">רווח</div>
+          <div class="font-bold text-emerald-600">${{ profit | number:'1.0-0' }}</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">מרווח</div>
+          <div class="font-bold text-blue-600">{{ margin | number:'1.1-1' }}%</div>
+        </div>
+        <div class="text-center">
+          <div class="text-xs text-gray-500 dark:text-gray-400">ROI</div>
+          <div class="font-bold text-purple-600">{{ roi | number:'1.1-1' }}%</div>
+        </div>
+      </div>
+      
+      <!-- Legacy Expected Profit -->
+      <div *ngIf="opportunity.expectedProfit && !opportunity.buyPrice" class="mt-2 text-center">
         <span class="text-sm text-gray-500 dark:text-gray-400">רווח צפוי:</span>
         <span class="font-bold text-emerald-600 ml-1">${{ opportunity.expectedProfit | number:'1.0-0' }}</span>
       </div>
     </div>
+
+    <!-- Dates -->
+    <div *ngIf="opportunity.checkIn && opportunity.checkOut" class="mt-3 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+      <mat-icon class="text-sm">calendar_today</mat-icon>
+      <span>{{ opportunity.checkIn | date:'dd/MM' }} - {{ opportunity.checkOut | date:'dd/MM' }}</span>
+    </div>
   </mat-card-content>
 
   <!-- Footer -->
-  <div class="card-footer p-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-    <span class="risk-label text-sm" [ngClass]="riskClass">
-      <mat-icon class="text-sm align-middle">warning</mat-icon>
-      {{ riskLabel }}
-    </span>
-    <span *ngIf="opportunity.validUntil" class="text-xs text-gray-400">
-      בתוקף עד {{ opportunity.validUntil | date:'dd/MM' }}
-    </span>
+  <div class="card-footer p-3 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-2">
+    <div class="flex items-center justify-between">
+      <span class="risk-label text-sm" [ngClass]="riskClass">
+        <mat-icon class="text-sm align-middle">warning</mat-icon>
+        {{ riskLabel }}
+      </span>
+      <span *ngIf="opportunity.validUntil" class="text-xs text-gray-400">
+        בתוקף עד {{ opportunity.validUntil | date:'dd/MM' }}
+      </span>
+    </div>
+    
+    <!-- Insert Opportunity Button -->
+    <button mat-raised-button color="primary" class="w-full" (click)="onInsertClick()">
+      <mat-icon>add_circle</mat-icon>
+      <span class="ml-2">הוסף הזדמנות</span>
+    </button>
   </div>
 </mat-card>

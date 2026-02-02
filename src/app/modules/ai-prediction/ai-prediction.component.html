@@ -20,8 +20,15 @@
     </div>
     
     <div class="flex items-center gap-3">
-      <button mat-stroked-button color="primary" (click)="clearCache()" matTooltip="נקה מטמון">
+      <div *ngIf="lastRefreshTime" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mr-4">
+        <mat-icon class="text-sm">schedule</mat-icon>
+        <span>רענון הבא בעוד: {{ formatTimeRemaining() }}</span>
+      </div>
+      <button mat-stroked-button color="primary" (click)="manualRefresh()" matTooltip="רענן עכשיו">
         <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-stroked-button color="primary" (click)="clearCache()" matTooltip="נקה מטמון">
+        <mat-icon>delete_sweep</mat-icon>
       </button>
       <button mat-flat-button color="primary" (click)="runFullAnalysis()" [disabled]="isLoading">
         <mat-icon *ngIf="!isLoading">auto_awesome</mat-icon>
@@ -249,7 +256,11 @@
         </div>
 
         <div *ngIf="!isLoadingOpportunities && opportunities.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-opportunity-card *ngFor="let opp of opportunities" [opportunity]="opp"></app-opportunity-card>
+          <app-opportunity-card 
+            *ngFor="let opp of opportunities" 
+            [opportunity]="opp"
+            (insertOpportunity)="insertOpportunity($event)">
+          </app-opportunity-card>
         </div>
       </div>
     </mat-tab>

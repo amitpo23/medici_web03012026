@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { AIOpportunity, AIPredictionService } from '../../../../services/ai-prediction.service';
 
 @Component({
@@ -8,8 +8,33 @@ import { AIOpportunity, AIPredictionService } from '../../../../services/ai-pred
 })
 export class OpportunityCardComponent {
   @Input() opportunity!: AIOpportunity;
+  @Output() insertOpportunity = new EventEmitter<AIOpportunity>();
 
   constructor(private aiService: AIPredictionService) {}
+
+  get profit(): number {
+    const buyPrice = this.opportunity.buyPrice || 0;
+    const sellPrice = this.opportunity.estimatedSellPrice || 0;
+    return sellPrice - buyPrice;
+  }
+
+  get margin(): number {
+    const buyPrice = this.opportunity.buyPrice || 0;
+    const sellPrice = this.opportunity.estimatedSellPrice || 0;
+    if (sellPrice === 0) return 0;
+    return ((sellPrice - buyPrice) / sellPrice) * 100;
+  }
+
+  get roi(): number {
+    const buyPrice = this.opportunity.buyPrice || 0;
+    const profit = this.profit;
+    if (buyPrice === 0) return 0;
+    return (profit / buyPrice) * 100;
+  }
+
+  onInsertClick(): void {
+    this.insertOpportunity.emit(this.opportunity);
+  }
 
   get typeClass(): string {
     return this.aiService.getActionClass(this.opportunity.type);
