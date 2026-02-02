@@ -1,0 +1,148 @@
+<div class="bulk-import-dialog">
+  <h2 mat-dialog-title>
+    <mat-icon>upload_file</mat-icon>
+    Bulk Import Opportunities
+  </h2>
+
+  <mat-dialog-content>
+    <!-- Step 1: File Upload -->
+    <div class="upload-section" *ngIf="!parsedData.length">
+      <div class="instructions">
+        <h3>Instructions:</h3>
+        <ol>
+          <li>Download the CSV template below</li>
+          <li>Fill in your opportunity data</li>
+          <li>Upload the completed CSV file</li>
+        </ol>
+        <p class="note">
+          <mat-icon>info</mat-icon>
+          <strong>Auto-pricing:</strong> If you provide only sourcePrice, the system will automatically calculate 
+          BuyPrice (source + $10) and PushPrice (source + $50)
+        </p>
+      </div>
+
+      <button mat-raised-button color="primary" (click)="downloadTemplate()">
+        <mat-icon>download</mat-icon>
+        Download CSV Template
+      </button>
+
+      <mat-divider></mat-divider>
+
+      <div class="file-input-container">
+        <input type="file" accept=".csv" (change)="onFileSelected($event)" #fileInput hidden>
+        <button mat-raised-button color="accent" (click)="fileInput.click()">
+          <mat-icon>attach_file</mat-icon>
+          Select CSV File
+        </button>
+        <span class="file-name" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+      </div>
+    </div>
+
+    <!-- Step 2: Preview Data -->
+    <div class="preview-section" *ngIf="parsedData.length && !showResults">
+      <div class="preview-header">
+        <h3>Preview ({{ parsedData.length }} rows)</h3>
+        <button mat-button (click)="parsedData = []">
+          <mat-icon>clear</mat-icon>
+          Clear & Upload New File
+        </button>
+      </div>
+
+      <div class="preview-table-container">
+        <table mat-table [dataSource]="parsedData" class="preview-table">
+          <ng-container matColumnDef="hotelId">
+            <th mat-header-cell *matHeaderCellDef>Hotel ID</th>
+            <td mat-cell *matCellDef="let row">{{ row.hotelId }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="dates">
+            <th mat-header-cell *matHeaderCellDef>Dates</th>
+            <td mat-cell *matCellDef="let row">
+              {{ row.dateFrom | date:'dd/MM' }} - {{ row.dateTo | date:'dd/MM' }}
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="board">
+            <th mat-header-cell *matHeaderCellDef>Board</th>
+            <td mat-cell *matCellDef="let row">{{ getBoardName(row.boardId) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="category">
+            <th mat-header-cell *matHeaderCellDef>Category</th>
+            <td mat-cell *matCellDef="let row">{{ getCategoryName(row.categoryId) }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="prices">
+            <th mat-header-cell *matHeaderCellDef>Prices</th>
+            <td mat-cell *matCellDef="let row">
+              <div class="price-breakdown">
+                <small>Source: €{{ row.sourcePrice }}</small>
+                <small>Buy: €{{ row.buyPrice }}</small>
+                <small>Push: €{{ row.pushPrice }}</small>
+              </div>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="rooms">
+            <th mat-header-cell *matHeaderCellDef>Rooms</th>
+            <td mat-cell *matCellDef="let row">{{ row.maxRooms }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['hotelId', 'dates', 'board', 'category', 'prices', 'rooms']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['hotelId', 'dates', 'board', 'category', 'prices', 'rooms'];"></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Step 3: Import Progress -->
+    <div class="progress-section" *ngIf="isProcessing">
+      <h3>Importing...</h3>
+      <mat-progress-bar mode="determinate" [value]="importProgress"></mat-progress-bar>
+      <p>{{ importProgress }}% complete ({{ importResults.success + importResults.failed }} / {{ importResults.total }})</p>
+    </div>
+
+    <!-- Step 4: Results -->
+    <div class="results-section" *ngIf="showResults">
+      <div class="results-summary">
+        <mat-icon class="success-icon">check_circle</mat-icon>
+        <h3>Import Complete!</h3>
+        <div class="stats">
+          <div class="stat success">
+            <span class="number">{{ importResults.success }}</span>
+            <span class="label">Success</span>
+          </div>
+          <div class="stat failed">
+            <span class="number">{{ importResults.failed }}</span>
+            <span class="label">Failed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-details" *ngIf="importResults.failed > 0">
+        <h4>Failed Rows:</h4>
+        <div class="failed-list">
+          <div class="failed-item" *ngFor="let row of parsedData">
+            <div *ngIf="row.status === 'error'">
+              <mat-icon>error</mat-icon>
+              <span>Hotel {{ row.hotelId }} ({{ row.dateFrom }} - {{ row.dateTo }}): {{ row.error }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button (click)="onClose()">
+      {{ showResults ? 'Close' : 'Cancel' }}
+    </button>
+
+    <button mat-raised-button color="primary" 
+            *ngIf="parsedData.length && !showResults && !isProcessing"
+            (click)="importAll()"
+            [disabled]="isProcessing">
+      <mat-icon>cloud_upload</mat-icon>
+      Import {{ parsedData.length }} Opportunities
+    </button>
+  </mat-dialog-actions>
+</div>

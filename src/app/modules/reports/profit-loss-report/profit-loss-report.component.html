@@ -1,0 +1,195 @@
+<div class="profit-loss-report">
+  <div class="report-header">
+    <h2>
+      <mat-icon>assessment</mat-icon>
+      Profit & Loss Report
+    </h2>
+
+    <div class="header-actions">
+      <button mat-raised-button color="primary" (click)="exportToExcel()" [disabled]="isLoading || !reportData">
+        <mat-icon>download</mat-icon>
+        Export to Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-content>
+      <form [formGroup]="filterForm" class="filters-form">
+        <mat-form-field appearance="outline">
+          <mat-label>From Date</mat-label>
+          <input matInput [matDatepicker]="pickerFrom" formControlName="dateFrom">
+          <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+          <mat-datepicker #pickerFrom></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>To Date</mat-label>
+          <input matInput [matDatepicker]="pickerTo" formControlName="dateTo">
+          <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+          <mat-datepicker #pickerTo></mat-datepicker>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Hotel (Optional)</mat-label>
+          <input matInput type="number" formControlName="hotelId" placeholder="Hotel ID">
+        </mat-form-field>
+
+        <div class="filter-actions">
+          <button mat-raised-button color="accent" (click)="loadReport()" [disabled]="isLoading">
+            <mat-icon>search</mat-icon>
+            Generate Report
+          </button>
+          <button mat-button (click)="resetFilters()">
+            <mat-icon>refresh</mat-icon>
+            Reset
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="isLoading">
+    <mat-spinner></mat-spinner>
+    <p>Loading report data...</p>
+  </div>
+
+  <!-- Report Content -->
+  <div class="report-content" *ngIf="!isLoading && reportData">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <mat-card class="summary-card profit">
+        <mat-card-content>
+          <div class="card-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="card-data">
+            <h3>Total Profit</h3>
+            <p class="amount">{{ totalProfit | currency:'EUR' }}</p>
+            <small>{{ totalBookings }} bookings</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card revenue">
+        <mat-card-content>
+          <div class="card-icon">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="card-data">
+            <h3>Total Revenue</h3>
+            <p class="amount">{{ totalRevenue | currency:'EUR' }}</p>
+            <small>Push price total</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card cost">
+        <mat-card-content>
+          <div class="card-icon">
+            <mat-icon>shopping_cart</mat-icon>
+          </div>
+          <div class="card-data">
+            <h3>Total Cost</h3>
+            <p class="amount">{{ totalCost | currency:'EUR' }}</p>
+            <small>Buy price total</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card margin">
+        <mat-card-content>
+          <div class="card-icon">
+            <mat-icon>percent</mat-icon>
+          </div>
+          <div class="card-data">
+            <h3>Average Margin</h3>
+            <p class="amount">{{ averageMargin | number:'1.2-2' }}%</p>
+            <small>Profit margin</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Chart -->
+    <mat-card class="chart-card" *ngIf="chartLabels.length">
+      <mat-card-header>
+        <mat-card-title>Profit Trend Over Time</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="chart-container">
+          <canvas baseChart
+                  [data]="{ labels: chartLabels, datasets: chartDatasets }"
+                  [options]="chartOptions"
+                  [type]="'line'">
+          </canvas>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Details Table -->
+    <mat-card class="details-card" *ngIf="detailsData.length">
+      <mat-card-header>
+        <mat-card-title>Booking Details</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="detailsData" class="details-table">
+            <ng-container matColumnDef="bookingId">
+              <th mat-header-cell *matHeaderCellDef>Booking ID</th>
+              <td mat-cell *matCellDef="let row">{{ row.bookingId }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="hotel">
+              <th mat-header-cell *matHeaderCellDef>Hotel</th>
+              <td mat-cell *matCellDef="let row">{{ row.hotelName }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="dates">
+              <th mat-header-cell *matHeaderCellDef>Dates</th>
+              <td mat-cell *matCellDef="let row">
+                {{ row.checkIn | date:'dd/MM/yy' }} - {{ row.checkOut | date:'dd/MM/yy' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="buyPrice">
+              <th mat-header-cell *matHeaderCellDef>Buy Price</th>
+              <td mat-cell *matCellDef="let row">{{ row.buyPrice | currency:'EUR' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="pushPrice">
+              <th mat-header-cell *matHeaderCellDef>Push Price</th>
+              <td mat-cell *matCellDef="let row">{{ row.pushPrice | currency:'EUR' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="profit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row" [class.negative]="row.profit < 0">
+                {{ row.profit | currency:'EUR' }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="margin">
+              <th mat-header-cell *matHeaderCellDef>Margin %</th>
+              <td mat-cell *matCellDef="let row" [class.negative]="row.margin < 0">
+                {{ row.margin | number:'1.2-2' }}%
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['bookingId', 'hotel', 'dates', 'buyPrice', 'pushPrice', 'profit', 'margin']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['bookingId', 'hotel', 'dates', 'buyPrice', 'pushPrice', 'profit', 'margin'];"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && !reportData">
+    <mat-icon>assessment</mat-icon>
+    <h3>No Report Data</h3>
+    <p>Select filters and click "Generate Report" to view profit & loss data</p>
+  </div>
+</div>

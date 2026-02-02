@@ -6,6 +6,7 @@ import { OptionsComponent } from './options.component';
 import { OppLogComponent } from './opp-log/opp-log.component';
 import { OppLogFormComponent } from './opp-log-form/opp-log-form.component';
 import { OppFormComponent } from './opp-form/opp-form.component';
+import { BulkImportDialogComponent } from './bulk-import-dialog/bulk-import-dialog.component';
 import { MaterialModule } from '../material/material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { AgGridModule } from 'ag-grid-angular';
@@ -18,7 +19,8 @@ import { OppActionRendererComponent } from './opp-action-renderer/opp-action-ren
     OppLogComponent,
     OppLogFormComponent,
     OppFormComponent,
-    OppActionRendererComponent
+    OppActionRendererComponent,
+    BulkImportDialogComponent
   ],
   imports: [
     CommonModule,

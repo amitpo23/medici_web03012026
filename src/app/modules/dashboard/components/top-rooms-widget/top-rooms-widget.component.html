@@ -1,0 +1,83 @@
+<div class="top-rooms-widget">
+  <mat-card class="profitable-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="success-icon">trending_up</mat-icon>
+        Top 10 Profitable Rooms
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div class="rooms-list" *ngIf="!isLoading">
+        <div class="room-item" *ngFor="let room of topProfitableRooms; let i = index">
+          <div class="rank">{{ i + 1 }}</div>
+          <div class="room-info">
+            <div class="hotel-name">{{ room.hotelName }}</div>
+            <div class="dates">
+              {{ room.checkIn | date:'dd/MM/yyyy' }} - {{ room.checkOut | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="guest" *ngIf="room.guestName">{{ room.guestName }}</div>
+          </div>
+          <div class="room-metrics">
+            <div class="profit">
+              <span class="label">Profit:</span>
+              <span class="value positive">{{ formatCurrency(room.profit) }}</span>
+            </div>
+            <div class="margin" [ngClass]="getMarginClass(room.margin)">
+              {{ formatPercent(room.margin) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="topProfitableRooms.length === 0">
+          <mat-icon>info</mat-icon>
+          <p>No profitable rooms data available</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="non-profitable-section">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="error-icon">trending_down</mat-icon>
+        Top 10 Loss-Making Rooms
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="loading" *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <div class="rooms-list" *ngIf="!isLoading">
+        <div class="room-item loss" *ngFor="let room of topNonProfitableRooms; let i = index">
+          <div class="rank">{{ i + 1 }}</div>
+          <div class="room-info">
+            <div class="hotel-name">{{ room.hotelName }}</div>
+            <div class="dates">
+              {{ room.checkIn | date:'dd/MM/yyyy' }} - {{ room.checkOut | date:'dd/MM/yyyy' }}
+            </div>
+            <div class="guest" *ngIf="room.guestName">{{ room.guestName }}</div>
+          </div>
+          <div class="room-metrics">
+            <div class="profit">
+              <span class="label">Loss:</span>
+              <span class="value negative">{{ formatCurrency(room.profit) }}</span>
+            </div>
+            <div class="margin negative-margin">
+              {{ formatPercent(room.margin) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="topNonProfitableRooms.length === 0">
+          <mat-icon>check_circle</mat-icon>
+          <p>No loss-making rooms - Great job! 🎉</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>
