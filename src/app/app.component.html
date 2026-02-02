@@ -138,12 +138,50 @@
                 <span class="nav-text">Reports</span>
             </a>
 
-            <!-- System Section -->
+            <!-- System Monitoring Section - NEW -->
+            <mat-expansion-panel class="nav-panel monitoring-panel" hideToggle>
+                <mat-expansion-panel-header>
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">monitoring</mat-icon>
+                        <span class="nav-text">System Monitoring</span>
+                        <span class="new-badge" style="margin-right: 8px;">NEW</span>
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/system']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">dashboard</mat-icon>
+                        Overview
+                    </a>
+                    <a mat-list-item [routerLink]="['/system/monitoring']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">bar_chart</mat-icon>
+                        Real-time Monitoring
+                    </a>
+                    <a mat-list-item [routerLink]="['/system/alerts']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">notification_important</mat-icon>
+                        Alert Center
+                        <span *ngIf="activeAlertsCount > 0" class="alert-badge">{{ activeAlertsCount }}</span>
+                    </a>
+                    <a mat-list-item [routerLink]="['/system/revenue']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">attach_money</mat-icon>
+                        Revenue Analytics
+                    </a>
+                    <a mat-list-item [routerLink]="['/system/logs']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">article</mat-icon>
+                        Logs Viewer
+                    </a>
+                    <a mat-list-item [routerLink]="['/system/cancellations']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">cancel</mat-icon>
+                        Cancellations
+                    </a>
+                </mat-nav-list>
+            </mat-expansion-panel>
+
+            <!-- System Admin Section -->
             <mat-expansion-panel class="nav-panel" hideToggle>
                 <mat-expansion-panel-header>
                     <mat-panel-title class="nav-item">
                         <mat-icon class="nav-icon">admin_panel_settings</mat-icon>
-                        <span class="nav-text">System</span>
+                        <span class="nav-text">System Admin</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
                 <mat-nav-list class="sub-nav">

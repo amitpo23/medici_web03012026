@@ -128,6 +128,98 @@
       </div>
     </div>
 
+    <!-- System Monitoring Widgets - NEW -->
+    <div class="system-monitoring-widgets">
+      <h2 class="section-title">
+        <mat-icon>monitoring</mat-icon>
+        System Monitoring
+        <span class="section-subtitle">Real-time system health and alerts</span>
+      </h2>
+
+      <div class="monitoring-widgets-grid">
+        <!-- System Health Widget -->
+        <div class="monitoring-widget health-widget" [ngClass]="systemHealth.status">
+          <div class="widget-header">
+            <mat-icon class="widget-icon">{{ systemHealth.icon }}</mat-icon>
+            <span class="widget-title">System Health</span>
+          </div>
+          <div class="widget-content">
+            <div class="health-status">{{ systemHealth.text }}</div>
+            <div class="health-details">
+              <div class="health-metric">
+                <span class="metric-label">Uptime:</span>
+                <span class="metric-value">{{ systemHealth.uptime }}</span>
+              </div>
+              <div class="health-metric">
+                <span class="metric-label">Response:</span>
+                <span class="metric-value">{{ systemHealth.avgResponse }}ms</span>
+              </div>
+            </div>
+          </div>
+          <button mat-stroked-button class="widget-action" routerLink="/system/monitoring">
+            View Details
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+
+        <!-- Active Alerts Widget -->
+        <div class="monitoring-widget alerts-widget" [class.has-alerts]="activeAlerts > 0">
+          <div class="widget-header">
+            <mat-icon class="widget-icon">{{ activeAlerts > 0 ? 'notification_important' : 'check_circle' }}</mat-icon>
+            <span class="widget-title">Active Alerts</span>
+          </div>
+          <div class="widget-content">
+            <div class="alert-count" [class.critical]="activeAlerts > 0">
+              {{ activeAlerts }}
+            </div>
+            <div class="alert-breakdown" *ngIf="alertsBreakdown">
+              <span class="breakdown-item critical" *ngIf="alertsBreakdown.critical > 0">
+                🔴 {{ alertsBreakdown.critical }} Critical
+              </span>
+              <span class="breakdown-item warning" *ngIf="alertsBreakdown.warning > 0">
+                ⚠️ {{ alertsBreakdown.warning }} Warning
+              </span>
+              <span class="breakdown-item info" *ngIf="alertsBreakdown.info > 0">
+                ℹ️ {{ alertsBreakdown.info }} Info
+              </span>
+            </div>
+            <div class="no-alerts" *ngIf="activeAlerts === 0">
+              All systems operational ✅
+            </div>
+          </div>
+          <button mat-stroked-button class="widget-action" routerLink="/system/alerts">
+            View Alerts
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+
+        <!-- Today's Revenue Widget -->
+        <div class="monitoring-widget revenue-widget">
+          <div class="widget-header">
+            <mat-icon class="widget-icon">attach_money</mat-icon>
+            <span class="widget-title">Today's Revenue</span>
+          </div>
+          <div class="widget-content">
+            <div class="revenue-amount">{{ todayRevenue | currency:'EUR':'symbol':'1.0-0' }}</div>
+            <div class="revenue-details">
+              <div class="detail-row">
+                <span class="detail-label">Profit:</span>
+                <span class="detail-value positive">{{ todayProfit | currency:'EUR':'symbol':'1.0-0' }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Margin:</span>
+                <span class="detail-value">{{ todayMargin }}%</span>
+              </div>
+            </div>
+          </div>
+          <button mat-stroked-button class="widget-action" routerLink="/system/revenue">
+            View Analytics
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- SEARCH INTELLIGENCE SECTION -->
     <div class="search-intelligence-section">
       <h2 class="section-title">

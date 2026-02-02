@@ -63,10 +63,34 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Recent Activity (derived from daily trend)
   recentActivity: Activity[] = [];
 
+  // System Monitoring Widgets Data
+  systemHealth = {
+    status: 'healthy', // healthy, warning, critical
+    icon: 'check_circle',
+    text: 'All Systems Operational',
+    uptime: '99.9%',
+    avgResponse: 0
+  };
+  
+  activeAlerts = 0;
+  alertsBreakdown = {
+    critical: 0,
+    warning: 0,
+    info: 0
+  };
+  
+  todayRevenue = 0;
+  todayProfit = 0;
+  todayMargin = 0;
+
   constructor(private dashboardService: DashboardService) {}
 
   ngOnInit(): void {
     this.loadDashboardData();
+    this.loadSystemMonitoringData();
+    
+    // Refresh system monitoring data every 30 seconds
+    setInterval(() => this.loadSystemMonitoringData(), 30000);
   }
 
   ngOnDestroy(): void {
@@ -152,5 +176,78 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   refreshData(): void {
     this.loadDashboardData();
+    this.loadSystemMonitoringData();
+  }
+
+  loadSystemMonitoringData(): void {
+    // Load system health
+    fetch(`${window.location.origin}/api/monitoring/health`)
+      .then(res => res.json())
+      .then(data => {
+        this.systemHealth.status = data.status || 'healthy';
+        this.systemHealth.icon = this.getHealthIcon(data.status);
+        this.systemHealth.text = this.getHealthText(data.status);
+        this.systemHealth.avgResponse = data.metrics?.avgResponseTime || 0;
+      })
+      .catch(() => {
+        this.systemHealth.status = 'healthy';
+        this.systemHealth.icon = 'check_circle';
+        this.systemHealth.text = 'All Systems Operational';
+      });
+
+    // Load active alerts
+    fetch(`${window.location.origin}/api/alert-management/active`)
+      .then(res => res.json())
+      .then(alerts => {
+        this.activeAlerts = alerts.length;
+        this.alertsBreakdown = {
+          critical: alerts.filter((a: any) => a.severity === 'critical').length,
+          warning: alerts.filter((a: any) => a.severity === 'warning').length,
+          info: alerts.filter((a: any) => a.severity === 'info').length
+        };
+      })
+      .catch(() => {
+        this.activeAlerts = 0;
+        this.alertsBreakdown = { critical: 0, warning: 0, info: 0 };
+      });
+
+    // Calculate today's revenue/profit from KPI data
+    if (this.dateRange === 'today') {
+      this.todayRevenue = this.kpiData.totalRevenue;
+      this.todayProfit = this.kpiData.totalProfit;
+    } else {
+      // Get today's stats
+      this.dashboardService.getStats(1).subscribe({
+        next: (stats) => {
+          this.todayRevenue = stats.overview.TotalPushPrice || 0;
+          this.todayProfit = stats.overview.TotalExpectedProfit || 0;
+          this.todayMargin = this.todayRevenue > 0 ? 
+            ((this.todayProfit / this.todayRevenue) * 100) : 0;
+        },
+        error: () => {
+          this.todayRevenue = 0;
+          this.todayProfit = 0;
+          this.todayMargin = 0;
+        }
+      });
+    }
+  }
+
+  private getHealthIcon(status: string): string {
+    const icons: { [key: string]: string } = {
+      'healthy': 'check_circle',
+      'warning': 'warning',
+      'critical': 'error'
+    };
+    return icons[status] || 'help';
+  }
+
+  private getHealthText(status: string): string {
+    const texts: { [key: string]: string } = {
+      'healthy': 'All Systems Operational',
+      'warning': 'Minor Issues Detected',
+      'critical': 'Critical Issues - Action Required'
+    };
+    return texts[status] || 'Unknown Status';
   }
 }

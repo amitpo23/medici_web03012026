@@ -151,6 +151,63 @@ $dark-card-bg: #1e1e2d;
   }
 }
 
+// System Monitoring Panel Styling
+.monitoring-panel {
+  .mat-expansion-panel-header {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+    border-radius: 8px;
+    margin: 4px 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.25) 0%, rgba(118, 75, 162, 0.25) 100%);
+    }
+  }
+
+  .new-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    animation: pulse-glow-blue 2s infinite;
+  }
+}
+
+@keyframes pulse-glow-blue {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(102, 126, 234, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(102, 126, 234, 0.8);
+  }
+}
+
+// Alert Badge
+.alert-badge {
+  position: absolute;
+  left: 8px;
+  background: linear-gradient(135deg, #ff5252 0%, #f44336 100%);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+  animation: pulse-alert 2s infinite;
+}
+
+@keyframes pulse-alert {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(244, 67, 54, 0.5);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(244, 67, 54, 0.8);
+    transform: scale(1.1);
+  }
+}
+
 // Expansion Panel Styles
 .nav-panel {
   background: transparent !important;

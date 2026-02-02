@@ -51,6 +51,305 @@
 }
 
 // ========================================
+// SYSTEM MONITORING WIDGETS
+// ========================================
+
+.system-monitoring-widgets {
+  margin: 32px 0;
+  padding: 0 24px;
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 3px solid #667eea;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #667eea;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      font-weight: 400;
+      color: #64748b;
+      margin-left: 12px;
+    }
+  }
+}
+
+.monitoring-widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.monitoring-widget {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: all 0.3s ease;
+  border-right: 4px solid #667eea;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  }
+
+  .widget-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .widget-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: #667eea;
+    }
+
+    .widget-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+  }
+
+  .widget-content {
+    flex: 1;
+  }
+
+  .widget-action {
+    width: 100%;
+    border-color: #667eea;
+    color: #667eea;
+
+    &:hover {
+      background: #667eea;
+      color: white;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+// Health Widget
+.health-widget {
+  &.healthy {
+    border-right-color: #4caf50;
+    .widget-icon { color: #4caf50; }
+    .widget-action { border-color: #4caf50; color: #4caf50; }
+    .widget-action:hover { background: #4caf50; color: white; }
+  }
+
+  &.warning {
+    border-right-color: #ff9800;
+    .widget-icon { color: #ff9800; }
+    .widget-action { border-color: #ff9800; color: #ff9800; }
+    .widget-action:hover { background: #ff9800; color: white; }
+  }
+
+  &.critical {
+    border-right-color: #f44336;
+    .widget-icon { color: #f44336; }
+    .widget-action { border-color: #f44336; color: #f44336; }
+    .widget-action:hover { background: #f44336; color: white; }
+  }
+
+  .health-status {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 12px;
+  }
+
+  .health-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .health-metric {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+
+      .metric-label {
+        color: #64748b;
+      }
+
+      .metric-value {
+        font-weight: 600;
+        color: #1e293b;
+      }
+    }
+  }
+}
+
+// Alerts Widget
+.alerts-widget {
+  border-right-color: #9c27b0;
+
+  &.has-alerts {
+    border-right-color: #f44336;
+    animation: pulse-border 2s infinite;
+  }
+
+  .widget-icon {
+    color: #9c27b0;
+  }
+
+  .widget-action {
+    border-color: #9c27b0;
+    color: #9c27b0;
+
+    &:hover {
+      background: #9c27b0;
+      color: white;
+    }
+  }
+
+  .alert-count {
+    font-size: 48px;
+    font-weight: 700;
+    color: #4caf50;
+    text-align: center;
+    margin: 16px 0;
+
+    &.critical {
+      color: #f44336;
+      animation: pulse-scale 2s infinite;
+    }
+  }
+
+  .alert-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 14px;
+
+    .breakdown-item {
+      padding: 6px 12px;
+      border-radius: 6px;
+
+      &.critical {
+        background: #ffebee;
+        color: #c62828;
+      }
+
+      &.warning {
+        background: #fff3e0;
+        color: #e65100;
+      }
+
+      &.info {
+        background: #e3f2fd;
+        color: #1565c0;
+      }
+    }
+  }
+
+  .no-alerts {
+    text-align: center;
+    color: #4caf50;
+    font-weight: 500;
+    padding: 20px 0;
+  }
+}
+
+@keyframes pulse-border {
+  0%, 100% {
+    border-right-width: 4px;
+  }
+  50% {
+    border-right-width: 6px;
+  }
+}
+
+@keyframes pulse-scale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+// Revenue Widget
+.revenue-widget {
+  border-right-color: #4caf50;
+
+  .widget-icon {
+    color: #4caf50;
+  }
+
+  .widget-action {
+    border-color: #4caf50;
+    color: #4caf50;
+
+    &:hover {
+      background: #4caf50;
+      color: white;
+    }
+  }
+
+  .revenue-amount {
+    font-size: 36px;
+    font-weight: 700;
+    color: #4caf50;
+    text-align: center;
+    margin: 16px 0;
+  }
+
+  .revenue-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #f5f7fa;
+      border-radius: 6px;
+
+      .detail-label {
+        color: #64748b;
+        font-size: 14px;
+      }
+
+      .detail-value {
+        font-weight: 600;
+        color: #1e293b;
+        font-size: 14px;
+
+        &.positive {
+          color: #4caf50;
+        }
+      }
+    }
+  }
+}
+
+// ========================================
 // SEARCH INTELLIGENCE SECTION
 // ========================================
 
