@@ -20,7 +20,6 @@ export class SearchService {
    * - Smart defaults: Adults=2, PaxChildren=[]
    * - Date format: yyyy-mm-dd
    * - HotelName XOR City logic
-   * - Caching enabled by default
    */
   searchInnstantPrice(params: {
     dateFrom: string;
@@ -32,7 +31,6 @@ export class SearchService {
     adults?: number;
     paxChildren?: number[];
     limit?: number;
-    useCache?: boolean;
   }): Observable<any> {
     return this.http.post(`${this.baseUrl}Search/InnstantPrice`, {
       dateFrom: params.dateFrom,
@@ -43,46 +41,8 @@ export class SearchService {
       stars: params.stars,
       adults: params.adults || 2,
       paxChildren: params.paxChildren || [],
-      limit: params.limit || 50,
-      useCache: params.useCache !== false  // Default true
+      limit: params.limit || 50
     });
-  }
-
-  /**
-   * Multi-Supplier Search (Innstant + GoGlobal)
-   * Returns combined results with best price comparison
-   */
-  searchMultiSupplier(params: {
-    dateFrom: string;
-    dateTo: string;
-    hotelId?: number;
-    hotelName?: string;
-    city?: string;
-    stars?: number;
-    adults?: number;
-    paxChildren?: number[];
-    preferredSupplier?: 'innstant' | 'goglobal' | 'all';
-    bestPriceOnly?: boolean;
-  }): Observable<any> {
-    return this.http.post(`${this.baseUrl}Search/MultiSupplier`, {
-      dateFrom: params.dateFrom,
-      dateTo: params.dateTo,
-      hotelId: params.hotelId,
-      hotelName: params.hotelName,
-      city: params.city,
-      stars: params.stars,
-      adults: params.adults || 2,
-      paxChildren: params.paxChildren || [],
-      preferredSupplier: params.preferredSupplier || 'all',
-      bestPriceOnly: params.bestPriceOnly || false
-    });
-  }
-
-  /**
-   * Get supplier statistics and availability
-   */
-  getSupplierStats(): Observable<any> {
-    return this.http.get(`${this.baseUrl}Search/SupplierStats`);
   }
 
   /**
