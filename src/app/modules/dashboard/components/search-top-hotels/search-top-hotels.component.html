@@ -1,0 +1,71 @@
+<div class="search-top-hotels-widget">
+  <div class="widget-header">
+    <h3>🏨 Most Searched Hotels</h3>
+    <span class="subtitle">המלונות עם הביקוש הגבוה ביותר</span>
+  </div>
+
+  <div class="widget-body">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>טוען נתוני מלונות...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <p>❌ {{ error }}</p>
+      <button (click)="loadHotels()" class="retry-btn">נסה שוב</button>
+    </div>
+
+    <!-- Hotels List -->
+    <div *ngIf="!loading && !error && hotels.length > 0" class="hotels-list">
+      <div *ngFor="let hotel of hotels; let i = index" class="hotel-item" [class.top-hotel]="i === 0">
+        <!-- Rank Badge -->
+        <div class="hotel-rank" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+          <span *ngIf="i < 3" class="medal">{{ i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉' }}</span>
+          <span *ngIf="i >= 3">{{ i + 1 }}</span>
+        </div>
+
+        <!-- Hotel Info -->
+        <div class="hotel-info">
+          <div class="hotel-name">
+            {{ hotel.HotelName }}
+          </div>
+          <div class="hotel-location">
+            📍 {{ hotel.CityName }}, {{ hotel.CountryCode }}
+          </div>
+          <div class="hotel-stars" *ngIf="hotel.AvgStars > 0">
+            {{ getStarRating(hotel.AvgStars) }}
+          </div>
+        </div>
+
+        <!-- Search Stats -->
+        <div class="hotel-stats">
+          <div class="stat-item main-stat">
+            <span class="stat-value">{{ formatNumber(hotel.SearchCount) }}</span>
+            <span class="stat-label">searches</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">{{ hotel.Percentage }}%</span>
+            <span class="stat-label">of total</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value">€{{ hotel.AvgPrice?.toFixed(0) }}</span>
+            <span class="stat-label">avg price</span>
+          </div>
+        </div>
+
+        <!-- Demand Level Badge -->
+        <div class="demand-badge" 
+             [style.background-color]="getDemandLevel(hotel.Percentage).color">
+          {{ getDemandLevel(hotel.Percentage).label }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && hotels.length === 0" class="empty-state">
+      <p>אין נתוני מלונות זמינים</p>
+    </div>
+  </div>
+</div>

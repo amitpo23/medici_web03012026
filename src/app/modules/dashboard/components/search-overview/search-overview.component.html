@@ -1,0 +1,99 @@
+<div class="search-overview-widget">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <p>❌ {{ error }}</p>
+    <button (click)="loadOverview()" class="retry-btn">נסה שוב</button>
+  </div>
+
+  <!-- Overview Cards -->
+  <div *ngIf="!loading && !error && overview" class="overview-cards">
+    <!-- Total Searches Card -->
+    <div class="stat-card total">
+      <div class="card-icon">🔍</div>
+      <div class="card-content">
+        <div class="card-label">Total Searches</div>
+        <div class="card-value">{{ formatNumber(overview.TotalSearches) }}</div>
+        <div class="card-sublabel">סך הכל חיפושים</div>
+      </div>
+    </div>
+
+    <!-- Last 7 Days Card -->
+    <div class="stat-card week">
+      <div class="card-icon">📅</div>
+      <div class="card-content">
+        <div class="card-label">Last 7 Days</div>
+        <div class="card-value">{{ formatNumber(overview.Last7Days) }}</div>
+        <div class="card-trend" [class.positive]="isGrowing(overview.Last7Days, overview.Last30Days)"
+                                [class.negative]="!isGrowing(overview.Last7Days, overview.Last30Days)">
+          {{ getGrowthPercent(overview.Last7Days, overview.Last30Days) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Last 30 Days Card -->
+    <div class="stat-card month">
+      <div class="card-icon">📊</div>
+      <div class="card-content">
+        <div class="card-label">Last 30 Days</div>
+        <div class="card-value">{{ formatNumber(overview.Last30Days) }}</div>
+        <div class="card-sublabel">{{ formatNumber(overview.Last30Days / 30) }}/day avg</div>
+      </div>
+    </div>
+
+    <!-- Unique Hotels Card -->
+    <div class="stat-card hotels">
+      <div class="card-icon">🏨</div>
+      <div class="card-content">
+        <div class="card-label">Hotels Searched</div>
+        <div class="card-value">{{ formatNumber(overview.UniqueHotels) }}</div>
+        <div class="card-sublabel">מלונות ייחודיים</div>
+      </div>
+    </div>
+
+    <!-- Unique Cities Card -->
+    <div class="stat-card cities">
+      <div class="card-icon">🌍</div>
+      <div class="card-content">
+        <div class="card-label">Destinations</div>
+        <div class="card-value">{{ formatNumber(overview.UniqueCities) }}</div>
+        <div class="card-sublabel">יעדים ייחודיים</div>
+      </div>
+    </div>
+
+    <!-- Average Price Card -->
+    <div class="stat-card price">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <div class="card-label">Avg Search Price</div>
+        <div class="card-value">€{{ overview.AvgSearchPrice?.toFixed(0) }}</div>
+        <div class="card-sublabel">מחיר ממוצע</div>
+      </div>
+    </div>
+
+    <!-- Data Range Info -->
+    <div class="stat-card range">
+      <div class="card-icon">📆</div>
+      <div class="card-content">
+        <div class="card-label">Data Range</div>
+        <div class="card-value-small">{{ formatDate(overview.FirstSearchDate) }}</div>
+        <div class="card-separator">→</div>
+        <div class="card-value-small">{{ formatDate(overview.LastSearchDate) }}</div>
+      </div>
+    </div>
+
+    <!-- This Month Card -->
+    <div class="stat-card current">
+      <div class="card-icon">⚡</div>
+      <div class="card-content">
+        <div class="card-label">This Month</div>
+        <div class="card-value">{{ formatNumber(overview.ThisMonth) }}</div>
+        <div class="card-sublabel">חודש נוכחי</div>
+      </div>
+    </div>
+  </div>
+</div>

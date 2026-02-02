@@ -9,6 +9,10 @@ import { OccupancyTrendComponent } from './components/occupancy-trend/occupancy-
 import { TopHotelsComponent } from './components/top-hotels/top-hotels.component';
 import { WorkerStatusComponent } from './components/worker-status/worker-status.component';
 import { TopRoomsWidgetComponent } from './components/top-rooms-widget/top-rooms-widget.component';
+// Search Intelligence Components (Standalone)
+import { SearchOverviewComponent } from './components/search-overview/search-overview.component';
+import { SearchTopCitiesComponent } from './components/search-top-cities/search-top-cities.component';
+import { SearchTopHotelsComponent } from './components/search-top-hotels/search-top-hotels.component';
 
 @NgModule({
   declarations: [
@@ -23,7 +27,11 @@ import { TopRoomsWidgetComponent } from './components/top-rooms-widget/top-rooms
   imports: [
     CommonModule,
     DashboardRoutingModule,
-    MaterialModule
+    MaterialModule,
+    // Import standalone search components
+    SearchOverviewComponent,
+    SearchTopCitiesComponent,
+    SearchTopHotelsComponent
   ],
   exports: [
     WorkerStatusComponent,

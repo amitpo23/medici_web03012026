@@ -128,6 +128,24 @@
       </div>
     </div>
 
+    <!-- SEARCH INTELLIGENCE SECTION -->
+    <div class="search-intelligence-section">
+      <h2 class="section-title">
+        <mat-icon>search</mat-icon>
+        Search Intelligence
+        <span class="section-subtitle">תובנות מ-8.3M חיפושי לקוחות</span>
+      </h2>
+      
+      <!-- Search Overview Cards -->
+      <app-search-overview></app-search-overview>
+
+      <!-- Top Cities and Hotels Row -->
+      <div class="search-widgets-row">
+        <app-search-top-cities></app-search-top-cities>
+        <app-search-top-hotels></app-search-top-hotels>
+      </div>
+    </div>
+
     <!-- Forecast Summary -->
     <div class="forecast-section" *ngIf="forecast?.summary">
       <mat-card class="forecast-card">

@@ -93,7 +93,8 @@ Important table notes:
 - MED_Board: Meal plans (BoardId, BoardCode).
 - MED_RoomCategory: Room types (CategoryId, Name, PMS_Code).
 - Med_CustomersReservation: Customer details linked by ReservationId.
-- AI_Search_HotelData: **SEARCH INTENT DATA** - Contains 8.3M search records showing what customers are searching for (NOT bookings). Columns: Id, HotelId, HotelName, CityName, StayFrom, StayTo, CountryCode, PriceAmount, PriceAmountCurrency, CancellationType, RoomType, UpdatedAt, PollLogId, Board, Stars. Use this for demand analysis, search volume trends, popular destinations, and price intelligence. Top cities: Amsterdam (41%), Dubai (26%). Top hotel: Kimpton De Witt Amsterdam (40% of all searches). Active data from Aug 2024 - Jan 2026.
+- AI_Search_HotelData: **SEARCH INTENT DATA (ACTIVE)** - Contains 8.3M search records showing what customers are searching for (NOT bookings). Columns: Id, HotelId, HotelName, CityName, StayFrom, StayTo, CountryCode, PriceAmount, PriceAmountCurrency, CancellationType, RoomType, UpdatedAt, PollLogId, Board, Stars. Use this for demand analysis, search volume trends, popular destinations, and price intelligence. Top cities: Amsterdam (41%), Dubai (26%). Top hotel: Kimpton De Witt Amsterdam (40% of all searches). Active data from Aug 2024 - Jan 2026.
+- MED_SearchHotels: **HISTORICAL SEARCH DATA (ARCHIVE)** - Contains 6.9M search records from 2020-2023 showing customer behavior during COVID and post-pandemic periods. Columns: RequestTime, DateForm, DateTo, NumberOfNights, SourceHotelId, HotelId, CategoryId, BeddingId, BoardId, PaxAdultsCount, PaxChildrenCount, Price, CurrencyId, providerId, providerName, CancellationType (20 columns). Providers: InnstantTravel (97%), GoGlobal (2.5%). Use this for historical trend analysis, year-over-year comparisons, and learning from past customer behavior. Data period: Jan 2020 - Apr 2023.
 
 Rules:
 - Return ONLY the SQL query, no explanations or markdown
@@ -206,6 +207,11 @@ Rules:
 
     if (patterns.top.test(q) && patterns.hotels.test(q) && patterns.searches.test(q)) {
       return `SELECT TOP 10 HotelName, CityName, COUNT(*) as SearchCount, AVG(PriceAmount) as AvgPrice FROM AI_Search_HotelData WHERE HotelName IS NOT NULL GROUP BY HotelName, CityName ORDER BY SearchCount DESC`;
+    }
+
+    // Historical search queries (MED_SearchHotels)
+    if (patterns.searches.test(q) && /(?:2020|2021|2022|2023|עבר|היסטורי|history|historical)/i.test(q)) {
+      return `SELECT TOP 10 h.name as HotelName, COUNT(*) as SearchCount, AVG(s.Price) as AvgPrice FROM MED_SearchHotels s LEFT JOIN Med_Hotels h ON s.HotelId = h.HotelId WHERE s.RequestTime >= '2020-01-01' AND s.RequestTime < '2024-01-01' GROUP BY h.name ORDER BY SearchCount DESC`;
     }
 
     // Default

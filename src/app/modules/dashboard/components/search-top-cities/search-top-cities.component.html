@@ -1,0 +1,60 @@
+<div class="search-top-cities-widget">
+  <div class="widget-header">
+    <h3>🌍 Top Search Destinations</h3>
+    <span class="subtitle">מקומות החיפוש הפופולריים ביותר</span>
+  </div>
+
+  <div class="widget-body">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <div class="spinner"></div>
+      <p>טוען נתוני חיפושים...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="error && !loading" class="error-state">
+      <p>❌ {{ error }}</p>
+      <button (click)="loadCities()" class="retry-btn">נסה שוב</button>
+    </div>
+
+    <!-- Cities List -->
+    <div *ngIf="!loading && !error && cities.length > 0" class="cities-list">
+      <div *ngFor="let city of cities; let i = index" class="city-item">
+        <div class="city-rank">{{ i + 1 }}</div>
+        
+        <div class="city-info">
+          <div class="city-name">
+            <span class="flag">{{ getCityFlag(city.CountryCode) }}</span>
+            <span class="name">{{ city.CityName }}</span>
+            <span class="country-code">{{ city.CountryCode }}</span>
+          </div>
+          
+          <div class="city-stats">
+            <span class="searches">
+              <strong>{{ formatNumber(city.SearchCount) }}</strong> searches
+            </span>
+            <span class="hotels">
+              {{ city.UniqueHotels }} hotels
+            </span>
+            <span class="avg-price">
+              €{{ city.AvgPrice?.toFixed(0) }} avg
+            </span>
+          </div>
+        </div>
+
+        <div class="city-percentage">
+          <div class="percentage-bar" 
+               [style.width]="getBarWidth(city.Percentage)"
+               [style.background-color]="getBarColor(i)">
+          </div>
+          <span class="percentage-text">{{ city.Percentage }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!loading && !error && cities.length === 0" class="empty-state">
+      <p>אין נתוני חיפושים זמינים</p>
+    </div>
+  </div>
+</div>
