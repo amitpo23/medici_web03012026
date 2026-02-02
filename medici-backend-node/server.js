@@ -87,6 +87,10 @@ const alertsRoutes = require('./routes/alerts');
 const healthRoutes = require('./routes/health');
 const aiRagRoutes = require('./routes/ai-rag');
 const searchIntelligenceRoutes = require('./routes/search-intelligence');
+const cancellationsRoutes = require('./routes/cancellations');
+const monitoringRoutes = require('./routes/monitoring');
+const alertManagementRoutes = require('./routes/alert-management');
+const revenueAnalyticsRoutes = require('./routes/revenue-analytics');
 
 // Public routes (no auth required - OPEN ACCESS FOR DEVELOPMENT)
 app.use('/sign-in', authLimiter, authRoutes);
@@ -108,6 +112,10 @@ app.use('/scraper', scraperRoutes);
 app.use('/logs', logsRoutes);
 app.use('/alerts', alertsRoutes);
 app.use('/search-intelligence', searchIntelligenceRoutes);
+app.use('/cancellations', cancellationsRoutes);
+app.use('/monitoring', monitoringRoutes);
+app.use('/alert-management', alertManagementRoutes);
+app.use('/revenue-analytics', revenueAnalyticsRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
@@ -140,7 +148,8 @@ app.get('/', (req, res) => {
       logs: '/logs (ניהול וצפייה בלוגים)',
       alerts: '/alerts (מערכת התראות ומעקב)',
       health: '/health (בדיקת תקינות מערכת)',
-      searchIntelligence: '/search-intelligence (ניתוח מגמות חיפוש ו-8.3M search records)'
+      searchIntelligence: '/search-intelligence (ניתוח מגמות חיפוש ו-8.3M search records)',
+      cancellations: '/cancellations (ניתוח מקיף של כל הביטולים במערכת)'
     },
     newFeatures: {
       searchInnstant: 'POST /Search/InnstantPrice - GPT-style search with smart defaults',

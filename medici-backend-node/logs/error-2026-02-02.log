@@ -1,0 +1,8 @@
+{"error":"Invalid column name 'SaleDate'.","level":"error","message":"Failed to collect booking metrics","timestamp":"2026-02-02 14:15:25"}
+{"error":"Invalid column name 'PurchasePrice'.","level":"error","message":"Failed to collect revenue metrics","timestamp":"2026-02-02 14:15:25"}
+{"error":"Invalid column name 'SaleDate'.","level":"error","message":"Revenue check failed","timestamp":"2026-02-02 14:15:25"}
+{"error":"emailService.send is not a function","level":"error","message":"Failed to send email alert","timestamp":"2026-02-02 14:15:27"}
+{"error":"slackService.sendAlert is not a function","level":"error","message":"Failed to send Slack alert","timestamp":"2026-02-02 14:15:27"}
+{"error":"Invalid object name 'SystemAlerts'.","level":"error","message":"Failed to save alert to database","timestamp":"2026-02-02 14:15:28"}
+{"error":"Invalid column name 'City'.","level":"error","message":"Failed to get revenue by city","timestamp":"2026-02-02 14:45:15"}
+{"error":"Invalid column name 'SessionId'.","level":"error","message":"Failed to collect booking metrics","timestamp":"2026-02-02 14:47:14"}

@@ -1,0 +1,246 @@
+<div class="cancellations-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>ניתוח ביטולים 🚫</h1>
+    <p class="subtitle">מעקב ופיתוח תובנות על כל הביטולים במערכת</p>
+  </div>
+
+  <!-- Period Selector -->
+  <div class="controls">
+    <label for="period-select">תקופת זמן:</label>
+    <select id="period-select" [(ngModel)]="selectedPeriod" (change)="onPeriodChange()">
+      <option [value]="7">7 ימים אחרונים</option>
+      <option [value]="30">30 ימים אחרונים</option>
+      <option [value]="60">60 ימים אחרונים</option>
+      <option [value]="90">90 ימים אחרונים</option>
+      <option [value]="180">180 ימים אחרונים</option>
+    </select>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs">
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'overview'"
+      (click)="setActiveTab('overview')">
+      סקירה כללית
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'recent'"
+      (click)="setActiveTab('recent')">
+      ביטולים אחרונים
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'errors'"
+      (click)="setActiveTab('errors')">
+      שגיאות נפוצות
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'auto'"
+      (click)="setActiveTab('auto')">
+      ביטולים אוטומטיים
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'trends'"
+      (click)="setActiveTab('trends')">
+      מגמות
+    </button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'overview'">
+    <div class="loading" *ngIf="statsLoading">טוען סטטיסטיקות...</div>
+    <div class="error" *ngIf="statsError">{{ statsError }}</div>
+
+    <div class="stats-grid" *ngIf="!statsLoading && !statsError && stats">
+      <div class="stat-card">
+        <div class="stat-icon">📊</div>
+        <div class="stat-value">{{ formatNumber(stats.totalCancellations) }}</div>
+        <div class="stat-label">סה"כ ביטולים</div>
+      </div>
+
+      <div class="stat-card success">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value">{{ formatNumber(stats.successfulCancellations) }}</div>
+        <div class="stat-label">ביטולים מוצלחים</div>
+      </div>
+
+      <div class="stat-card failure">
+        <div class="stat-icon">❌</div>
+        <div class="stat-value">{{ formatNumber(stats.failedCancellations) }}</div>
+        <div class="stat-label">ביטולים כושלים</div>
+      </div>
+
+      <div class="stat-card" [ngClass]="getSuccessRateColor()">
+        <div class="stat-icon">📈</div>
+        <div class="stat-value">{{ stats.successRate }}</div>
+        <div class="stat-label">שיעור הצלחה</div>
+      </div>
+
+      <div class="stat-card auto">
+        <div class="stat-icon">🤖</div>
+        <div class="stat-value">{{ formatNumber(stats.autoCancellations) }}</div>
+        <div class="stat-label">ביטולים אוטומטיים</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Cancellations Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'recent'">
+    <div class="controls">
+      <label for="status-filter">סינון לפי סטטוס:</label>
+      <select id="status-filter" [(ngModel)]="statusFilter" (change)="onStatusFilterChange()">
+        <option value="all">הכל</option>
+        <option value="success">מוצלח בלבד</option>
+        <option value="failure">כושל בלבד</option>
+      </select>
+    </div>
+
+    <div class="loading" *ngIf="recentLoading">טוען ביטולים אחרונים...</div>
+    <div class="error" *ngIf="recentError">{{ recentError }}</div>
+
+    <div class="table-container" *ngIf="!recentLoading && !recentError">
+      <table class="cancellations-table">
+        <thead>
+          <tr>
+            <th>תאריך</th>
+            <th>סטטוס</th>
+            <th>מזהה הזדמנות</th>
+            <th>מזהה הזמנה</th>
+            <th>מלון</th>
+            <th>סכום</th>
+            <th>סיבה/שגיאה</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cancellation of recentCancellations">
+            <td>{{ formatDate(cancellation.DateInsert) }}</td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(cancellation.Status)">
+                {{ cancellation.Status === 'SUCCESS' ? '✓ הצליח' : '✗ כשל' }}
+              </span>
+            </td>
+            <td>{{ cancellation.OpportunityId }}</td>
+            <td>{{ cancellation.BookingId }}</td>
+            <td>{{ cancellation.HotelName || 'לא ידוע' }}</td>
+            <td>{{ formatCurrency(cancellation.Amount || 0) }}</td>
+            <td class="reason">{{ cancellation.CancellationReason || cancellation.ErrorMessage || '-' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Common Errors Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'errors'">
+    <div class="loading" *ngIf="errorsLoading">טוען שגיאות נפוצות...</div>
+    <div class="error" *ngIf="errorsError">{{ errorsError }}</div>
+
+    <div class="errors-list" *ngIf="!errorsLoading && !errorsError">
+      <div class="error-item" *ngFor="let error of commonErrors; let i = index">
+        <div class="error-rank">{{ i + 1 }}</div>
+        <div class="error-details">
+          <div class="error-message">{{ error.ErrorType }}</div>
+          <div class="error-meta">
+            <span class="error-count">{{ formatNumber(error.Count) }} פעמים</span>
+            <span class="error-last">אחרון: {{ formatDate(error.LastOccurrence) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Auto Cancellations Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'auto'">
+    <div class="loading" *ngIf="autoLoading">טוען ביטולים אוטומטיים...</div>
+    <div class="error" *ngIf="autoError">{{ autoError }}</div>
+
+    <div class="table-container" *ngIf="!autoLoading && !autoError">
+      <table class="cancellations-table">
+        <thead>
+          <tr>
+            <th>תאריך</th>
+            <th>פעולה</th>
+            <th>מזהה הזדמנות</th>
+            <th>מלון</th>
+            <th>תאריך כניסה</th>
+            <th>מחיר רכישה</th>
+            <th>החזר/הפסד</th>
+            <th>פרטים</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let auto of autoCancellations">
+            <td>{{ formatDate(auto.date) }}</td>
+            <td>
+              <span 
+                class="status-badge" 
+                [ngClass]="auto.actionType === 'AUTO_CANCELLED' ? 'success' : 'failure'">
+                {{ auto.actionType === 'AUTO_CANCELLED' ? '✓ בוטל אוטומטית' : '✗ כשל בביטול' }}
+              </span>
+            </td>
+            <td>{{ auto.opportunityId }}</td>
+            <td>{{ auto.hotelName || 'לא ידוע' }}</td>
+            <td>{{ formatDate(auto.checkIn) }}</td>
+            <td>{{ formatCurrency(auto.purchasePrice || 0) }}</td>
+            <td [ngClass]="auto.refundAmount > 0 ? 'refund' : 'loss'">
+              {{ auto.refundAmount > 0 ? formatCurrency(auto.refundAmount) : formatCurrency(auto.lostAmount) }}
+            </td>
+            <td class="details">
+              <span *ngIf="auto.cancellationId">ID: {{ auto.cancellationId }}</span>
+              <span *ngIf="auto.error" class="error-text">{{ auto.error }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Trends Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'trends'">
+    <div class="loading" *ngIf="trendsLoading">טוען מגמות...</div>
+    <div class="error" *ngIf="trendsError">{{ trendsError }}</div>
+
+    <div class="trends-container" *ngIf="!trendsLoading && !trendsError && trends">
+      <div class="trend-section">
+        <h3>ביטולים מוצלחים לפי יום</h3>
+        <div class="trend-dates">
+          <span *ngFor="let trend of trends.successByDay" class="date-label">
+            {{ formatDate(trend.Date).split(' ')[0] }}
+          </span>
+        </div>
+        <div class="trend-chart">
+          <div 
+            class="trend-bar success" 
+            *ngFor="let trend of trends.successByDay"
+            [style.height]="getBarHeight(trend.Count, trends.successByDay)"
+            [title]="formatDate(trend.Date) + ': ' + trend.Count">
+            <span class="bar-label">{{ trend.Count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="trend-section">
+        <h3>ביטולים כושלים לפי יום</h3>
+        <div class="trend-dates">
+          <span *ngFor="let trend of trends.failureByDay" class="date-label">
+            {{ formatDate(trend.Date).split(' ')[0] }}
+          </span>
+        </div>
+        <div class="trend-chart">
+          <div 
+            class="trend-bar failure" 
+            *ngFor="let trend of trends.failureByDay"
+            [style.height]="getBarHeight(trend.Count, trends.failureByDay)"
+            [title]="formatDate(trend.Date) + ': ' + trend.Count">
+            <span class="bar-label">{{ trend.Count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,3 +1,133 @@
 {"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 10:53:30"}
 {"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 10:55:57"}
 {"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 10:56:12"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:05:28"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:05:29"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:06:41"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:06:42"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:08:40"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:08:41"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:11:24"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:11:25"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:12:47"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:12:48"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:31:52"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:32:01"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:32:13"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:58:51"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:58:52"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:59:11"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 12:59:12"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 12:59:59"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 13:00:00"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 13:10:24"}
+{"error":"Cannot find module 'redis'\nRequire stack:\n- /workspaces/medici_web03012026/medici-backend-node/services/cache-service.js\n- /workspaces/medici_web03012026/medici-backend-node/routes/search.js\n- /workspaces/medici_web03012026/medici-backend-node/server.js","level":"warn","message":"⚠️  Multi-Supplier/Cache services not available, using basic mode","timestamp":"2026-02-02 13:10:25"}
+{"error":"Cannot find module 'redis'\nRequire stack:\n- /workspaces/medici_web03012026/medici-backend-node/services/cache-service.js\n- /workspaces/medici_web03012026/medici-backend-node/routes/health.js\n- /workspaces/medici_web03012026/medici-backend-node/server.js","level":"warn","message":"⚠️  Advanced monitoring not available","timestamp":"2026-02-02 13:10:26"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 13:10:27"}
+{"level":"info","message":"Database connection verified","timestamp":"2026-02-02 13:10:27"}
+{"database":"medici-db-dev-copy","environment":"development","level":"info","message":"🚀 Medici Hotels Server Started","nodeVersion":"v24.11.1","port":"3000","timestamp":"2026-02-02 13:10:27"}
+{"level":"info","message":"Starting Alerts Agent...","timestamp":"2026-02-02 13:10:27"}
+{"interval":"5 minutes","level":"info","message":"🚨 Alerts Agent Started","timestamp":"2026-02-02 13:10:27"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:10:27"}
+{"count":27,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:10:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:10:27","triggeredAlerts":0}
+{"ip":"::1","level":"info","message":"HTTP Request","method":"GET","requestId":"408ba07d-a6a3-45b0-bfa6-c27040ebe0b5","responseTime":"1616ms","status":200,"timestamp":"2026-02-02 13:11:52","url":"/stats?days=30"}
+{"ip":"::1","level":"info","message":"HTTP Request","method":"GET","requestId":"5aafc782-ac32-4f08-8437-b29a1fc2a2b0","responseTime":"558ms","status":200,"timestamp":"2026-02-02 13:11:55","url":"/stats?days=30"}
+{"ip":"::1","level":"info","message":"HTTP Request","method":"GET","requestId":"24c08ea9-e363-45cd-8c8e-7ee5aa029b6b","responseTime":"304ms","status":200,"timestamp":"2026-02-02 13:12:01","url":"/errors?days=7"}
+{"ip":"::1","level":"info","message":"HTTP Request","method":"GET","requestId":"6c785cd1-46f6-4a7e-ab6b-6d9c9f56b9b6","responseTime":"344ms","status":200,"timestamp":"2026-02-02 13:12:06","url":"/recent?limit=3&status=failure"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:15:27"}
+{"count":48,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:15:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:15:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:20:27"}
+{"count":24,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:20:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:20:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:25:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:25:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:25:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:30:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:30:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:30:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:35:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:35:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:35:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:40:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:40:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:40:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:45:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:45:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:45:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:50:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:50:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:50:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 13:55:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 13:55:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 13:55:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:00:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:00:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:00:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:05:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:05:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:05:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:10:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:10:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:10:27","triggeredAlerts":0}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:15:23"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:15:24"}
+{"error":"Invalid column name 'SaleDate'.","level":"error","message":"Failed to collect booking metrics","timestamp":"2026-02-02 14:15:25"}
+{"error":"Invalid column name 'PurchasePrice'.","level":"error","message":"Failed to collect revenue metrics","timestamp":"2026-02-02 14:15:25"}
+{"alert":{"acknowledged":false,"category":"database","count":1,"createdAt":"2026-02-02T14:15:25.219Z","id":"db_slow_1770041725219","lastSeen":"2026-02-02T14:15:25.219Z","message":"זמן תגובה של DB: 1169ms","metadata":{"responseTime":1169},"severity":"warning","status":"active","title":"מסד נתונים איטי","type":"db_slow"},"level":"warn","message":"Alert created","timestamp":"2026-02-02 14:15:25"}
+{"error":"Invalid column name 'SaleDate'.","level":"error","message":"Revenue check failed","timestamp":"2026-02-02 14:15:25"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:15:27"}
+{"count":33,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:15:27"}
+{"alert":"High Error Rate","level":"warn","message":"🚨 ALERT TRIGGERED","severity":"critical","timestamp":"2026-02-02 14:15:27"}
+{"error":"emailService.send is not a function","level":"error","message":"Failed to send email alert","timestamp":"2026-02-02 14:15:27"}
+{"error":"slackService.sendAlert is not a function","level":"error","message":"Failed to send Slack alert","timestamp":"2026-02-02 14:15:27"}
+{"error":"Invalid object name 'SystemAlerts'.","level":"error","message":"Failed to save alert to database","timestamp":"2026-02-02 14:15:28"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:15:28","triggeredAlerts":1}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:20:27"}
+{"count":48,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:20:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:20:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:25:27"}
+{"count":19,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:25:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:25:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:30:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:30:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:30:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:35:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:35:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:35:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:40:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:40:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:40:27","triggeredAlerts":0}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:41:32"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:41:33"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:45:12"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:45:14"}
+{"error":"Invalid column name 'City'.","level":"error","message":"Failed to get revenue by city","timestamp":"2026-02-02 14:45:15"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:45:22"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:45:23"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:45:27"}
+{"count":34,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:45:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:45:27","triggeredAlerts":0}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:46:58"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:46:59"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:47:11"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:47:12"}
+{"error":"Invalid column name 'SessionId'.","level":"error","message":"Failed to collect booking metrics","timestamp":"2026-02-02 14:47:14"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:50:20"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:50:21"}
+{"alert":{"acknowledged":false,"category":"database","count":1,"createdAt":"2026-02-02T14:50:22.896Z","id":"db_slow_1770043822896","lastSeen":"2026-02-02T14:50:22.896Z","message":"זמן תגובה של DB: 1169ms","metadata":{"responseTime":1169},"severity":"warning","status":"active","title":"מסד נתונים איטי","type":"db_slow"},"level":"warn","message":"Alert created","timestamp":"2026-02-02 14:50:22"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:50:27"}
+{"count":59,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:50:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:50:27","triggeredAlerts":0}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:50:41"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:50:42"}
+{"alert":{"acknowledged":false,"category":"database","count":1,"createdAt":"2026-02-02T14:50:43.465Z","id":"db_slow_1770043843465","lastSeen":"2026-02-02T14:50:43.465Z","message":"זמן תגובה של DB: 1201ms","metadata":{"responseTime":1201},"severity":"warning","status":"active","title":"מסד נתונים איטי","type":"db_slow"},"level":"warn","message":"Alert created","timestamp":"2026-02-02 14:50:43"}
+{"environment":"development","level":"info","logLevel":"info","logsDirectory":"/workspaces/medici_web03012026/medici-backend-node/logs","message":"Logger initialized","timestamp":"2026-02-02 14:50:48"}
+{"level":"info","message":"Connected to Azure SQL Database","timestamp":"2026-02-02 14:50:49"}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 14:55:27"}
+{"count":52,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 14:55:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 14:55:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 15:00:27"}
+{"count":27,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 15:00:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 15:00:27","triggeredAlerts":0}

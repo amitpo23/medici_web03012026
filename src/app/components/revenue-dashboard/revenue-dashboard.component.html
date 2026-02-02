@@ -1,0 +1,323 @@
+<div class="revenue-dashboard" dir="rtl">
+  <!-- Header -->
+  <div class="header">
+    <h1>💰 דשבורד ניתוח הכנסות ורווחיות</h1>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="refresh()" [disabled]="loading">
+        🔄 רענן
+      </button>
+      <button class="btn-export" (click)="exportToCSV()">
+        💾 ייצא ל-CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Period Selector -->
+  <div class="period-selector">
+    <span class="label">תקופה:</span>
+    <button 
+      *ngFor="let days of periodOptions"
+      class="period-btn"
+      [class.active]="selectedPeriod === days"
+      (click)="changePeriod(days)">
+      {{ days }} ימים
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>טוען נתוני הכנסות...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error">
+    ⚠️ {{ error }}
+  </div>
+
+  <!-- KPI Cards -->
+  <div *ngIf="kpis && !loading" class="kpi-cards">
+    <div class="kpi-card primary">
+      <div class="icon">💵</div>
+      <div class="content">
+        <div class="label">סה"כ הכנסות</div>
+        <div class="value">{{ formatCurrency(kpis.current.revenue) }}</div>
+        <div class="growth" [style.color]="getGrowthColor(kpis.growth.revenue)">
+          {{ getGrowthIcon(kpis.growth.revenue) }} {{ formatPercentage(kpis.growth.revenue) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card success">
+      <div class="icon">💚</div>
+      <div class="content">
+        <div class="label">סה"כ רווח</div>
+        <div class="value">{{ formatCurrency(kpis.current.profit) }}</div>
+        <div class="growth" [style.color]="getGrowthColor(kpis.growth.profit)">
+          {{ getGrowthIcon(kpis.growth.profit) }} {{ formatPercentage(kpis.growth.profit) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="kpi-card info">
+      <div class="icon">📊</div>
+      <div class="content">
+        <div class="label">מרווח רווח</div>
+        <div class="value">{{ formatPercentage(kpis.current.profit_margin) }}</div>
+        <div class="sub">{{ formatCurrency(kpis.current.avg_profit_per_booking) }} לממוצע הזמנה</div>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="icon">📦</div>
+      <div class="content">
+        <div class="label">הזמנות</div>
+        <div class="value">{{ kpis.current.bookings }}</div>
+        <div class="growth" [style.color]="getGrowthColor(kpis.growth.bookings)">
+          {{ getGrowthIcon(kpis.growth.bookings) }} {{ formatPercentage(kpis.growth.bookings) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      [class.active]="selectedTab === 'overview'"
+      (click)="changeTab('overview')">
+      סקירה כללית
+    </button>
+    <button 
+      [class.active]="selectedTab === 'breakdown'"
+      (click)="changeTab('breakdown')">
+      פילוח מפורט
+    </button>
+    <button 
+      [class.active]="selectedTab === 'trends'"
+      (click)="changeTab('trends')">
+      מגמות
+    </button>
+    <button 
+      [class.active]="selectedTab === 'forecast'"
+      (click)="changeTab('forecast')">
+      תחזית
+    </button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div *ngIf="selectedTab === 'overview' && !loading" class="tab-content">
+    <div class="overview-grid">
+      <!-- Top Cities -->
+      <div class="card">
+        <h3>🏙️ ערים מובילות</h3>
+        <div class="top-list">
+          <div *ngFor="let city of getTopCities(); let i = index" class="top-item">
+            <span class="rank">{{ i + 1 }}</span>
+            <span class="name">{{ city.name }}</span>
+            <span class="value">{{ formatCurrency(city.total_profit) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Hotels -->
+      <div class="card">
+        <h3>🏨 מלונות מובילים</h3>
+        <div class="top-list">
+          <div *ngFor="let hotel of getTopHotels(); let i = index" class="top-item">
+            <span class="rank">{{ i + 1 }}</span>
+            <span class="name">{{ hotel.name }}</span>
+            <span class="value">{{ formatCurrency(hotel.total_profit) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Forecast Card -->
+      <div *ngIf="forecast" class="card forecast-card">
+        <h3>🔮 תחזית 7 ימים</h3>
+        <div class="forecast-content">
+          <div class="forecast-item">
+            <span class="label">הכנסות צפויות</span>
+            <span class="value">{{ formatCurrency(forecast.forecasted_revenue) }}</span>
+          </div>
+          <div class="forecast-item">
+            <span class="label">רווח צפוי</span>
+            <span class="value">{{ formatCurrency(forecast.forecasted_profit) }}</span>
+          </div>
+          <div class="forecast-item">
+            <span class="label">הזמנות צפויות</span>
+            <span class="value">{{ forecast.forecasted_bookings }}</span>
+          </div>
+          <div class="confidence">
+            <span>רמת ביטחון: </span>
+            <span [style.color]="getConfidenceColor(forecast.confidence)">
+              {{ formatConfidence(forecast.confidence) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Breakdown Tab -->
+  <div *ngIf="selectedTab === 'breakdown'" class="tab-content">
+    <div class="breakdown-section">
+      <h3>פילוח לפי עיר</h3>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>עיר</th>
+            <th>הזמנות</th>
+            <th>הכנסות</th>
+            <th>רווח</th>
+            <th>מרווח</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of revenueByCity">
+            <td>{{ item.city }}</td>
+            <td>{{ item.bookings_count }}</td>
+            <td>{{ formatCurrency(item.total_revenue) }}</td>
+            <td>{{ formatCurrency(item.total_profit) }}</td>
+            <td>{{ formatPercentage(item.profit_margin) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="breakdown-section">
+      <h3>פילוח לפי מלון (Top 20)</h3>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>מלון</th>
+            <th>עיר</th>
+            <th>הזמנות</th>
+            <th>הכנסות</th>
+            <th>רווח</th>
+            <th>מרווח</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of revenueByHotel">
+            <td>{{ item.hotel }}</td>
+            <td>{{ item.city }}</td>
+            <td>{{ item.bookings_count }}</td>
+            <td>{{ formatCurrency(item.total_revenue) }}</td>
+            <td>{{ formatCurrency(item.total_profit) }}</td>
+            <td>{{ formatPercentage(item.profit_margin) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="breakdown-section">
+      <h3>פילוח לפי ספק</h3>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>ספק</th>
+            <th>הזמנות</th>
+            <th>הכנסות</th>
+            <th>רווח</th>
+            <th>מרווח</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of revenueBySupplier">
+            <td>{{ item.supplier }}</td>
+            <td>{{ item.bookings_count }}</td>
+            <td>{{ formatCurrency(item.total_revenue) }}</td>
+            <td>{{ formatCurrency(item.total_profit) }}</td>
+            <td>{{ formatPercentage(item.profit_margin) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Trends Tab -->
+  <div *ngIf="selectedTab === 'trends'" class="tab-content">
+    <div class="trends-chart">
+      <h3>מגמות הכנסות ורווח</h3>
+      <div class="simple-chart">
+        <div *ngFor="let point of trends" class="chart-bar">
+          <div class="bar revenue" [style.height.px]="point.revenue / 100"></div>
+          <div class="bar profit" [style.height.px]="point.profit / 100"></div>
+          <div class="label">{{ point.period }}</div>
+        </div>
+      </div>
+      <div class="legend">
+        <span class="legend-item"><span class="color revenue"></span> הכנסות</span>
+        <span class="legend-item"><span class="color profit"></span> רווח</span>
+      </div>
+    </div>
+
+    <div class="trends-table-section">
+      <h3>טבלת מגמות</h3>
+      <table class="breakdown-table">
+        <thead>
+          <tr>
+            <th>תאריך</th>
+            <th>הזמנות</th>
+            <th>הכנסות</th>
+            <th>רווח</th>
+            <th>ממוצע הזמנה</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let trend of trends">
+            <td>{{ trend.period }}</td>
+            <td>{{ trend.bookings }}</td>
+            <td>{{ formatCurrency(trend.revenue) }}</td>
+            <td>{{ formatCurrency(trend.profit) }}</td>
+            <td>{{ formatCurrency(trend.avg_booking_value) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Forecast Tab -->
+  <div *ngIf="selectedTab === 'forecast' && forecast" class="tab-content">
+    <div class="forecast-details">
+      <h3>תחזית מפורטת - 7 ימים קדימה</h3>
+      
+      <div class="forecast-grid">
+        <div class="forecast-card-big">
+          <div class="icon">💵</div>
+          <div class="label">הכנסות צפויות</div>
+          <div class="value">{{ formatCurrency(forecast.forecasted_revenue) }}</div>
+          <div class="daily">{{ formatCurrency(forecast.daily_averages.revenue) }} ליום בממוצע</div>
+        </div>
+
+        <div class="forecast-card-big">
+          <div class="icon">💚</div>
+          <div class="label">רווח צפוי</div>
+          <div class="value">{{ formatCurrency(forecast.forecasted_profit) }}</div>
+          <div class="daily">{{ formatCurrency(forecast.daily_averages.profit) }} ליום בממוצע</div>
+        </div>
+
+        <div class="forecast-card-big">
+          <div class="icon">📦</div>
+          <div class="label">הזמנות צפויות</div>
+          <div class="value">{{ forecast.forecasted_bookings }}</div>
+          <div class="daily">{{ forecast.daily_averages.bookings.toFixed(1) }} ליום בממוצע</div>
+        </div>
+
+        <div class="forecast-card-big">
+          <div class="icon">🎯</div>
+          <div class="label">רמת ביטחון</div>
+          <div class="value" [style.color]="getConfidenceColor(forecast.confidence)">
+            {{ formatConfidence(forecast.confidence) }}
+          </div>
+          <div class="daily">מבוסס על {{ forecast.based_on_days }} ימים</div>
+        </div>
+      </div>
+
+      <div class="forecast-note">
+        <strong>📝 הערה:</strong> תחזית זו מבוססת על ממוצע נתוני {{ forecast.based_on_days }} הימים האחרונים.
+        התחזית מתאימה למגמות עונתיות והתנהגות היסטורית של המערכת.
+      </div>
+    </div>
+  </div>
+</div>

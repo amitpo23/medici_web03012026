@@ -1,0 +1,303 @@
+<div class="monitoring-dashboard" [class.rtl]="true">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h1>מוניטורינג בזמן אמת</h1>
+    <div class="header-actions">
+      <button class="btn btn-refresh" (click)="refresh()" [disabled]="loading">
+        <span class="icon">🔄</span>
+        <span>רענן</span>
+      </button>
+      <button 
+        class="btn btn-auto-refresh" 
+        [class.active]="autoRefresh"
+        (click)="toggleAutoRefresh()">
+        <span class="icon">⏱️</span>
+        <span>{{ autoRefresh ? 'עצור רענון אוטומטי' : 'התחל רענון אוטומטי' }}</span>
+      </button>
+      <button class="btn btn-export" (click)="exportMetrics()">
+        <span class="icon">💾</span>
+        <span>ייצוא</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-overlay">
+    <div class="spinner"></div>
+    <p>טוען נתונים...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error" class="error-message">
+    <span class="icon">⚠️</span>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Alerts Banner -->
+  <div *ngIf="alerts.length > 0" class="alerts-banner">
+    <div 
+      *ngFor="let alert of alerts" 
+      class="alert"
+      [class.critical]="alert.severity === 'critical'"
+      [class.warning]="alert.severity === 'warning'">
+      <span class="icon">{{ getSeverityIcon(alert.severity) }}</span>
+      <span class="message">{{ alert.message }}</span>
+      <span class="time">{{ timeAgo(alert.timestamp) }}</span>
+      <button class="btn-dismiss" (click)="dismissAlert(alert.id)">✕</button>
+    </div>
+  </div>
+
+  <!-- Health Status -->
+  <div *ngIf="health" class="health-status" [class]="health.status">
+    <div class="status-icon">
+      {{ getSeverityIcon(health.status) }}
+    </div>
+    <div class="status-content">
+      <h3>סטטוס מערכת: {{ getHealthStatusText(health.status) }}</h3>
+      <ul *ngIf="health.issues.length > 0" class="issues-list">
+        <li *ngFor="let issue of health.issues">{{ issue }}</li>
+      </ul>
+      <p *ngIf="health.issues.length === 0" class="all-good">כל המערכות פועלות תקין ✅</p>
+    </div>
+    <div class="status-time">
+      עודכן: {{ timeAgo(health.timestamp) }}
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab"
+      [class.active]="selectedTab === 'overview'"
+      (click)="selectedTab = 'overview'">
+      סקירה כללית
+    </button>
+    <button 
+      class="tab"
+      [class.active]="selectedTab === 'activity'"
+      (click)="selectedTab = 'activity'">
+      פעילות אחרונה
+    </button>
+    <button 
+      class="tab"
+      [class.active]="selectedTab === 'trends'"
+      (click)="selectedTab = 'trends'">
+      מגמות
+    </button>
+  </div>
+
+  <!-- Overview Tab -->
+  <div *ngIf="selectedTab === 'overview' && metrics" class="tab-content">
+    <!-- KPI Cards -->
+    <div class="kpi-grid">
+      <!-- Bookings KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-content">
+          <h3>הזמנות היום</h3>
+          <div class="kpi-value">{{ metrics.bookings.total_today }}</div>
+          <div class="kpi-details">
+            <span>בשעה האחרונה: {{ metrics.bookings.last_hour }}</span>
+            <span>הזדמנויות פעילות: {{ metrics.bookings.active_opportunities }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-content">
+          <h3>הכנסות היום</h3>
+          <div class="kpi-value">{{ metrics.revenue.today }}</div>
+          <div class="kpi-details">
+            <span>בשעה האחרונה: {{ metrics.revenue.this_hour }}</span>
+            <span>רווח: {{ metrics.revenue.profit }}</span>
+            <span>מרווח ממוצע: {{ metrics.revenue.avg_margin }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- API KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">🔌</div>
+        <div class="kpi-content">
+          <h3>API (שעה אחרונה)</h3>
+          <div class="kpi-value">{{ metrics.api.total_requests }}</div>
+          <div class="kpi-details">
+            <span>שגיאות: {{ metrics.api.error_count }} ({{ metrics.api.error_rate }})</span>
+            <span>זמן תגובה ממוצע: {{ metrics.api.avg_response_time }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Errors KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-content">
+          <h3>שגיאות ביטולים</h3>
+          <div class="kpi-value">{{ metrics.errors.cancellation_failures_last_hour }}</div>
+          <div class="kpi-details">
+            <span>בשעה האחרונה</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System CPU KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">🖥️</div>
+        <div class="kpi-content">
+          <h3>מעבד (CPU)</h3>
+          <div class="kpi-value">{{ metrics.system.cpu_usage }}</div>
+          <div class="kpi-details">
+            <span>זיכרון: {{ metrics.system.memory_usage }}</span>
+            <span>פנוי: {{ metrics.system.free_memory }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- System DB KPI -->
+      <div class="kpi-card">
+        <div class="kpi-icon">💾</div>
+        <div class="kpi-content">
+          <h3>מסד נתונים</h3>
+          <div class="kpi-value">{{ getHealthStatusText(metrics.system.db_status) }}</div>
+          <div class="kpi-details">
+            <span>זמן תגובה: {{ metrics.system.db_response_time }}</span>
+            <span>זמן פעילות: {{ metrics.system.uptime }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Errors -->
+    <div *ngIf="metrics.errors.last_5_errors.length > 0" class="section">
+      <h2>שגיאות אחרונות</h2>
+      <div class="errors-list">
+        <div *ngFor="let error of metrics.errors.last_5_errors" class="error-item">
+          <span class="time">{{ timeAgo(error.timestamp) }}</span>
+          <span class="message">{{ error.message }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Errors -->
+    <div *ngIf="metrics.errors.top_errors.length > 0" class="section">
+      <h2>שגיאות נפוצות (שעה אחרונה)</h2>
+      <div class="top-errors">
+        <div *ngFor="let error of metrics.errors.top_errors" class="error-row">
+          <div class="error-type">{{ error.error_type }}</div>
+          <div class="error-count">{{ error.count }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Slow Requests -->
+    <div *ngIf="metrics.api.slow_requests.length > 0" class="section">
+      <h2>בקשות איטיות</h2>
+      <div class="slow-requests">
+        <div *ngFor="let req of metrics.api.slow_requests" class="request-row">
+          <div class="url">{{ req.url }}</div>
+          <div class="time">{{ req.responseTime }}</div>
+          <div class="status" [style.color]="getStatusColor(req.status < 400 ? 'success' : 'error')">
+            {{ req.status }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Codes Distribution -->
+    <div class="section">
+      <h2>התפלגות קודי סטטוס</h2>
+      <div class="status-codes">
+        <div *ngFor="let code of getStatusCodesArray()" class="status-code-item">
+          <span class="code" [style.color]="getStatusCodeColor(code.code)">{{ code.code }}</span>
+          <span class="count">{{ code.count }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Tab -->
+  <div *ngIf="selectedTab === 'activity'" class="tab-content">
+    <div class="activity-list">
+      <div *ngFor="let item of activity" class="activity-item">
+        <div class="activity-icon">{{ getActivityIcon(item.type) }}</div>
+        <div class="activity-content">
+          <div class="activity-type">{{ item.type === 'booking' ? 'הזמנה' : 'ביטול' }}</div>
+          <div class="activity-reference">{{ item.reference }}</div>
+          <div class="activity-details">{{ item.details }}</div>
+        </div>
+        <div class="activity-meta">
+          <div class="activity-amount" *ngIf="item.amount">{{ item.amount }}</div>
+          <div class="activity-time">{{ timeAgo(item.timestamp) }}</div>
+          <div 
+            class="activity-status" 
+            [style.color]="getActivityColor(item.status)">
+            {{ item.status === 'success' ? '✓' : '✗' }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trends Tab -->
+  <div *ngIf="selectedTab === 'trends'" class="tab-content">
+    <div class="trends-grid">
+      <!-- Bookings Chart -->
+      <div class="chart-card">
+        <h3>הזמנות - 24 שעות אחרונות</h3>
+        <div class="simple-chart">
+          <div *ngFor="let point of trends" class="chart-bar">
+            <div class="bar" [style.height.px]="point.bookings * 10"></div>
+            <div class="label">{{ point.hour }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Revenue Chart -->
+      <div class="chart-card">
+        <h3>הכנסות - 24 שעות אחרונות</h3>
+        <div class="simple-chart">
+          <div *ngFor="let point of trends" class="chart-bar">
+            <div class="bar revenue" [style.height.px]="point.revenue / 100"></div>
+            <div class="label">{{ point.hour }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profit Chart -->
+      <div class="chart-card">
+        <h3>רווח - 24 שעות אחרונות</h3>
+        <div class="simple-chart">
+          <div *ngFor="let point of trends" class="chart-bar">
+            <div class="bar profit" [style.height.px]="point.profit / 100"></div>
+            <div class="label">{{ point.hour }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trends Table -->
+    <div class="section">
+      <h2>טבלת מגמות</h2>
+      <table class="trends-table">
+        <thead>
+          <tr>
+            <th>שעה</th>
+            <th>הזמנות</th>
+            <th>הכנסות</th>
+            <th>רווח</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let trend of trends">
+            <td>{{ trend.hour }}</td>
+            <td>{{ trend.bookings }}</td>
+            <td>₪{{ formatNumber(trend.revenue) }}</td>
+            <td>₪{{ formatNumber(trend.profit) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

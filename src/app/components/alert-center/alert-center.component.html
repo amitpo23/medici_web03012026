@@ -1,0 +1,219 @@
+<div class="alert-center" dir="rtl">
+  <!-- Header -->
+  <div class="header">
+    <h1>🚨 מרכז התראות</h1>
+    <button class="btn-refresh" (click)="refresh()" [disabled]="loading">
+      🔄 רענן
+    </button>
+  </div>
+
+  <!-- Summary Cards -->
+  <div *ngIf="summary" class="summary-cards">
+    <div class="card">
+      <div class="icon">🔴</div>
+      <div class="content">
+        <div class="label">התראות קריטיות</div>
+        <div class="value">{{ summary.active.critical }}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="icon">⚠️</div>
+      <div class="content">
+        <div class="label">אזהרות פעילות</div>
+        <div class="value">{{ summary.active.warning }}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="icon">📊</div>
+      <div class="content">
+        <div class="label">סה"כ פעילות</div>
+        <div class="value">{{ summary.active.total }}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="icon">📅</div>
+      <div class="content">
+        <div class="label">24 שעות אחרונות</div>
+        <div class="value">{{ summary.last_24h.total }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      [class.active]="selectedTab === 'active'"
+      (click)="changeTab('active')">
+      התראות פעילות ({{ activeAlerts.length }})
+    </button>
+    <button 
+      [class.active]="selectedTab === 'history'"
+      (click)="changeTab('history')">
+      היסטוריה
+    </button>
+    <button 
+      [class.active]="selectedTab === 'statistics'"
+      (click)="changeTab('statistics')">
+      סטטיסטיקות
+    </button>
+    <button 
+      [class.active]="selectedTab === 'config'"
+      (click)="changeTab('config')">
+      הגדרות
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>טוען...</p>
+  </div>
+
+  <!-- Active Alerts Tab -->
+  <div *ngIf="selectedTab === 'active' && !loading" class="tab-content">
+    <div *ngIf="activeAlerts.length === 0" class="no-alerts">
+      ✅ אין התראות פעילות - הכל תקין!
+    </div>
+
+    <div class="alerts-list">
+      <div 
+        *ngFor="let alert of activeAlerts" 
+        class="alert-item"
+        [class.critical]="alert.severity === 'critical'"
+        [class.warning]="alert.severity === 'warning'">
+        
+        <div class="alert-icon">{{ getSeverityIcon(alert.severity) }}</div>
+        
+        <div class="alert-content">
+          <div class="alert-title">{{ alert.title }}</div>
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-meta">
+            <span>{{ getCategoryIcon(alert.category) }} {{ alert.category }}</span>
+            <span>{{ timeAgo(alert.createdAt) }}</span>
+            <span *ngIf="alert.count > 1">חזר {{ alert.count }} פעמים</span>
+          </div>
+        </div>
+        
+        <div class="alert-actions">
+          <button 
+            *ngIf="!alert.acknowledged"
+            class="btn-acknowledge"
+            (click)="acknowledgeAlert(alert)">
+            ✓ אישור
+          </button>
+          <button 
+            class="btn-resolve"
+            (click)="resolveAlert(alert)">
+            ✕ סגור
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Tab -->
+  <div *ngIf="selectedTab === 'history'" class="tab-content">
+    <div class="alerts-list">
+      <div 
+        *ngFor="let alert of alertHistory" 
+        class="alert-item history-item"
+        [class.resolved]="alert.status === 'resolved'">
+        
+        <div class="alert-icon">{{ getSeverityIcon(alert.severity) }}</div>
+        
+        <div class="alert-content">
+          <div class="alert-title">{{ alert.title }}</div>
+          <div class="alert-message">{{ alert.message }}</div>
+          <div class="alert-meta">
+            <span>{{ timeAgo(alert.createdAt) }}</span>
+            <span *ngIf="alert.status === 'resolved'">✓ נפתר</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Tab -->
+  <div *ngIf="selectedTab === 'statistics'" class="tab-content">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>התראות לפי קטגוריה</h3>
+        <div class="stat-list">
+          <div *ngFor="let item of getCategoryEntries()" class="stat-row">
+            <span class="label">{{ getCategoryIcon(item.category) }} {{ item.category }}</span>
+            <span class="value">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h3>התראות נפוצות</h3>
+        <div class="stat-list">
+          <div *ngFor="let item of statistics?.most_frequent" class="stat-row">
+            <span class="label">{{ formatAlertType(item.type) }}</span>
+            <span class="value">{{ item.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Tab -->
+  <div *ngIf="selectedTab === 'config' && config" class="tab-content">
+    <div class="config-form">
+      <h3>הגדרות סף התראות</h3>
+      
+      <div class="form-group">
+        <label>שיעור שגיאות מקסימלי (%)</label>
+        <input type="number" [(ngModel)]="config.error_rate_threshold">
+      </div>
+
+      <div class="form-group">
+        <label>זמן תגובת API איטי (ms)</label>
+        <input type="number" [(ngModel)]="config.slow_api_threshold">
+      </div>
+
+      <div class="form-group">
+        <label>סף כשלי ביטולים (לשעה)</label>
+        <input type="number" [(ngModel)]="config.cancellation_spike_threshold">
+      </div>
+
+      <div class="form-group">
+        <label>סף ירידה בהכנסות (%)</label>
+        <input type="number" [(ngModel)]="config.revenue_drop_threshold">
+      </div>
+
+      <div class="form-group">
+        <label>סף שימוש מעבד (%)</label>
+        <input type="number" [(ngModel)]="config.cpu_threshold">
+      </div>
+
+      <div class="form-group">
+        <label>סף שימוש זיכרון (%)</label>
+        <input type="number" [(ngModel)]="config.memory_threshold">
+      </div>
+
+      <button class="btn-save" (click)="saveConfig()">
+        💾 שמור הגדרות
+      </button>
+    </div>
+
+    <div class="test-alerts">
+      <h3>התראות בדיקה</h3>
+      <div class="test-buttons">
+        <button class="btn-test" (click)="createTestAlert('error_rate')">
+          בדוק שיעור שגיאות
+        </button>
+        <button class="btn-test" (click)="createTestAlert('slow_api')">
+          בדוק API איטי
+        </button>
+        <button class="btn-test" (click)="createTestAlert('cancellation_spike')">
+          בדוק כשלי ביטולים
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

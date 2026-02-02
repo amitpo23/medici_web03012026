@@ -1,0 +1,381 @@
+<div class="logs-viewer-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>📋 מערכת צפייה בלוגים</h1>
+    <p class="subtitle">מעקב וחיפוש בכל קריאות ה-API ופעולות המערכת</p>
+  </div>
+
+  <!-- Controls Bar -->
+  <div class="controls-bar">
+    <!-- File Selector -->
+    <div class="control-group">
+      <label for="file-select">קובץ לוג:</label>
+      <select 
+        id="file-select" 
+        [(ngModel)]="selectedFile" 
+        (change)="onFileSelect()"
+        [disabled]="filesLoading">
+        <option value="">בחר קובץ לוג...</option>
+        <option *ngFor="let file of logFiles" [value]="file.name">
+          {{ file.name }} ({{ file.size }})
+        </option>
+      </select>
+    </div>
+
+    <!-- Lines Limit -->
+    <div class="control-group">
+      <label for="lines-limit">שורות:</label>
+      <select id="lines-limit" [(ngModel)]="maxLines" (change)="loadLogFile()">
+        <option [value]="50">50</option>
+        <option [value]="100">100</option>
+        <option [value]="200">200</option>
+        <option [value]="500">500</option>
+        <option [value]="1000">1000</option>
+      </select>
+    </div>
+
+    <!-- Auto Refresh -->
+    <div class="control-group">
+      <button 
+        class="btn-toggle" 
+        [class.active]="autoRefresh"
+        (click)="toggleAutoRefresh()"
+        [title]="autoRefresh ? 'עצור רענון אוטומטי' : 'הפעל רענון אוטומטי'">
+        {{ autoRefresh ? '⏸ עצור' : '▶ רענון אוטומטי' }}
+      </button>
+    </div>
+
+    <!-- Actions -->
+    <div class="control-group actions">
+      <button class="btn-refresh" (click)="refresh()" [disabled]="logsLoading">
+        🔄 רענן
+      </button>
+      <button class="btn-download" (click)="downloadLogs()">
+        💾 הורד JSON
+      </button>
+      <button class="btn-export" (click)="exportToCSV()">
+        📊 ייצא CSV
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'viewer'"
+      (click)="setActiveTab('viewer')">
+      📋 צפייה בלוגים
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'search'"
+      (click)="setActiveTab('search')">
+      🔍 חיפוש מתקדם
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="activeTab === 'stats'"
+      (click)="setActiveTab('stats')">
+      📊 סטטיסטיקות
+    </button>
+  </div>
+
+  <!-- Viewer Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'viewer'">
+    <!-- Filters -->
+    <div class="filters">
+      <div class="filter-group">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery" 
+          (input)="onSearchChange()"
+          placeholder="🔍 חיפוש בלוגים... (URL, שגיאה, הודעה)"
+          class="search-input">
+      </div>
+
+      <div class="filter-group">
+        <select [(ngModel)]="selectedLevel" (change)="loadLogFile()">
+          <option value="">כל הרמות</option>
+          <option value="info">Info</option>
+          <option value="warn">Warning</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select [(ngModel)]="selectedMethod" (change)="loadLogFile()">
+          <option value="">כל המתודות</option>
+          <option value="GET">GET</option>
+          <option value="POST">POST</option>
+          <option value="PUT">PUT</option>
+          <option value="DELETE">DELETE</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <select [(ngModel)]="selectedStatus" (change)="loadLogFile()">
+          <option value="">כל הסטטוסים</option>
+          <option value="2xx">2xx - Success</option>
+          <option value="3xx">3xx - Redirect</option>
+          <option value="4xx">4xx - Client Error</option>
+          <option value="5xx">5xx - Server Error</option>
+        </select>
+      </div>
+
+      <button class="btn-clear" (click)="clearFilters()">
+        🗑️ נקה סינונים
+      </button>
+    </div>
+
+    <!-- Loading / Error -->
+    <div class="loading" *ngIf="logsLoading">טוען לוגים...</div>
+    <div class="error" *ngIf="logsError">{{ logsError }}</div>
+
+    <!-- Logs Table -->
+    <div class="logs-container" *ngIf="!logsLoading && !logsError">
+      <div class="logs-count">
+        מציג {{ getFilteredEntries().length }} רשומות
+      </div>
+
+      <div class="logs-table-wrapper">
+        <table class="logs-table">
+          <thead>
+            <tr>
+              <th style="width: 40px"></th>
+              <th style="width: 150px">זמן</th>
+              <th style="width: 80px">רמה</th>
+              <th style="width: 80px">Method</th>
+              <th>URL / הודעה</th>
+              <th style="width: 80px">Status</th>
+              <th style="width: 100px">זמן תגובה</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr 
+              *ngFor="let entry of getFilteredEntries()" 
+              [class]="getEntryClass(entry)">
+              <td class="icon">{{ getEntryIcon(entry) }}</td>
+              <td class="timestamp">{{ formatTimestamp(entry.timestamp) }}</td>
+              <td class="level">
+                <span 
+                  class="level-badge" 
+                  [style.background]="logsService.getLevelColor(entry.level || 'info')">
+                  {{ entry.level || '-' }}
+                </span>
+              </td>
+              <td class="method">
+                <span 
+                  class="method-badge"
+                  *ngIf="entry.method"
+                  [style.background]="logsService.getMethodColor(entry.method)">
+                  {{ entry.method }}
+                </span>
+              </td>
+              <td class="message">
+                <div class="url" *ngIf="entry.url">{{ entry.url }}</div>
+                <div class="msg" *ngIf="entry.message && !entry.url">{{ entry.message }}</div>
+                <div class="raw" *ngIf="entry.raw">{{ entry.raw }}</div>
+              </td>
+              <td class="status">
+                <span 
+                  class="status-badge"
+                  *ngIf="entry.status"
+                  [style.background]="getStatusCodeColor(entry.status)">
+                  {{ entry.status }}
+                </span>
+              </td>
+              <td class="response-time">
+                <span 
+                  [class.slow]="entry.responseTime && parseInt(entry.responseTime) > 2000">
+                  {{ entry.responseTime || '-' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'search'">
+    <div class="search-panel">
+      <h3>חיפוש מתקדם בכל הלוגים</h3>
+      
+      <div class="search-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>שאילתת חיפוש:</label>
+            <input 
+              type="text" 
+              [(ngModel)]="searchQuery" 
+              placeholder="טקסט לחיפוש...">
+          </div>
+
+          <div class="form-group">
+            <label>רמת לוג:</label>
+            <select [(ngModel)]="advancedSearch.level">
+              <option [value]="undefined">הכל</option>
+              <option value="info">Info</option>
+              <option value="warn">Warning</option>
+              <option value="error">Error</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>מתאריך:</label>
+            <input 
+              type="date" 
+              [(ngModel)]="startDate">
+          </div>
+
+          <div class="form-group">
+            <label>עד תאריך:</label>
+            <input 
+              type="date" 
+              [(ngModel)]="endDate">
+          </div>
+
+          <div class="form-group">
+            <label>מקסימום תוצאות:</label>
+            <select [(ngModel)]="advancedSearch.limit">
+              <option [value]="50">50</option>
+              <option [value]="100">100</option>
+              <option [value]="200">200</option>
+              <option [value]="500">500</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>שם מלון:</label>
+            <input 
+              type="text" 
+              [(ngModel)]="advancedSearch.hotelName" 
+              placeholder="לדוגמה: Radisson">
+          </div>
+
+          <div class="form-group">
+            <label>מזהה הזמנה:</label>
+            <input 
+              type="text" 
+              [(ngModel)]="advancedSearch.bookingId" 
+              placeholder="לדוגמה: INN123456">
+          </div>
+        </div>
+
+        <button 
+          class="btn-search" 
+          (click)="performAdvancedSearch()"
+          [disabled]="searchLoading">
+          🔍 חפש
+        </button>
+      </div>
+
+      <!-- Search Results -->
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <h4>נמצאו {{ searchResults.length }} תוצאות:</h4>
+        
+        <div class="results-list">
+          <div 
+            class="result-item" 
+            *ngFor="let result of searchResults"
+            [class]="getEntryClass(result)">
+            <div class="result-header">
+              <span class="result-icon">{{ getEntryIcon(result) }}</span>
+              <span class="result-time">{{ formatTimestamp(result.timestamp) }}</span>
+              <span 
+                class="result-level"
+                [style.background]="logsService.getLevelColor(result.level || 'info')">
+                {{ result.level }}
+              </span>
+              <span 
+                class="result-method"
+                *ngIf="result.method"
+                [style.background]="logsService.getMethodColor(result.method)">
+                {{ result.method }}
+              </span>
+              <span 
+                class="result-status"
+                *ngIf="result.status"
+                [style.background]="getStatusCodeColor(result.status)">
+                {{ result.status }}
+              </span>
+            </div>
+            <div class="result-body">
+              <div class="result-url" *ngIf="result.url">{{ result.url }}</div>
+              <div class="result-message">{{ result.message }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="no-results" *ngIf="!searchLoading && searchResults.length === 0">
+        אין תוצאות חיפוש. נסה לשנות את הפרמטרים.
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'stats'">
+    <div class="loading" *ngIf="statsLoading">טוען סטטיסטיקות...</div>
+
+    <div class="stats-container" *ngIf="!statsLoading && stats">
+      <h3>סטטיסטיקות מערכת</h3>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-value">{{ stats.totalRequests?.toLocaleString() }}</div>
+          <div class="stat-label">סה"כ קריאות</div>
+        </div>
+
+        <div class="stat-card error">
+          <div class="stat-icon">❌</div>
+          <div class="stat-value">{{ stats.errorCount?.toLocaleString() }}</div>
+          <div class="stat-label">שגיאות</div>
+        </div>
+
+        <div class="stat-card" [class.warning]="parseFloat(stats.errorRate) > 5">
+          <div class="stat-icon">📈</div>
+          <div class="stat-value">{{ stats.errorRate }}</div>
+          <div class="stat-label">שיעור שגיאות</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value">{{ stats.avgResponseTime }}</div>
+          <div class="stat-label">זמן תגובה ממוצע</div>
+        </div>
+      </div>
+
+      <div class="slowest-request" *ngIf="stats.slowestRequest">
+        <h4>🐌 הקריאה האיטית ביותר:</h4>
+        <div class="request-details">
+          <div><strong>URL:</strong> {{ stats.slowestRequest.url }}</div>
+          <div><strong>זמן:</strong> {{ stats.slowestRequest.responseTime }}</div>
+        </div>
+      </div>
+
+      <div class="status-codes" *ngIf="stats.statusCodes">
+        <h4>פילוח לפי Status Code:</h4>
+        <div class="status-list">
+          <div 
+            class="status-item" 
+            *ngFor="let code of objectKeys(stats.statusCodes)">
+            <span 
+              class="status-code"
+              [style.background]="getStatusCodeColor(parseInt(code))">
+              {{ code }}
+            </span>
+            <span class="status-count">{{ stats.statusCodes[code] }} פעמים</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
