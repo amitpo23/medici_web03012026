@@ -131,3 +131,6 @@
 {"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 15:00:27"}
 {"count":27,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 15:00:27"}
 {"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 15:00:27","triggeredAlerts":0}
+{"level":"info","message":"🔍 Alerts Agent: Starting scan","timestamp":"2026-02-02 15:05:27"}
+{"count":12,"level":"info","message":"📊 Alerts Agent: Processing logs","timestamp":"2026-02-02 15:05:27"}
+{"level":"info","message":"✅ Alerts Agent: Scan complete","timestamp":"2026-02-02 15:05:27","triggeredAlerts":0}
