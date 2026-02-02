@@ -14,6 +14,11 @@
             "date": 1769945044191,
             "name": "/workspaces/medici_web03012026/medici-backend-node/logs/error-2026-02-01.log",
             "hash": "b300fbd563403b934017e796ac42826ac0f177e274260498977229e9f2764c59"
+        },
+        {
+            "date": 1770029610672,
+            "name": "/workspaces/medici_web03012026/medici-backend-node/logs/error-2026-02-02.log",
+            "hash": "2b81bdada9b5c606c0922f0a237efcdbb3e2b9370127bee8568f47b51f8d3058"
         }
     ],
     "hashType": "sha256"

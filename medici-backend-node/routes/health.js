@@ -8,6 +8,18 @@ const healthMonitor = require('../services/health-monitor');
 const logger = require('../config/logger');
 const { getMode, setMode, MODES } = require('../middleware/operational-mode');
 
+// Safe imports - optional features
+let getCacheService, MultiSupplierAggregator, cache, multiSupplier;
+try {
+  getCacheService = require('../services/cache-service').getCacheService;
+  MultiSupplierAggregator = require('../services/multi-supplier-aggregator');
+  cache = getCacheService();
+  multiSupplier = new MultiSupplierAggregator();
+  logger.info('✅ Advanced health monitoring features loaded');
+} catch (err) {
+  logger.warn('⚠️  Advanced monitoring not available', { error: err.message });
+}
+
 /**
  * @swagger
  * /health:
@@ -113,6 +125,85 @@ router.get('/mode', (req, res) => {
       PURCHASE_ENABLED: 'All operations allowed including booking/purchase.'
     }
   });
+});
+
+/**
+ * Get supplier status and availability (if multi-supplier enabled)
+ */
+router.get('/suppliers', (req, res) => {
+  try {
+    if (!multiSupplier) {
+      return res.json({
+        success: true,
+        message: 'Multi-supplier feature not enabled',
+        suppliers: { innstant: { available: true, configured: true } }
+      });
+    }
+    
+    const supplierStats = multiSupplier.getSupplierStats();
+    res.json({
+      success: true,
+      suppliers: supplierStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Supplier stats fetch failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get cache statistics (if cache enabled)
+ */
+router.get('/cache', async (req, res) => {
+  try {
+    if (!cache || !cache.getStats) {
+      return res.json({
+        success: true,
+        message: 'Cache feature not enabled',
+        cache: { enabled: false }
+      });
+    }
+    
+    const cacheStats = await cache.getStats();
+    res.json({
+      success: true,
+      cache: cacheStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Cache stats fetch failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Clear cache (admin only - if cache enabled)
+ */
+router.post('/cache/clear', async (req, res) => {
+  try {
+    if (!cache || !cache.clear) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Cache feature not enabled' 
+      });
+    }
+    
+    const apiKey = req.headers['x-api-key'];
+    const internalKey = process.env.INTERNAL_API_KEY;
+    if (!apiKey || !internalKey || apiKey !== internalKey) {
+      return res.status(401).json({ error: 'API key required to clear cache' });
+    }
+
+    await cache.clear();
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully'
+    });
+  } catch (error) {
+    logger.error('Cache clear failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
