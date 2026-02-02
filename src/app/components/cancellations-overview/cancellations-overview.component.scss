@@ -1,3 +1,55 @@
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  margin: -20px -20px 20px -20px;
+  color: white;
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateX(5px);
+    }
+
+    .icon {
+      font-size: 1.2rem;
+    }
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+
+    .separator {
+      opacity: 0.6;
+    }
+
+    .breadcrumb-item {
+      opacity: 0.8;
+
+      &.current {
+        opacity: 1;
+        font-weight: 600;
+      }
+    }
+  }
+}
 .cancellations-container {
   padding: 20px;
   max-width: 1400px;

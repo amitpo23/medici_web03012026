@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { AlertManagementService, Alert, AlertStatistics, AlertConfig, AlertSummary } from '../../services/alert-management.service';
 import { Subscription } from 'rxjs';
 
@@ -21,7 +22,7 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   
   private subscriptions: Subscription[] = [];
   
-  constructor(public alertService: AlertManagementService) {}
+  constructor(public alertService: AlertManagementService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadAllData();
@@ -29,6 +30,10 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  goBack(): void {
+    this.router.navigate(['/system']);
   }
 
   /**

@@ -1,4 +1,16 @@
 <div class="monitoring-dashboard" [class.rtl]="true">
+  <!-- Navigation Bar -->
+  <div class="nav-bar">
+    <button class="btn-back" (click)="goBack()">
+      ← חזרה למרכז המערכות
+    </button>
+    <div class="breadcrumb">
+      <span>מערכות ניטור</span>
+      <span class="separator">›</span>
+      <span class="current">מוניטורינג בזמן אמת</span>
+    </div>
+  </div>
+
   <!-- Header -->
   <div class="dashboard-header">
     <h1>מוניטורינג בזמן אמת</h1>

@@ -26,7 +26,10 @@ const routes: Routes = [
   { path: 'hotels', loadChildren: () => import('./modules/hotels/hotels.module').then(m => m.HotelsModule), canActivate: [AuthGuard] },
   { path: 'reports', loadChildren: () => import('./modules/reports/reports.module').then(m => m.ReportsModule), canActivate: [AuthGuard] },
   { path: 'alerts', loadChildren: () => import('./modules/alerts/alerts.module').then(m => m.AlertsModule), canActivate: [AuthGuard] },
-  { path: 'system-admin', loadChildren: () => import('./modules/system-admin/system-admin.module').then(m => m.SystemAdminModule), canActivate: [AuthGuard] }
+  { path: 'system-admin', loadChildren: () => import('./modules/system-admin/system-admin.module').then(m => m.SystemAdminModule), canActivate: [AuthGuard] },
+  
+  // 🆕 System Monitoring & Analytics (Tasks 2, 3, 5)
+  { path: 'system', loadChildren: () => import('./modules/system-monitoring/system-monitoring.module').then(m => m.SystemMonitoringModule), canActivate: [AuthGuard] }
 ];
 
 @NgModule({

@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { MonitoringService, Metrics, HealthStatus, Activity, Alert, TrendData } from '../../services/monitoring.service';
 import { Subscription, interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
@@ -25,7 +26,7 @@ export class MonitoringDashboardComponent implements OnInit, OnDestroy {
   autoRefresh = true;
   refreshInterval = 10; // seconds
   
-  constructor(private monitoringService: MonitoringService) {}
+  constructor(private monitoringService: MonitoringService, private router: Router) {}
 
   ngOnInit(): void {
     this.loadAllData();
@@ -280,5 +281,12 @@ export class MonitoringDashboardComponent implements OnInit, OnDestroy {
     if (codeNum >= 400 && codeNum < 500) return '#ff9800';
     if (codeNum >= 500) return '#f44336';
     return '#757575';
+  }
+
+  /**
+   * Navigate back to system overview
+   */
+  goBack(): void {
+    this.router.navigate(['/system']);
   }
 }

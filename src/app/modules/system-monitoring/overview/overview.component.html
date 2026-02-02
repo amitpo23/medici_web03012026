@@ -1,0 +1,161 @@
+<div class="system-overview" dir="rtl">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-content">
+      <h1>🎛️ מערכות ניטור ואנליטיקה</h1>
+      <p class="subtitle">ניהול ומעקב אחר ביצועי המערכת בזמן אמת</p>
+    </div>
+    
+    <div class="system-health" [class]="getHealthClass()">
+      <span class="health-icon">{{ getHealthIcon() }}</span>
+      <div class="health-info">
+        <span class="health-title">מצב המערכת</span>
+        <span class="health-status">{{ getHealthText() }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-value">5</div>
+        <div class="stat-label">מערכות ניטור</div>
+      </div>
+    </div>
+
+    <div class="stat-card" [class.warning]="activeAlerts > 0">
+      <div class="stat-icon">{{ activeAlerts > 0 ? '🔔' : '✅' }}</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ activeAlerts }}</div>
+        <div class="stat-label">התראות פעילות</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-value">24</div>
+        <div class="stat-label">נקודות מדידה</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-content">
+        <div class="stat-value">10s</div>
+        <div class="stat-label">רענון אוטומטי</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>טוען מערכות ניטור...</p>
+  </div>
+
+  <!-- System Cards -->
+  <div *ngIf="!loading" class="systems-grid">
+    <div 
+      *ngFor="let card of cards" 
+      class="system-card"
+      (click)="navigateTo(card.route)"
+      [style.border-right-color]="card.color">
+      
+      <div class="card-header">
+        <div class="card-icon">{{ card.icon }}</div>
+        <h3>{{ card.title }}</h3>
+      </div>
+
+      <p class="card-description">{{ card.description }}</p>
+
+      <div class="card-footer">
+        <span class="card-stats">{{ card.stats }}</span>
+        <span class="card-action">עבור למערכת →</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features List -->
+  <div class="features-section">
+    <h2>יכולות המערכת</h2>
+    
+    <div class="features-grid">
+      <div class="feature-item">
+        <span class="feature-icon">📊</span>
+        <div class="feature-content">
+          <h4>מוניטורינג בזמן אמת</h4>
+          <p>מעקב אחר הזמנות, הכנסות, שגיאות וביצועי API</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <span class="feature-icon">🔔</span>
+        <div class="feature-content">
+          <h4>התראות חכמות</h4>
+          <p>התראות אוטומטיות על חריגות ובעיות במערכת</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <span class="feature-icon">💰</span>
+        <div class="feature-content">
+          <h4>ניתוח רווחיות</h4>
+          <p>דוחות מפורטים, תחזיות והשוואות תקופתיות</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <span class="feature-icon">📋</span>
+        <div class="feature-content">
+          <h4>ניהול לוגים</h4>
+          <p>חיפוש וניתוח מתקדם של כל פעולות המערכת</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <span class="feature-icon">❌</span>
+        <div class="feature-content">
+          <h4>מעקב ביטולים</h4>
+          <p>ניתוח כישלונות, מגמות ושיפור תהליכים</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <span class="feature-icon">📈</span>
+        <div class="feature-content">
+          <h4>מגמות ותחזיות</h4>
+          <p>תובנות עסקיות מבוססות נתונים היסטוריים</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <h2>פעולות מהירות</h2>
+    <div class="actions-grid">
+      <button class="action-btn primary" (click)="navigateTo('/system/monitoring')">
+        <span class="btn-icon">📊</span>
+        <span>צפה במטריקות נוכחיות</span>
+      </button>
+
+      <button class="action-btn warning" (click)="navigateTo('/system/alerts')" *ngIf="activeAlerts > 0">
+        <span class="btn-icon">⚠️</span>
+        <span>{{ activeAlerts }} התראות פעילות</span>
+      </button>
+
+      <button class="action-btn success" (click)="navigateTo('/system/revenue')">
+        <span class="btn-icon">💰</span>
+        <span>דוח רווחיות</span>
+      </button>
+
+      <button class="action-btn info" (click)="navigateTo('/system/logs')">
+        <span class="btn-icon">🔍</span>
+        <span>חפש בלוגים</span>
+      </button>
+    </div>
+  </div>
+</div>

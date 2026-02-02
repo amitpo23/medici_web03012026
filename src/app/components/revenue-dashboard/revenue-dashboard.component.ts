@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Router } from '@angular/router';
 import { RevenueAnalyticsService, KPIs, DailySummary, RevenueBreakdown, Forecast, TopPerformer, RevenueTrend } from '../../services/revenue-analytics.service';
 import { Subscription } from 'rxjs';
 
@@ -26,7 +27,11 @@ export class RevenueDashboardComponent implements OnInit, OnDestroy {
   
   private subscriptions: Subscription[] = [];
   
-  constructor(public revenueService: RevenueAnalyticsService) {}
+  constructor(public revenueService: RevenueAnalyticsService, private router: Router) {}
+
+  goBack(): void {
+    this.router.navigate(['/system']);
+  }
 
   ngOnInit(): void {
     this.loadAllData();

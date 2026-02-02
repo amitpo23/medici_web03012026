@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { 
   CancellationsService, 
   CancellationStats,
@@ -48,7 +49,11 @@ export class CancellationsOverviewComponent implements OnInit {
   // UI state
   activeTab: 'overview' | 'recent' | 'errors' | 'auto' | 'trends' = 'overview';
 
-  constructor(private cancellationsService: CancellationsService) {}
+  constructor(private cancellationsService: CancellationsService, private router: Router) {}
+
+  goBack(): void {
+    this.router.navigate(['/system']);
+  }
 
   ngOnInit(): void {
     this.loadStats();

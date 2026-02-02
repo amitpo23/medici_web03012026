@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { 
   LogsService, 
   LogFile, 
@@ -56,7 +57,11 @@ export class LogsViewerComponent implements OnInit, OnDestroy {
   searchResults: LogEntry[] = [];
   searchLoading = false;
 
-  constructor(public logsService: LogsService) {}
+  constructor(public logsService: LogsService, private router: Router) {}
+
+  goBack(): void {
+    this.router.navigate(['/system']);
+  }
 
   ngOnInit(): void {
     this.loadLogFiles();
