@@ -3,8 +3,12 @@ const router = express.Router();
 const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const InnstantClient = require('../services/innstant-client');
+const MultiSupplierAggregator = require('../services/multi-supplier-aggregator');
+const { getCacheService } = require('../services/cache-service');
 
 const innstantClient = new InnstantClient();
+const multiSupplier = new MultiSupplierAggregator();
+const cache = getCacheService();
 
 /**
  * POST /Search/InnstantPrice
@@ -13,6 +17,7 @@ const innstantClient = new InnstantClient();
  * - Date format: yyyy-mm-dd
  * - HotelName XOR City logic
  * - Returns array of hotel results with pricing
+ * - Caching enabled for performance
  */
 router.post('/InnstantPrice', async (req, res) => {
   try {
@@ -25,7 +30,8 @@ router.post('/InnstantPrice', async (req, res) => {
       stars,
       adults = 2,          // GPT Default: 2 adults
       paxChildren = [],    // GPT Default: empty array
-      limit = 50
+      limit = 50,
+      useCache = true      // Cache control
     } = req.body;
 
     // Validation: HotelName XOR City (not both)
@@ -40,6 +46,22 @@ router.post('/InnstantPrice', async (req, res) => {
       return res.status(400).json({ 
         error: 'dateFrom and dateTo are required (format: yyyy-mm-dd)' 
       });
+    }
+
+    // Check cache first
+    if (useCache) {
+      const cacheKey = cache.generateKey('innstant', { 
+        dateFrom, dateTo, hotelId, hotelName, city, stars, adults, paxChildren 
+      });
+      const cached = await cache.get(cacheKey);
+      
+      if (cached) {
+        logger.info('[Search] Returning cached results');
+        return res.json({
+          ...cached,
+          fromCache: true
+        });
+      }
     }
 
     const pool = await getPool();
@@ -200,12 +222,23 @@ router.post('/InnstantPrice', async (req, res) => {
 
     logger.info(`[Search] Found ${searchResults.length} results`);
     
-    res.json({
+    const response = {
       success: true,
       count: searchResults.length,
       searchParams: { dateFrom, dateTo, adults, paxChildren },
-      results: searchResults
-    });
+      results: searchResults,
+      fromCache: false
+    };
+
+    // Cache the results
+    if (useCache && searchResults.length > 0) {
+      const cacheKey = cache.generateKey('innstant', { 
+        dateFrom, dateTo, hotelId, hotelName, city, stars, adults, paxChildren 
+      });
+      await cache.set(cacheKey, response, 300); // Cache for 5 minutes
+    }
+    
+    res.json(response);
 
   } catch (err) {
     logger.error('Error in Innstant search', { error: err.message, stack: err.stack });
@@ -213,6 +246,145 @@ router.post('/InnstantPrice', async (req, res) => {
       error: 'Search failed', 
       message: err.message 
     });
+  }
+});
+
+/**
+ * POST /Search/MultiSupplier
+ * Search across multiple suppliers (Innstant + GoGlobal)
+ * Returns combined results with best price comparison
+ * 
+ * Query params:
+ * - preferredSupplier: 'innstant' | 'goglobal' | 'all' (default: 'all')
+ * - bestPriceOnly: true | false (default: false)
+ */
+router.post('/MultiSupplier', async (req, res) => {
+  try {
+    const {
+      dateFrom,
+      dateTo,
+      hotelId,
+      hotelName,
+      city,
+      stars,
+      adults = 2,
+      paxChildren = [],
+      preferredSupplier = 'all',
+      bestPriceOnly = false
+    } = req.body;
+
+    // Validation
+    if (!dateFrom || !dateTo) {
+      return res.status(400).json({ 
+        error: 'dateFrom and dateTo are required (format: yyyy-mm-dd)' 
+      });
+    }
+
+    const pool = await getPool();
+    let searchParams = {
+      dateFrom,
+      dateTo,
+      adults,
+      children: paxChildren
+    };
+
+    // Get hotel mapping from database if hotelId provided
+    if (hotelId) {
+      const hotelMapping = await pool.request()
+        .input('hotelId', hotelId)
+        .query('SELECT InnstantId, GoGlobalId, Name FROM Med_Hotels WHERE HotelId = @hotelId');
+      
+      if (hotelMapping.recordset.length === 0) {
+        return res.status(404).json({ 
+          error: `Hotel ID ${hotelId} not found` 
+        });
+      }
+
+      const hotel = hotelMapping.recordset[0];
+      searchParams.hotelId = hotel.InnstantId || hotel.GoGlobalId;
+      searchParams.hotelName = hotel.Name;
+    } else if (hotelName) {
+      searchParams.hotelName = hotelName;
+    } else if (city) {
+      searchParams.city = city;
+    } else {
+      return res.status(400).json({ 
+        error: 'Must provide hotelId, hotelName, or city for search' 
+      });
+    }
+
+    if (stars) {
+      searchParams.stars = stars;
+    }
+
+    logger.info('[Search] MultiSupplier search initiated', { 
+      params: searchParams, 
+      preferredSupplier,
+      bestPriceOnly 
+    });
+
+    // Execute multi-supplier search
+    const results = await multiSupplier.searchAllSuppliers(searchParams, {
+      preferredSupplier,
+      bestPriceOnly
+    });
+
+    // Save search results to database
+    if (results.success && results.combined.length > 0) {
+      for (const hotel of results.combined) {
+        try {
+          const minPrice = multiSupplier.getMinRoomPrice(hotel.rooms);
+          await pool.request()
+            .input('hotelId', hotelId || null)
+            .input('hotelName', hotel.hotelName)
+            .input('dateFrom', dateFrom)
+            .input('dateTo', dateTo)
+            .input('price', minPrice)
+            .input('currency', hotel.rooms[0]?.currency || 'EUR')
+            .input('source', hotel.supplier)
+            .query(`
+              INSERT INTO MED_SearchHotels 
+              (HotelId, HotelName, DateFrom, DateTo, Price, Currency, Source, DateInsert)
+              VALUES (@hotelId, @hotelName, @dateFrom, @dateTo, @price, @currency, @source, GETDATE())
+            `);
+        } catch (dbError) {
+          logger.warn('Error saving multi-supplier result', { error: dbError.message });
+        }
+      }
+    }
+
+    res.json({
+      success: results.success,
+      searchId: results.searchId,
+      count: results.combined.length,
+      suppliers: results.suppliers,
+      bestPrice: results.bestPrice,
+      results: results.combined
+    });
+
+  } catch (err) {
+    logger.error('Error in multi-supplier search', { error: err.message, stack: err.stack });
+    res.status(500).json({ 
+      error: 'Multi-supplier search failed', 
+      message: err.message 
+    });
+  }
+});
+
+/**
+ * GET /Search/SupplierStats
+ * Get supplier availability and statistics
+ */
+router.get('/SupplierStats', (req, res) => {
+  try {
+    const stats = multiSupplier.getSupplierStats();
+    res.json({
+      success: true,
+      suppliers: stats
+    });
+  } catch (err) {
+    logger.error('Error getting supplier stats', { error: err.message });
+    res.status(500).json({ error: 'Failed to get supplier stats' });
   }
 });
 

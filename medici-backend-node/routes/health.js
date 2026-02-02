@@ -1,5 +1,6 @@
 /**
  * Health & Metrics Routes
+ * Enhanced with supplier monitoring and cache stats
  */
 
 const express = require('express');
@@ -7,6 +8,11 @@ const router = express.Router();
 const healthMonitor = require('../services/health-monitor');
 const logger = require('../config/logger');
 const { getMode, setMode, MODES } = require('../middleware/operational-mode');
+const { getCacheService } = require('../services/cache-service');
+const MultiSupplierAggregator = require('../services/multi-supplier-aggregator');
+
+const cache = getCacheService();
+const multiSupplier = new MultiSupplierAggregator();
 
 /**
  * @swagger
@@ -113,6 +119,62 @@ router.get('/mode', (req, res) => {
       PURCHASE_ENABLED: 'All operations allowed including booking/purchase.'
     }
   });
+});
+
+/**
+ * Get supplier status and availability
+ */
+router.get('/suppliers', (req, res) => {
+  try {
+    const supplierStats = multiSupplier.getSupplierStats();
+    res.json({
+      success: true,
+      suppliers: supplierStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Supplier stats fetch failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Get cache statistics
+ */
+router.get('/cache', async (req, res) => {
+  try {
+    const cacheStats = await cache.getStats();
+    res.json({
+      success: true,
+      cache: cacheStats,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.error('Cache stats fetch failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * Clear cache (admin only)
+ */
+router.post('/cache/clear', async (req, res) => {
+  try {
+    const apiKey = req.headers['x-api-key'];
+    const internalKey = process.env.INTERNAL_API_KEY;
+    if (!apiKey || !internalKey || apiKey !== internalKey) {
+      return res.status(401).json({ error: 'API key required to clear cache' });
+    }
+
+    await cache.clear();
+    res.json({
+      success: true,
+      message: 'Cache cleared successfully'
+    });
+  } catch (error) {
+    logger.error('Cache clear failed', { error: error.message });
+    res.status(500).json({ error: error.message });
+  }
 });
 
 /**
