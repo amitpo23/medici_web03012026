@@ -29,7 +29,14 @@ router.get('/Opportunities', async (req, res) => {
   }
 });
 
-// Insert opportunity (with Zenith Push integration)
+/**
+ * POST /InsertOpp - Insert opportunity with automatic pricing
+ * GPT Best Practices:
+ * - BuyPrice = sourcePrice + $10
+ * - PushPrice = sourcePrice + $50
+ * - If buyPrice/pushPrice not provided, calculate from sourcePrice
+ * - Validate dates are not outside search range
+ */
 router.post('/InsertOpp', async (req, res) => {
   const pool = await getPool();
   const transaction = new sql.Transaction(pool);
@@ -38,15 +45,64 @@ router.post('/InsertOpp', async (req, res) => {
     const {
       hotelId, startDateStr, endDateStr,
       boardlId, categorylId,
-      buyPrice, pushPrice, maxRooms
+      sourcePrice,      // New: source price from supplier
+      buyPrice,         // Optional: auto-calculated if not provided
+      pushPrice,        // Optional: auto-calculated if not provided
+      maxRooms,
+      searchDateFrom,   // Optional: validate dates are within search range
+      searchDateTo
     } = req.body;
 
     // Input validation
     if (!hotelId || !startDateStr || !endDateStr || !boardlId || !categorylId) {
-      return res.status(400).json({ error: 'Missing required fields: hotelId, startDateStr, endDateStr, boardlId, categorylId' });
+      return res.status(400).json({ 
+        error: 'Missing required fields: hotelId, startDateStr, endDateStr, boardlId, categorylId' 
+      });
     }
-    if (buyPrice == null || pushPrice == null || buyPrice < 0 || pushPrice < 0) {
-      return res.status(400).json({ error: 'Invalid price values' });
+
+    // GPT Best Practice: Validate dates are within search range
+    if (searchDateFrom && searchDateTo) {
+      const from = new Date(startDateStr);
+      const to = new Date(endDateStr);
+      const searchFrom = new Date(searchDateFrom);
+      const searchTo = new Date(searchDateTo);
+      
+      if (from < searchFrom || to > searchTo) {
+        return res.status(400).json({ 
+          error: `Dates must be within search range (${searchDateFrom} to ${searchDateTo})` 
+        });
+      }
+    }
+
+    // GPT Best Practice: Automatic pricing calculation
+    let calculatedBuyPrice = buyPrice;
+    let calculatedPushPrice = pushPrice;
+
+    if (sourcePrice != null) {
+      // If sourcePrice provided, calculate buy/push prices using GPT rules
+      calculatedBuyPrice = calculatedBuyPrice ?? (sourcePrice + 10);  // BuyPrice = source + $10
+      calculatedPushPrice = calculatedPushPrice ?? (sourcePrice + 50); // PushPrice = source + $50
+      
+      logger.info('[InsertOpp] Auto-calculated prices', { 
+        sourcePrice, 
+        buyPrice: calculatedBuyPrice, 
+        pushPrice: calculatedPushPrice,
+        profit: calculatedPushPrice - calculatedBuyPrice
+      });
+    } else if (buyPrice == null || pushPrice == null) {
+      return res.status(400).json({ 
+        error: 'Either sourcePrice OR (buyPrice AND pushPrice) must be provided' 
+      });
+    }
+
+    // Validate final prices
+    if (calculatedBuyPrice < 0 || calculatedPushPrice < 0) {
+      return res.status(400).json({ error: 'Invalid price values (must be positive)' });
+    }
+    if (calculatedPushPrice <= calculatedBuyPrice) {
+      return res.status(400).json({ 
+        error: 'PushPrice must be greater than BuyPrice for profit' 
+      });
     }
 
     await transaction.begin();
@@ -58,8 +114,8 @@ router.post('/InsertOpp', async (req, res) => {
       .input('dateTo', endDateStr)
       .input('boardId', boardlId)
       .input('categoryId', categorylId)
-      .input('price', buyPrice)
-      .input('pushPrice', pushPrice)
+      .input('price', calculatedBuyPrice)
+      .input('pushPrice', calculatedPushPrice)
       .input('maxRooms', maxRooms)
       .execute('MED_InsertOpportunity');
 

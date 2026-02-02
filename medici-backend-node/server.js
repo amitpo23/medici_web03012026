@@ -115,17 +115,17 @@ app.get('/', (req, res) => {
   res.json({
     status: 'OK',
     message: 'Medici Hotels API',
-    version: '1.0.0',
+    version: '2.0.0',
     environment: process.env.NODE_ENV,
     documentation: '/api-docs',
     health: '/health',
     endpoints: {
       auth: '/sign-in',
-      opportunity: '/Opportunity',
-      book: '/Book',
+      opportunity: '/Opportunity (GET /Opportunities, POST /InsertOpp with auto-pricing)',
+      book: '/Book (GET /Bookings, POST /PreBook, POST /Confirm, POST /ManualBook, DELETE /CancelDirect)',
       reservation: '/Reservation',
       salesRoom: '/SalesRoom',
-      search: '/Search',
+      search: '/Search (POST /InnstantPrice with smart defaults, POST /Search legacy)',
       errors: '/Errors',
       hotels: '/hotels',
       misc: '/Misc',
@@ -138,6 +138,14 @@ app.get('/', (req, res) => {
       logs: '/logs (ניהול וצפייה בלוגים)',
       alerts: '/alerts (מערכת התראות ומעקב)',
       health: '/health (בדיקת תקינות מערכת)'
+    },
+    newFeatures: {
+      searchInnstant: 'POST /Search/InnstantPrice - GPT-style search with smart defaults',
+      preBook: 'POST /Book/PreBook - Hold room with supplier',
+      confirmBooking: 'POST /Book/Confirm - Confirm pre-booked room',
+      manualBook: 'POST /Book/ManualBook - Manual booking entry',
+      cancelDirect: 'DELETE /Book/CancelDirect - Cancel with optional supplier cancellation',
+      autoPricing: 'POST /Opportunity/InsertOpp - Automatic pricing: BuyPrice=source+$10, PushPrice=source+$50'
     }
   });
 });
