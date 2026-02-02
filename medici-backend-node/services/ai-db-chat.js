@@ -93,6 +93,7 @@ Important table notes:
 - MED_Board: Meal plans (BoardId, BoardCode).
 - MED_RoomCategory: Room types (CategoryId, Name, PMS_Code).
 - Med_CustomersReservation: Customer details linked by ReservationId.
+- AI_Search_HotelData: **SEARCH INTENT DATA** - Contains 8.3M search records showing what customers are searching for (NOT bookings). Columns: Id, HotelId, HotelName, CityName, StayFrom, StayTo, CountryCode, PriceAmount, PriceAmountCurrency, CancellationType, RoomType, UpdatedAt, PollLogId, Board, Stars. Use this for demand analysis, search volume trends, popular destinations, and price intelligence. Top cities: Amsterdam (41%), Dubai (26%). Top hotel: Kimpton De Witt Amsterdam (40% of all searches). Active data from Aug 2024 - Jan 2026.
 
 Rules:
 - Return ONLY the SQL query, no explanations or markdown
@@ -102,7 +103,8 @@ Rules:
 - Add TOP 100 to prevent huge result sets unless specifically asked
 - Use ISNULL for nullable columns in calculations
 - Format dates with CONVERT for readable output
-- Always use square brackets for the opportunities table: [MED_ֹOֹֹpportunities]`;
+- Always use square brackets for the opportunities table: [MED_ֹOֹֹpportunities]
+- When asked about "searches", "demand", "popular destinations", or "price trends" — use AI_Search_HotelData table`;
 
     // Build conversation context
     const messages = [];
@@ -148,11 +150,13 @@ Rules:
       hotels: /(?:מלונות|hotels?|hotel)/i,
       bookings: /(?:הזמנות|bookings?|reservations?)/i,
       opportunities: /(?:הזדמנויות|opportunities)/i,
+      searches: /(?:חיפושים|סריקות|searches?|search|demand|ביקוש)/i,
       price: /(?:מחיר|price|revenue|הכנסה|הכנסות)/i,
       profit: /(?:רווח|profit|margin)/i,
       today: /(?:היום|today)/i,
       month: /(?:חודש|month|חודשי)/i,
-      top: /(?:מובילים|top|הכי|best)/i
+      top: /(?:מובילים|top|הכי|best)/i,
+      cities: /(?:ערים|יעדים|cities|destinations)/i
     };
 
     if (patterns.count.test(q) && patterns.bookings.test(q)) {
@@ -183,6 +187,25 @@ Rules:
 
     if (patterns.count.test(q) && patterns.opportunities.test(q)) {
       return `SELECT COUNT(*) as Total, SUM(CASE WHEN IsActive = 1 THEN 1 ELSE 0 END) as Active, SUM(CASE WHEN IsSale = 1 THEN 1 ELSE 0 END) as Sold FROM [MED_ֹOֹֹpportunities]`;
+    }
+
+    // Search data queries
+    if (patterns.count.test(q) && patterns.searches.test(q)) {
+      let sql = `SELECT COUNT(*) as TotalSearches FROM AI_Search_HotelData`;
+      if (patterns.today.test(q)) {
+        sql += ` WHERE CAST(UpdatedAt AS DATE) = CAST(GETDATE() AS DATE)`;
+      } else if (patterns.month.test(q)) {
+        sql += ` WHERE MONTH(UpdatedAt) = MONTH(GETDATE()) AND YEAR(UpdatedAt) = YEAR(GETDATE())`;
+      }
+      return sql;
+    }
+
+    if (patterns.top.test(q) && patterns.cities.test(q)) {
+      return `SELECT TOP 10 CityName, CountryCode, COUNT(*) as SearchCount, AVG(PriceAmount) as AvgPrice FROM AI_Search_HotelData WHERE CityName IS NOT NULL GROUP BY CityName, CountryCode ORDER BY SearchCount DESC`;
+    }
+
+    if (patterns.top.test(q) && patterns.hotels.test(q) && patterns.searches.test(q)) {
+      return `SELECT TOP 10 HotelName, CityName, COUNT(*) as SearchCount, AVG(PriceAmount) as AvgPrice FROM AI_Search_HotelData WHERE HotelName IS NOT NULL GROUP BY HotelName, CityName ORDER BY SearchCount DESC`;
     }
 
     // Default

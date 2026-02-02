@@ -1,21 +1,119 @@
 /**
  * Agent 2: Demand Prediction Agent
- * Predicts demand patterns based on historical booking data
+ * Predicts demand patterns based on historical booking data AND search intent data
  */
 const BaseAgent = require('./base-agent');
+const { getPool } = require('../../config/database');
 
 class DemandPredictionAgent extends BaseAgent {
     constructor() {
-        super('DemandPredictionAgent', 'Predicts demand patterns based on historical booking data');
+        super('DemandPredictionAgent', 'Predicts demand patterns based on historical booking data and search intent');
     }
 
     /**
-     * Analyze demand patterns
+     * Fetch search intent data from AI_Search_HotelData table
+     */
+    async fetchSearchData(filters = {}) {
+        const pool = await getPool();
+        const { hotelId, city, days = 90 } = filters;
+
+        let query = `
+            SELECT 
+                HotelId,
+                HotelName,
+                CityName,
+                CountryCode,
+                StayFrom,
+                StayTo,
+                PriceAmount,
+                PriceAmountCurrency,
+                UpdatedAt,
+                RoomType,
+                Board,
+                CancellationType,
+                Stars
+            FROM AI_Search_HotelData
+            WHERE UpdatedAt >= DATEADD(day, -${days}, GETDATE())
+        `;
+
+        if (hotelId) {
+            query += ` AND HotelId = ${parseInt(hotelId)}`;
+        }
+        if (city) {
+            query += ` AND CityName = '${city.replace(/'/g, "''")}'`;
+        }
+
+        query += ` ORDER BY UpdatedAt DESC`;
+
+        const result = await pool.request().query(query);
+        this.log(`Fetched ${result.recordset.length} search records`);
+        return result.recordset;
+    }
+
+    /**
+     * Calculate search velocity (searches per day)
+     */
+    calculateSearchVelocity(searches) {
+        if (searches.length < 2) return { daily: 0, weekly: 0, trend: 'unknown' };
+
+        const sortedSearches = [...searches].sort((a, b) => 
+            new Date(a.UpdatedAt) - new Date(b.UpdatedAt)
+        );
+
+        const firstDate = new Date(sortedSearches[0].UpdatedAt);
+        const lastDate = new Date(sortedSearches[sortedSearches.length - 1].UpdatedAt);
+        const totalDays = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
+
+        const dailyVelocity = searches.length / totalDays;
+        const weeklyVelocity = dailyVelocity * 7;
+
+        // Calculate recent velocity (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const recentSearches = searches.filter(s => new Date(s.UpdatedAt) >= sevenDaysAgo);
+        const recentVelocity = recentSearches.length / 7;
+
+        // Determine trend
+        let trend = 'stable';
+        if (recentVelocity > dailyVelocity * 1.3) trend = 'surging';
+        else if (recentVelocity > dailyVelocity * 1.1) trend = 'accelerating';
+        else if (recentVelocity < dailyVelocity * 0.7) trend = 'declining';
+        else if (recentVelocity < dailyVelocity * 0.9) trend = 'decelerating';
+
+        return {
+            daily: dailyVelocity.toFixed(2),
+            weekly: weeklyVelocity.toFixed(2),
+            recentDaily: recentVelocity.toFixed(2),
+            trend
+        };
+    }
+
+    /**
+     * Analyze search-to-booking conversion rate
+     */
+    calculateConversionMetrics(searches, bookings) {
+        if (searches.length === 0) {
+            return { conversionRate: 0, searchToBookRatio: 'N/A' };
+        }
+
+        const conversionRate = ((bookings.length / searches.length) * 100).toFixed(2);
+        const searchToBookRatio = (searches.length / Math.max(1, bookings.length)).toFixed(1);
+
+        return {
+            conversionRate: `${conversionRate}%`,
+            searchToBookRatio: `${searchToBookRatio}:1`,
+            totalSearches: searches.length,
+            totalBookings: bookings.length
+        };
+    }
+
+    /**
+     * Analyze demand patterns - NOW WITH SEARCH DATA!
      */
     async analyze(data) {
         const { bookings, hotelId, city, futureDays = 30 } = data;
         
-        this.log(`Predicting demand for next ${futureDays} days`);
+        this.log(`Predicting demand for next ${futureDays} days (with search intent data)`);
 
         // Filter relevant bookings
         let relevantBookings = bookings;
@@ -27,11 +125,20 @@ class DemandPredictionAgent extends BaseAgent {
             );
         }
 
-        if (relevantBookings.length < 10) {
+        // **NEW: Fetch search intent data**
+        let searchData = [];
+        try {
+            searchData = await this.fetchSearchData({ hotelId, city, days: 90 });
+            this.log(`Integrated ${searchData.length} search records into analysis`);
+        } catch (error) {
+            this.log(`Warning: Could not fetch search data - ${error.message}`);
+        }
+
+        if (relevantBookings.length < 10 && searchData.length < 100) {
             return {
                 agent: this.name,
                 success: false,
-                message: 'Insufficient data for demand prediction',
+                message: 'Insufficient data for demand prediction (need bookings or search data)',
                 confidence: 0
             };
         }
@@ -43,7 +150,12 @@ class DemandPredictionAgent extends BaseAgent {
         const demandForecast = this.forecastDemand(relevantBookings, futureDays);
         const hotPeriods = this.identifyHotPeriods(relevantBookings);
 
-        this.confidence = this.calculateConfidence(relevantBookings.length);
+        // **NEW: Analyze search patterns**
+        const searchVelocity = this.calculateSearchVelocity(searchData);
+        const conversionMetrics = this.calculateConversionMetrics(searchData, relevantBookings);
+
+        // **NEW: Combined confidence with search signals**
+        this.confidence = this.calculateConfidence(relevantBookings.length, searchData.length);
         this.lastAnalysis = new Date();
 
         return {
@@ -52,12 +164,19 @@ class DemandPredictionAgent extends BaseAgent {
             confidence: this.confidence,
             analysis: {
                 bookingVelocity,
+                searchVelocity,  // **NEW**
+                conversionMetrics,  // **NEW**
                 demandByPeriod,
                 leadTimeAnalysis,
                 demandForecast,
                 hotPeriods,
                 sampleSize: relevantBookings.length,
-                recommendation: this.generateDemandRecommendation(demandForecast, hotPeriods)
+                searchSampleSize: searchData.length,  // **NEW**
+                recommendation: this.generateDemandRecommendation(
+                    demandForecast, 
+                    hotPeriods, 
+                    searchVelocity  // **NEW: Pass search signals**
+                )
             }
         };
     }
@@ -291,21 +410,44 @@ class DemandPredictionAgent extends BaseAgent {
     }
 
     /**
-     * Calculate confidence
+     * Calculate confidence (now considers both booking and search data)
      */
-    calculateConfidence(sampleSize) {
-        if (sampleSize < 20) return 0.2;
-        if (sampleSize < 50) return 0.4;
-        if (sampleSize < 100) return 0.6;
-        if (sampleSize < 500) return 0.8;
+    calculateConfidence(bookingSampleSize, searchSampleSize = 0) {
+        // Combined confidence based on both signals
+        const totalSignals = bookingSampleSize + (searchSampleSize / 10); // Searches weighted 10:1
+        
+        if (totalSignals < 20) return 0.2;
+        if (totalSignals < 50) return 0.4;
+        if (totalSignals < 100) return 0.6;
+        if (totalSignals < 500) return 0.8;
         return 0.9;
     }
 
     /**
-     * Generate demand-based recommendations
+     * Generate demand-based recommendations (now includes search signals)
      */
-    generateDemandRecommendation(forecast, hotPeriods) {
+    generateDemandRecommendation(forecast, hotPeriods, searchVelocity = null) {
         const recommendations = [];
+
+        // **NEW: Search trend signals**
+        if (searchVelocity) {
+            if (searchVelocity.trend === 'surging' || searchVelocity.trend === 'accelerating') {
+                recommendations.push({
+                    action: 'HIGH_DEMAND_ALERT',
+                    reason: `Search volume is ${searchVelocity.trend} (${searchVelocity.recentDaily} searches/day)`,
+                    urgency: 'critical',
+                    signal: 'SEARCH_INTENT',
+                    metric: `Recent: ${searchVelocity.recentDaily}/day vs avg ${searchVelocity.daily}/day`
+                });
+            } else if (searchVelocity.trend === 'declining') {
+                recommendations.push({
+                    action: 'DEMAND_COOLING',
+                    reason: `Search volume declining (${searchVelocity.recentDaily} vs ${searchVelocity.daily}/day avg)`,
+                    urgency: 'medium',
+                    signal: 'SEARCH_INTENT'
+                });
+            }
+        }
 
         // Find upcoming high demand periods
         const highDemandDays = forecast.filter(f => 
@@ -317,6 +459,7 @@ class DemandPredictionAgent extends BaseAgent {
                 action: 'PREPARE_INVENTORY',
                 reason: `${highDemandDays.length} high-demand days in forecast period`,
                 urgency: 'high',
+                signal: 'BOOKING_HISTORY',
                 dates: highDemandDays.slice(0, 5).map(d => d.date)
             });
         }
@@ -328,6 +471,7 @@ class DemandPredictionAgent extends BaseAgent {
                 action: 'BUY_OPPORTUNITY',
                 reason: `${lowDemandDays.length} low-demand days - potential for lower prices`,
                 urgency: 'medium',
+                signal: 'BOOKING_HISTORY',
                 dates: lowDemandDays.slice(0, 5).map(d => d.date)
             });
         }

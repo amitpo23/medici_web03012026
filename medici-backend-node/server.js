@@ -86,6 +86,7 @@ const logsRoutes = require('./routes/logs');
 const alertsRoutes = require('./routes/alerts');
 const healthRoutes = require('./routes/health');
 const aiRagRoutes = require('./routes/ai-rag');
+const searchIntelligenceRoutes = require('./routes/search-intelligence');
 
 // Public routes (no auth required - OPEN ACCESS FOR DEVELOPMENT)
 app.use('/sign-in', authLimiter, authRoutes);
@@ -106,6 +107,7 @@ app.use('/ai-chat', aiChatRoutes);
 app.use('/scraper', scraperRoutes);
 app.use('/logs', logsRoutes);
 app.use('/alerts', alertsRoutes);
+app.use('/search-intelligence', searchIntelligenceRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
@@ -137,7 +139,8 @@ app.get('/', (req, res) => {
       scraper: '/scraper (בדיקת מחירי מתחרים)',
       logs: '/logs (ניהול וצפייה בלוגים)',
       alerts: '/alerts (מערכת התראות ומעקב)',
-      health: '/health (בדיקת תקינות מערכת)'
+      health: '/health (בדיקת תקינות מערכת)',
+      searchIntelligence: '/search-intelligence (ניתוח מגמות חיפוש ו-8.3M search records)'
     },
     newFeatures: {
       searchInnstant: 'POST /Search/InnstantPrice - GPT-style search with smart defaults',
