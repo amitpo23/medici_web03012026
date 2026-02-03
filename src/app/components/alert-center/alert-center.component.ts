@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { AlertManagementService, Alert, AlertStatistics, AlertConfig, AlertSummary } from '../../services/alert-management.service';
 import { Subscription } from 'rxjs';
+import { Alert, AlertConfig, AlertManagementService, AlertStatistics, AlertSummary } from '../../services/alert-management.service';
 
 @Component({
   selector: 'app-alert-center',

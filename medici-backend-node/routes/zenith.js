@@ -2,6 +2,7 @@
  * Zenith API Routes
  * Handles OTA XML requests from Zenith distribution channel
  * Implements OTA_HotelResNotifRQ and OTA_CancelRQ
+ * Enhanced with batch push and queue processing
  */
 
 const express = require('express');
@@ -9,6 +10,7 @@ const router = express.Router();
 const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const slackService = require('../services/slack-service');
+const zenithPushService = require('../services/zenith-push-service');
 
 // XML parser middleware
 const parseXML = (req, res, next) => {
@@ -238,13 +240,59 @@ router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
         .execute('MED_InsertReservation');
 
       // Try to match with available room
-      await pool.request()
+      const matchResult = await pool.request()
         .input('uniqueID', reservation.uniqueID)
         .input('hotelCode', reservation.hotelCode)
         .input('dateFrom', reservation.dateFrom)
         .input('dateTo', reservation.dateTo)
         .input('ratePlanCode', reservation.ratePlanCode)
         .execute('MED_FindAvailableRoom');
+
+      // If room found, update reservation with BookId and mark as approved
+      if (matchResult.recordset && matchResult.recordset.length > 0) {
+        const matchedBook = matchResult.recordset[0];
+        const bookId = matchedBook.id || matchedBook.BookId;
+        
+        if (bookId) {
+          logger.info(`[Zenith] Matched reservation ${reservation.uniqueID} with Book ${bookId}`);
+          
+          await pool.request()
+            .input('uniqueID', reservation.uniqueID)
+            .input('bookId', bookId)
+            .query(`
+              UPDATE Med_Reservation
+              SET IsApproved = 1,
+                  ApprovedDate = GETDATE()
+              WHERE uniqueID = @uniqueID
+            `);
+          
+          // Mark book as sold
+          await pool.request()
+            .input('bookId', bookId)
+            .query(`
+              UPDATE MED_Book
+              SET IsSold = 1,
+                  SoldDate = GETDATE()
+              WHERE id = @bookId
+            `);
+          
+          // Update opportunity if exists
+          await pool.request()
+            .input('bookId', bookId)
+            .query(`
+              UPDATE [MED_ֹOֹֹpportunities]
+              SET IsSale = 1,
+                  Lastupdate = GETDATE()
+              WHERE OpportunityId IN (
+                SELECT OpportunityId FROM MED_Book WHERE id = @bookId
+              )
+            `);
+          
+          logger.info(`[Zenith] Book ${bookId} marked as sold for reservation ${reservation.uniqueID}`);
+        }
+      } else {
+        logger.warn(`[Zenith] No available room found for reservation ${reservation.uniqueID}`);
+      }
 
       // Notify via Slack
       await slackService.notifyNewReservation({
@@ -555,4 +603,137 @@ router.post('/push-batch', async (req, res) => {
   }
 });
 
-module.exports = router;
+/**
+ * POST /zenith/process-queue
+ * Process Med_HotelsToPush queue
+ */
+router.post('/process-queue', async (req, res) => {
+  try {
+    logger.info('[Zenith] Processing Med_HotelsToPush queue');
+    
+    const result = await zenithPushService.processQueue();
+    
+    const successRate = result.processed > 0 
+      ? ((result.successful / result.processed) * 100).toFixed(1)
+      : 0;
+    
+    res.json({
+      success: true,
+      message: 'Queue processed successfully',
+      result: {
+        processed: result.processed,
+        successful: result.successful,
+        failed: result.failed,
+        successRate: `${successRate}%`
+      },
+      details: result.details
+    });
+    
+  } catch (error) {
+    logger.error('[Zenith] Queue processing error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process queue',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/queue-status
+ * Get Med_HotelsToPush queue status
+ */
+router.get('/queue-status', async (req, res) => {
+  try {
+    const pool = await getPool();
+    
+    const result = await pool.request().query(`
+      SELECT 
+        COUNT(*) as TotalPending,
+        COUNT(CASE WHEN Error IS NOT NULL THEN 1 END) as FailedItems,
+        MIN(DateInsert) as OldestItem,
+        MAX(DateInsert) as NewestItem
+      FROM Med_HotelsToPush
+      WHERE IsActive = 1 AND DatePush IS NULL
+    `);
+    
+    const stats = result.recordset[0];
+    
+    res.json({
+      success: true,
+      queue: {
+        pending: stats.TotalPending,
+        failed: stats.FailedItems,
+        oldestItem: stats.OldestItem,
+        newestItem: stats.NewestItem,
+        status: stats.TotalPending === 0 ? 'empty' : 
+                stats.TotalPending > 100 ? 'high' : 
+                stats.TotalPending > 20 ? 'medium' : 'normal'
+      }
+    });
+    
+  } catch (error) {
+    logger.error('[Zenith] Queue status error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get queue status',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/push-stats
+ * Get push statistics from MED_PushLog
+ */
+router.get('/push-stats', async (req, res) => {
+  try {
+    const { days = 7 } = req.query;
+    const pool = await getPool();
+    
+    const result = await pool.request()
+      .input('Days', days)
+      .query(`
+        SELECT 
+          PushType,
+          COUNT(*) as TotalPushes,
+          SUM(CASE WHEN Success = 1 THEN 1 ELSE 0 END) as SuccessCount,
+          SUM(CASE WHEN Success = 0 THEN 1 ELSE 0 END) as FailureCount,
+          CAST(AVG(CASE WHEN Success = 1 THEN 100.0 ELSE 0 END) AS DECIMAL(5,2)) as SuccessRate,
+          AVG(ProcessingTimeMs) as AvgProcessingTime,
+          MAX(ProcessingTimeMs) as MaxProcessingTime
+        FROM MED_PushLog
+        WHERE PushDate >= DATEADD(DAY, -@Days, GETDATE())
+        GROUP BY PushType
+      `);
+    
+    const totalResult = await pool.request()
+      .input('Days', days)
+      .query(`
+        SELECT 
+          COUNT(*) as TotalPushes,
+          SUM(CASE WHEN Success = 1 THEN 1 ELSE 0 END) as SuccessCount,
+          SUM(CASE WHEN Success = 0 THEN 1 ELSE 0 END) as FailureCount,
+          CAST(AVG(CASE WHEN Success = 1 THEN 100.0 ELSE 0 END) AS DECIMAL(5,2)) as OverallSuccessRate
+        FROM MED_PushLog
+        WHERE PushDate >= DATEADD(DAY, -@Days, GETDATE())
+      `);
+    
+    res.json({
+      success: true,
+      period: `Last ${days} days`,
+      overall: totalResult.recordset[0],
+      byType: result.recordset
+    });
+    
+  } catch (error) {
+    logger.error('[Zenith] Push stats error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get push statistics',
+      message: error.message
+    });
+  }
+});
+
+module.exports = router;module.exports = router;

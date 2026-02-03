@@ -1,0 +1,290 @@
+<div class="inventory-container">
+  <!-- Summary Cards -->
+  <div class="summary-cards" *ngIf="summary">
+    <mat-card class="summary-card total">
+      <mat-card-content>
+        <div class="card-icon">
+          <mat-icon>inventory</mat-icon>
+        </div>
+        <div class="card-info">
+          <div class="card-label">סה"כ פריטים</div>
+          <div class="card-value">{{ dataSource.data.length }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card profit">
+      <mat-card-content>
+        <div class="card-icon">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="card-info">
+          <div class="card-label">רווח פוטנציאלי</div>
+          <div class="card-value">{{ formatCurrency(summary.totalPotentialProfit) }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card margin">
+      <mat-card-content>
+        <div class="card-icon">
+          <mat-icon>percent</mat-icon>
+        </div>
+        <div class="card-info">
+          <div class="card-label">מרווח ממוצע</div>
+          <div class="card-value">{{ summary.avgMargin.toFixed(1) }}%</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card urgent" *ngIf="summary.urgentItems > 0">
+      <mat-card-content>
+        <div class="card-icon">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="card-info">
+          <div class="card-label">פריטים דחופים</div>
+          <div class="card-value">{{ summary.urgentItems }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="summary-card risk" *ngIf="summary.highRiskItems > 0">
+      <mat-card-content>
+        <div class="card-icon">
+          <mat-icon>error</mat-icon>
+        </div>
+        <div class="card-info">
+          <div class="card-label">סיכון גבוה</div>
+          <div class="card-value">{{ summary.highRiskItems }}</div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Filters -->
+  <mat-card class="filters-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>filter_list</mat-icon>
+        סינון מלאי
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="filtersForm">
+        <div class="filters-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>ימים עד כניסה</mat-label>
+            <input matInput type="number" formControlName="daysToCheckIn" placeholder="7">
+            <mat-hint>הצג רק חדרים עם כניסה תוך X ימים</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>רווח מינימלי (€)</mat-label>
+            <input matInput type="number" formControlName="minProfit" placeholder="100">
+            <mat-hint>הצג רק חדרים עם רווח מינימלי</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>מספר מלון</mat-label>
+            <input matInput type="number" formControlName="hotelId" placeholder="12345">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>דחיפות</mat-label>
+            <mat-select formControlName="urgency">
+              <mat-option value="">הכל</mat-option>
+              <mat-option value="high">גבוה</mat-option>
+              <mat-option value="medium">בינוני</mat-option>
+              <mat-option value="low">נמוך</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>מיון לפי</mat-label>
+            <mat-select formControlName="sortBy">
+              <mat-option value="urgency">דחיפות</mat-option>
+              <mat-option value="date">תאריך כניסה</mat-option>
+              <mat-option value="profit">רווח</mat-option>
+              <mat-option value="margin">מרווח</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="filters-actions">
+          <button mat-button (click)="clearFilters()">
+            <mat-icon>clear</mat-icon>
+            נקה סינון
+          </button>
+          <button mat-raised-button color="primary" (click)="loadInventory()">
+            <mat-icon>refresh</mat-icon>
+            רענן
+          </button>
+          <button mat-raised-button color="accent" (click)="exportToCSV()">
+            <mat-icon>download</mat-icon>
+            ייצא CSV
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Spinner -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+  </div>
+
+  <!-- Inventory Table -->
+  <mat-card class="table-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        מלאי פעיל
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="table-container">
+        <table mat-table [dataSource]="dataSource" matSort class="inventory-table">
+          
+          <!-- Hotel Name Column -->
+          <ng-container matColumnDef="hotelName">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>מלון</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="hotel-info">
+                <strong>{{ item.hotelName }}</strong>
+                <div class="hotel-city">{{ item.hotelCity }}</div>
+                <div class="room-type">{{ item.roomType }}</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Check-in Column -->
+          <ng-container matColumnDef="checkIn">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>תאריכים</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="dates">
+                <div>כניסה: {{ formatDate(item.checkIn) }}</div>
+                <div>יציאה: {{ formatDate(item.checkOut) }}</div>
+                <div class="days-info">בעוד {{ item.daysUntilCheckIn }} ימים</div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Buy Price Column -->
+          <ng-container matColumnDef="buyPrice">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>מחיר קנייה</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="price buy-price">{{ formatCurrency(item.buyPrice) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Sell Price Column -->
+          <ng-container matColumnDef="sellPrice">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>מחיר מכירה</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="price sell-price">{{ formatCurrency(item.sellPrice) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Current Market Price Column -->
+          <ng-container matColumnDef="currentMarketPrice">
+            <th mat-header-cell *matHeaderCellDef>מחיר שוק נוכחי</th>
+            <td mat-cell *matCellDef="let item">
+              <span *ngIf="item.currentMarketPrice" class="price market-price">
+                {{ formatCurrency(item.currentMarketPrice) }}
+              </span>
+              <span *ngIf="!item.currentMarketPrice" class="no-data">-</span>
+            </td>
+          </ng-container>
+
+          <!-- Potential Profit Column -->
+          <ng-container matColumnDef="potentialProfit">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>רווח</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="profit-value">{{ formatCurrency(item.potentialProfit) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Margin Column -->
+          <ng-container matColumnDef="marginPercent">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>מרווח %</th>
+            <td mat-cell *matCellDef="let item">
+              <span class="margin-value">{{ item.marginPercent.toFixed(1) }}%</span>
+            </td>
+          </ng-container>
+
+          <!-- Days Until Check-in Column -->
+          <ng-container matColumnDef="daysUntilCheckIn">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>ימים לכניסה</th>
+            <td mat-cell *matCellDef="let item">
+              {{ item.daysUntilCheckIn }}
+            </td>
+          </ng-container>
+
+          <!-- Urgency Column -->
+          <ng-container matColumnDef="urgency">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>דחיפות</th>
+            <td mat-cell *matCellDef="let item">
+              <mat-chip [color]="getUrgencyColor(item.urgency)" selected>
+                {{ item.urgency === 'high' ? 'גבוה' : item.urgency === 'medium' ? 'בינוני' : 'נמוך' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Risk Level Column -->
+          <ng-container matColumnDef="riskLevel">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>סיכון</th>
+            <td mat-cell *matCellDef="let item">
+              <mat-chip [color]="getRiskColor(item.riskLevel)" selected>
+                {{ item.riskLevel === 'high' ? 'גבוה' : item.riskLevel === 'medium' ? 'בינוני' : 'נמוך' }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>פעולות</th>
+            <td mat-cell *matCellDef="let item">
+              <div class="actions-buttons">
+                <button mat-icon-button color="primary" 
+                        (click)="onUpdatePrice(item)"
+                        matTooltip="עדכן מחיר מכירה">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="accent" 
+                        (click)="onCheckCurrentPrice(item)"
+                        matTooltip="בדוק מחיר שוק נוכחי">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
+              <div class="suggested-actions" *ngIf="item.suggestedActions.length > 0">
+                <mat-icon class="action-icon">info</mat-icon>
+                <span>{{ item.suggestedActions[0] }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+
+        <mat-paginator 
+          [pageSizeOptions]="[10, 25, 50, 100]"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- No Data Message -->
+  <div class="no-data-message" *ngIf="!loading && dataSource.data.length === 0">
+    <mat-icon>inbox</mat-icon>
+    <p>אין פריטים במלאי</p>
+    <button mat-raised-button color="primary" routerLink="/trading/search">
+      <mat-icon>search</mat-icon>
+      חפש חדרים חדשים
+    </button>
+  </div>
+</div>

@@ -1,0 +1,249 @@
+<div class="competitor-tracker-container">
+  <div class="tracker-header">
+    <h2>
+      <mat-icon>visibility</mat-icon>
+      Competitor Tracking
+    </h2>
+    <p class="subtitle">Real-time monitoring with intelligent response strategies</p>
+  </div>
+
+  <div class="tracker-controls">
+    <mat-form-field appearance="outline" class="hotel-select">
+      <mat-label>Hotel ID</mat-label>
+      <input matInput type="number" [(ngModel)]="selectedHotelId" placeholder="Enter hotel ID">
+      <mat-icon matPrefix>hotel</mat-icon>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="period-select">
+      <mat-label>Time Period</mat-label>
+      <mat-select [(ngModel)]="daysBack">
+        <mat-option [value]="1">Last 24 hours</mat-option>
+        <mat-option [value]="3">Last 3 days</mat-option>
+        <mat-option [value]="7">Last 7 days</mat-option>
+        <mat-option [value]="14">Last 14 days</mat-option>
+        <mat-option [value]="30">Last 30 days</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button mat-raised-button color="primary" 
+            [disabled]="!selectedHotelId || loading"
+            (click)="trackChanges()">
+      <mat-icon>search</mat-icon>
+      Track Changes
+    </button>
+
+    <button mat-icon-button 
+            [color]="autoRefresh ? 'accent' : ''"
+            (click)="toggleAutoRefresh()"
+            matTooltip="Auto-refresh every 2 minutes">
+      <mat-icon>{{ autoRefresh ? 'sync' : 'sync_disabled' }}</mat-icon>
+    </button>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    <mat-icon>error</mat-icon>
+    {{ error }}
+  </div>
+
+  <div *ngIf="!loading && changes.length > 0" class="tracker-content">
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>swap_vert</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Changes</span>
+            <span class="stat-value">{{ stats.totalChanges }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon trending-down">
+            <mat-icon>trending_down</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Price Decreases</span>
+            <span class="stat-value decrease">{{ stats.priceDecreases }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon trending-up">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Price Increases</span>
+            <span class="stat-value increase">{{ stats.priceIncreases }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <div class="stat-icon">
+            <mat-icon>show_chart</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Avg Change</span>
+            <span class="stat-value" [style.color]="getChangeColor(stats.avgChangePercent)">
+              {{ formatPercent(stats.avgChangePercent) }}
+            </span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Alerts -->
+    <mat-card *ngIf="alerts.length > 0" class="alerts-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>notifications_active</mat-icon>
+          Active Alerts
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="alerts-list">
+          <div class="alert-item" *ngFor="let alert of alerts"
+               [class.high]="alert.severity === 'HIGH'"
+               [class.medium]="alert.severity === 'MEDIUM'"
+               [class.low]="alert.severity === 'LOW'">
+            <div class="alert-icon">
+              <mat-icon>{{ alert.severity === 'HIGH' ? 'warning' : alert.severity === 'MEDIUM' ? 'info' : 'announcement' }}</mat-icon>
+            </div>
+            <div class="alert-content">
+              <div class="alert-header">
+                <span class="alert-type">{{ formatReadable(alert.type) }}</span>
+                <span class="alert-severity" [style.background-color]="getSeverityColor(alert.severity)">
+                  {{ alert.severity }}
+                </span>
+              </div>
+              <div class="alert-message">{{ alert.message }}</div>
+              <div class="alert-competitor">{{ alert.competitor }}</div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Response Strategy -->
+    <mat-card *ngIf="strategy" class="strategy-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>psychology</mat-icon>
+          Recommended Response Strategy
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="strategy-details">
+          <div class="strategy-header">
+            <div class="strategy-badge" [style.background-color]="getStrategyColor(strategy.strategy)">
+              {{ formatReadable(strategy.strategy) }}
+            </div>
+            <div class="urgency-badge" [style.color]="getUrgencyColor(strategy.urgency)">
+              <mat-icon>{{ strategy.urgency === 'HIGH' ? 'priority_high' : strategy.urgency === 'MEDIUM' ? 'report' : 'info' }}</mat-icon>
+              {{ strategy.urgency }} Urgency
+            </div>
+          </div>
+
+          <div class="strategy-rationale">
+            <mat-icon>lightbulb</mat-icon>
+            <span>{{ strategy.rationale }}</span>
+          </div>
+
+          <div class="strategy-action">
+            <div class="action-item">
+              <span class="action-label">Recommended Action:</span>
+              <span class="action-value">{{ formatReadable(strategy.action.action) }}</span>
+            </div>
+            <div class="action-item">
+              <span class="action-label">New Price:</span>
+              <span class="action-value price">{{ formatCurrency(strategy.action.newPrice) }}</span>
+            </div>
+            <div class="action-item">
+              <span class="action-label">Adjustment:</span>
+              <span class="action-value" [style.color]="getChangeColor(strategy.action.adjustmentPercent)">
+                {{ formatCurrency(strategy.action.adjustment) }} ({{ formatPercent(strategy.action.adjustmentPercent) }})
+              </span>
+            </div>
+          </div>
+
+          <div class="strategy-actions">
+            <button mat-raised-button color="primary">
+              <mat-icon>check</mat-icon>
+              Apply Strategy
+            </button>
+            <button mat-stroked-button>
+              <mat-icon>schedule</mat-icon>
+              Schedule for Later
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Recent Changes Table -->
+    <mat-card class="changes-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>history</mat-icon>
+          Recent Price Changes
+        </mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="table-container">
+          <table class="changes-table">
+            <thead>
+              <tr>
+                <th>Competitor</th>
+                <th>Old Price</th>
+                <th>New Price</th>
+                <th>Change</th>
+                <th>Change %</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let change of changes" 
+                  [class.significant]="getAbsoluteValue(change.changePercent) > 10">
+                <td class="competitor-name">
+                  <mat-icon>business</mat-icon>
+                  {{ change.competitorName }}
+                </td>
+                <td>{{ formatCurrency(change.oldPrice) }}</td>
+                <td>{{ formatCurrency(change.newPrice) }}</td>
+                <td [style.color]="getChangeColor(change.changeAmount)">
+                  {{ formatCurrency(change.changeAmount) }}
+                </td>
+                <td>
+                  <span class="change-badge" [style.background-color]="getChangeColor(change.changePercent)">
+                    {{ formatPercent(change.changePercent) }}
+                  </span>
+                </td>
+                <td class="timestamp">{{ formatDate(change.changeDate) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="60"></mat-spinner>
+    <p>Analyzing competitor data...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && changes.length === 0 && selectedHotelId" class="empty-state">
+    <mat-icon>search_off</mat-icon>
+    <h3>No Changes Found</h3>
+    <p>No competitor price changes detected in the selected period.</p>
+  </div>
+</div>

@@ -1,0 +1,209 @@
+.search-and-buy-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.search-card {
+  margin-bottom: 20px;
+}
+
+.search-card mat-card-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 24px;
+    margin: 0;
+  }
+}
+
+.search-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.search-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+
+  button {
+    mat-icon {
+      margin-right: 5px;
+    }
+  }
+}
+
+.loading-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  
+  p {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #666;
+  }
+}
+
+.analytics-card {
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      font-size: 20px;
+    }
+  }
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.analytics-item {
+  text-align: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+
+  .analytics-label {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+  }
+
+  .analytics-value {
+    font-size: 24px;
+    font-weight: bold;
+  }
+}
+
+.results-card {
+  margin-bottom: 20px;
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 22px;
+    }
+  }
+}
+
+.results-table-container {
+  overflow-x: auto;
+  margin-top: 15px;
+}
+
+.results-table {
+  width: 100%;
+  
+  th {
+    font-weight: bold;
+    background: #f5f5f5;
+    padding: 15px 10px;
+  }
+
+  td {
+    padding: 15px 10px;
+  }
+
+  .room-policy {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+  }
+
+  .price-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    background: #e3f2fd;
+    color: #1976d2;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .profit-amount {
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 16px;
+  }
+
+  .margin-percent {
+    font-weight: bold;
+    font-size: 15px;
+  }
+
+  .reasoning-text {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+    max-width: 300px;
+    line-height: 1.4;
+  }
+
+  mat-chip {
+    font-weight: 500;
+  }
+
+  button {
+    white-space: nowrap;
+  }
+}
+
+.no-results {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 20px;
+  }
+
+  p {
+    font-size: 18px;
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .search-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .results-table {
+    font-size: 14px;
+
+    th, td {
+      padding: 10px 5px;
+    }
+  }
+}

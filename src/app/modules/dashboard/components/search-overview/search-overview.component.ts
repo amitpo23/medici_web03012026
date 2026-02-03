@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SearchIntelligenceService, SearchOverview } from '../../../services/search-intelligence.service';
+import { Component, OnInit } from '@angular/core';
+import { SearchIntelligenceService, SearchOverview } from '../../../../services/search-intelligence.service';
 
 @Component({
   selector: 'app-search-overview',

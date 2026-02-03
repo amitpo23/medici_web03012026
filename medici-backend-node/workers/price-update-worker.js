@@ -241,7 +241,7 @@ async function syncHotelToZenith(pool, hotel) {
         // Push rates with retry and concurrency limit
         const rateResults = await withConcurrencyLimit(rateGroups, async (group) => {
             return withRetry(
-                () => zenithPushService.pushRates({
+                () => zenithPushService.pushRate({
                     hotelCode: hotel.ZenithHotelCode,
                     invTypeCode: group.roomCode,
                     startDate: group.startDate,

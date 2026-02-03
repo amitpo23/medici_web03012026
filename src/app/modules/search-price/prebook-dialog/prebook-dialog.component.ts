@@ -1,9 +1,9 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { BookingService } from 'src/app/services/booking.service';
 import { BOARD_OPTIONS, CATEGORY_OPTIONS } from 'src/app/core/constants/reference-data.constants';
+import { BookingService } from 'src/app/services/booking.service';
 
 @Component({
   selector: 'app-prebook-dialog',

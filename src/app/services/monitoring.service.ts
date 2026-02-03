@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, interval } from 'rxjs';
-import { switchMap, startWith, shareReplay } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { interval, Observable } from 'rxjs';
+import { shareReplay, startWith, switchMap } from 'rxjs/operators';
 
 export interface Metrics {
   bookings: {

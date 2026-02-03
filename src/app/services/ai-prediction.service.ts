@@ -26,6 +26,8 @@ export interface AIOpportunity {
   endDate?: string;
   formattedDate?: string;
   rank?: number;
+  checkIn?: string;
+  checkOut?: string;
 }
 
 export interface AgentAnalysis {

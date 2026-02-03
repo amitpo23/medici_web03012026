@@ -1,0 +1,114 @@
+<div class="realtime-pricing-container">
+  <div class="pricing-header">
+    <div class="header-left">
+      <h2>
+        <mat-icon>speed</mat-icon>
+        Real-time Price Optimization
+      </h2>
+      <div class="live-indicator" [class.active]="isLive">
+        <span class="pulse"></span>
+        {{ isLive ? 'LIVE' : 'PAUSED' }}
+      </div>
+    </div>
+    <div class="header-actions">
+      <button mat-icon-button (click)="toggleLive()" 
+              [matTooltip]="isLive ? 'Pause updates' : 'Resume updates'">
+        <mat-icon>{{ isLive ? 'pause' : 'play_arrow' }}</mat-icon>
+      </button>
+      <button mat-icon-button (click)="clearUpdates()" matTooltip="Clear updates">
+        <mat-icon>delete_sweep</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Performance Metrics -->
+  <div class="metrics-grid">
+    <mat-card *ngFor="let metric of metrics" class="metric-card">
+      <mat-card-content>
+        <div class="metric-header">
+          <span class="metric-label">{{ metric.label }}</span>
+          <span class="metric-trend" [class]="metric.trend">
+            <mat-icon>{{ metric.trend === 'up' ? 'trending_up' : metric.trend === 'down' ? 'trending_down' : 'trending_flat' }}</mat-icon>
+            {{ metric.change > 0 ? '+' : '' }}{{ metric.change.toFixed(1) }}%
+          </span>
+        </div>
+        <div class="metric-value">
+          <span *ngIf="metric.label.includes('Price')">{{ formatCurrency(metric.value) }}</span>
+          <span *ngIf="metric.label.includes('Confidence') || metric.label.includes('Success')">{{ formatPercent(metric.value) }}</span>
+          <span *ngIf="metric.label.includes('Updates')">{{ metric.value.toFixed(1) }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Updates Feed -->
+  <mat-card class="updates-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>history</mat-icon>
+        Recent Optimizations ({{ totalUpdates }} total)
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="updates-feed">
+        <div *ngIf="priceUpdates.length === 0" class="empty-state">
+          <mat-icon>hourglass_empty</mat-icon>
+          <p>Waiting for price updates...</p>
+        </div>
+
+        <div *ngFor="let update of priceUpdates; let i = index" 
+             class="update-item"
+             [@slideIn]>
+          <div class="update-timeline">
+            <div class="timeline-dot" [style.background-color]="getStrategyColor(update.strategy)"></div>
+            <div class="timeline-line" *ngIf="i < priceUpdates.length - 1"></div>
+          </div>
+
+          <div class="update-content">
+            <div class="update-header">
+              <div class="update-info">
+                <span class="opportunity-id">#{{ update.opportunityId }}</span>
+                <span class="hotel-name">{{ update.hotelName }}</span>
+                <span class="city">{{ update.city }}</span>
+              </div>
+              <span class="timestamp">{{ formatTimestamp(update.timestamp) }}</span>
+            </div>
+
+            <div class="update-details">
+              <div class="price-change">
+                <div class="price-item old">
+                  <span class="price-label">Old</span>
+                  <span class="price-value">{{ formatCurrency(update.oldPrice) }}</span>
+                </div>
+                <mat-icon class="arrow">arrow_forward</mat-icon>
+                <div class="price-item new">
+                  <span class="price-label">New</span>
+                  <span class="price-value" [style.color]="getPriceChangeColor(update.oldPrice, update.newPrice)">
+                    {{ formatCurrency(update.newPrice) }}
+                  </span>
+                </div>
+                <div class="price-diff" [style.color]="getPriceChangeColor(update.oldPrice, update.newPrice)">
+                  {{ formatChange(update.oldPrice, update.newPrice) }}
+                </div>
+              </div>
+
+              <div class="update-meta">
+                <span class="strategy-badge" [style.background-color]="getStrategyColor(update.strategy)">
+                  {{ formatStrategyName(update.strategy) }}
+                </span>
+                <span class="confidence-badge" [style.background-color]="getConfidenceColor(update.confidence)">
+                  <mat-icon>psychology</mat-icon>
+                  {{ formatPercent(update.confidence * 100) }}
+                </span>
+                <span class="checkin-date">
+                  <mat-icon>event</mat-icon>
+                  {{ update.checkIn }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -63,7 +63,7 @@ export interface DemandForecast {
   providedIn: 'root'
 })
 export class SearchIntelligenceService {
-  private apiUrl = environment.API_URL || 'http://localhost:8080';
+  private apiUrl = environment.apiUrl || environment.baseUrl;
 
   constructor(private http: HttpClient) {}
 

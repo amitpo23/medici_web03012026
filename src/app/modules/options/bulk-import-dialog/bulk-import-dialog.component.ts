@@ -1,9 +1,9 @@
-import { Component, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient } from '@angular/common/http';
+import { Component, Inject } from '@angular/core';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { BOARD_OPTIONS, calculatePrices, CATEGORY_OPTIONS } from 'src/app/core/constants/reference-data.constants';
 import { environment } from 'src/app/environments/environment';
-import { BOARD_OPTIONS, CATEGORY_OPTIONS, calculatePrices } from 'src/app/core/constants/reference-data.constants';
 
 interface CsvRow {
   hotelId: number;

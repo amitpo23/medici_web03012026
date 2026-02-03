@@ -1,8 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { MonitoringService, Metrics, HealthStatus, Activity, Alert, TrendData } from '../../services/monitoring.service';
-import { Subscription, interval } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { interval, Subscription } from 'rxjs';
+import { Activity, Alert, HealthStatus, Metrics, MonitoringService, TrendData } from '../../services/monitoring.service';
 
 @Component({
   selector: 'app-monitoring-dashboard',

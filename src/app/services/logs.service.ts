@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -53,7 +53,7 @@ export interface LogStats {
   providedIn: 'root'
 })
 export class LogsService {
-  private readonly apiUrl = `${environment.API_URL}/logs`;
+  private readonly apiUrl = `${environment.baseUrl}/logs`;
 
   constructor(private http: HttpClient) {}
 
@@ -160,7 +160,7 @@ export class LogsService {
       icon = '✗';
     }
 
-    return { isError, isSlow, statusClass, icon };
+    return { isError: !!isError, isSlow: !!isSlow, statusClass, icon };
   }
 
   /**

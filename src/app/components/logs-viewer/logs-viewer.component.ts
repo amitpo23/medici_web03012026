@@ -1,16 +1,12 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { 
-  LogsService, 
-  LogFile, 
-  LogEntry, 
-  LogSearchParams,
-  LogStats 
-} from '../../services/logs.service';
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import {
+    LogEntry, LogFile, LogSearchParams, LogsService, LogStats
+} from '../../services/logs.service';
 
 @Component({
   selector: 'app-logs-viewer',

@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { ThemeService } from './services/theme.service';
 import { DashboardService } from './services/dashboard.service';
+import { ThemeService } from './services/theme.service';
 
 interface QuickStats {
   todayProfit: number;

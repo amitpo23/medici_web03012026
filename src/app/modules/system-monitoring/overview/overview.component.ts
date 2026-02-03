@@ -1,9 +1,8 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { CommonModule } from '@angular/common';
-import { MonitoringService } from '../../../services/monitoring.service';
 import { AlertManagementService } from '../../../services/alert-management.service';
-import { RevenueAnalyticsService } from '../../../services/revenue-analytics.service';
+import { MonitoringService } from '../../../services/monitoring.service';
 
 interface SystemCard {
   title: string;

@@ -1,0 +1,137 @@
+<h2 mat-dialog-title>
+  <mat-icon>shopping_cart</mat-icon>
+  אישור רכישה
+</h2>
+
+<mat-dialog-content>
+  <!-- Room Details -->
+  <div class="section">
+    <h3>פרטי החדר</h3>
+    <div class="details-grid">
+      <div class="detail-item">
+        <span class="label">סוג חדר:</span>
+        <span class="value">{{ data.room.roomName }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">מחיר קנייה:</span>
+        <span class="value price">{{ formatCurrency(data.room.price) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">מחיר מכירה מוצע:</span>
+        <span class="value">{{ formatCurrency(data.room.aiAnalysis.suggestedSellPrice) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">רווח צפוי:</span>
+        <span class="value profit">{{ formatCurrency(data.room.aiAnalysis.expectedProfit) }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">מרווח:</span>
+        <span class="value">{{ data.room.aiAnalysis.expectedMargin }}%</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">ביטחון AI:</span>
+        <span class="value">{{ data.room.aiAnalysis.buyConfidence }}%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Recommendation -->
+  <div class="section recommendation-section">
+    <h3>המלצת AI</h3>
+    <div class="recommendation-badge" [class]="data.room.aiAnalysis.recommendation.toLowerCase().replace(' ', '-')">
+      {{ data.room.aiAnalysis.recommendation }}
+    </div>
+    <p class="reasoning">{{ data.room.aiAnalysis.reasoning }}</p>
+  </div>
+
+  <!-- Stay Details -->
+  <div class="section">
+    <h3>פרטי השהייה</h3>
+    <div class="details-grid">
+      <div class="detail-item">
+        <span class="label">כניסה:</span>
+        <span class="value">{{ data.searchParams.checkIn }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">יציאה:</span>
+        <span class="value">{{ data.searchParams.checkOut }}</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">אורחים:</span>
+        <span class="value">{{ data.searchParams.adults }} מבוגרים, {{ data.searchParams.children || 0 }} ילדים</span>
+      </div>
+      <div class="detail-item">
+        <span class="label">מדיניות ביטול:</span>
+        <span class="value">{{ data.room.cancellationPolicy }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Guest Information Form -->
+  <div class="section">
+    <h3>פרטי אורח (לצורך הזמנה)</h3>
+    <form [formGroup]="guestForm">
+      <div class="guest-form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>שם פרטי</mat-label>
+          <input matInput formControlName="firstName" required>
+          <mat-error *ngIf="guestForm.get('firstName')?.hasError('required')">
+            שדה חובה
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>שם משפחה</mat-label>
+          <input matInput formControlName="lastName" required>
+          <mat-error *ngIf="guestForm.get('lastName')?.hasError('required')">
+            שדה חובה
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>אימייל</mat-label>
+          <input matInput type="email" formControlName="email" required>
+          <mat-error *ngIf="guestForm.get('email')?.hasError('required')">
+            שדה חובה
+          </mat-error>
+          <mat-error *ngIf="guestForm.get('email')?.hasError('email')">
+            כתובת אימייל לא תקינה
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>טלפון</mat-label>
+          <input matInput formControlName="phone" required>
+          <mat-error *ngIf="guestForm.get('phone')?.hasError('required')">
+            שדה חובה
+          </mat-error>
+          <mat-error *ngIf="guestForm.get('phone')?.hasError('pattern')">
+            מספר טלפון לא תקין
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </form>
+  </div>
+
+  <!-- Warning -->
+  <div class="warning-section">
+    <mat-icon>warning</mat-icon>
+    <p>
+      <strong>שים לב:</strong> הרכישה תבוצע באופן מיידי. 
+      המחיר הסופי עשוי להשתנות אם חל שינוי במחיר הספק.
+      ניתן לבטל את ההזמנה בהתאם למדיניות הביטול המצוינת לעיל.
+    </p>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">
+    ביטול
+  </button>
+  <button mat-raised-button color="primary" 
+          (click)="onConfirm()" 
+          [disabled]="guestForm.invalid">
+    <mat-icon>check</mat-icon>
+    אשר רכישה
+  </button>
+</mat-dialog-actions>

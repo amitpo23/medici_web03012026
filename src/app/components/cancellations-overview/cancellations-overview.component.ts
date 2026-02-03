@@ -1,14 +1,11 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { 
-  CancellationsService, 
-  CancellationStats,
-  Cancellation,
-  CancellationError,
-  AutoCancellation,
-  TrendData
+import {
+    AutoCancellation, Cancellation,
+    CancellationError, CancellationsService,
+    CancellationStats, TrendData
 } from '../../services/cancellations.service';
 
 @Component({

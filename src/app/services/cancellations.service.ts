@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
@@ -51,7 +51,7 @@ export interface TrendData {
   providedIn: 'root'
 })
 export class CancellationsService {
-  private readonly apiUrl = `${environment.API_URL}/cancellations`;
+  private readonly apiUrl = `${environment.baseUrl}/cancellations`;
 
   constructor(private http: HttpClient) {}
 

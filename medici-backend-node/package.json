@@ -9,8 +9,19 @@
     "worker:buyroom": "node workers/buyroom-worker.js",
     "worker:cancellation": "node workers/auto-cancellation-worker.js",
     "worker:priceupdate": "node workers/price-update-worker.js",
+    "worker:pricesnapshot": "node workers/price-snapshot-worker.js",
+    "worker:aiscanner": "node workers/ai-opportunity-scanner.js",
+    "worker:priceoptimization": "node workers/price-optimization-worker.js",
+    "worker:coordinator": "node workers/worker-coordinator.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop all",
+    "pm2:restart": "pm2 restart all",
+    "pm2:logs": "pm2 logs",
+    "pm2:monit": "pm2 monit",
+    "pm2:status": "pm2 status",
     "test": "jest --forceExit --detectOpenHandles",
-    "test:coverage": "jest --forceExit --detectOpenHandles --coverage"
+    "test:coverage": "jest --forceExit --detectOpenHandles --coverage",
+    "test:integration": "node tests/integration-test.js"
   },
   "dependencies": {
     "@azure/core-auth": "^1.10.1",

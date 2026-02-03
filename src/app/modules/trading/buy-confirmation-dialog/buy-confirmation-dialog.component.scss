@@ -1,0 +1,166 @@
+h2[mat-dialog-title] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  margin: 0 0 20px 0;
+
+  mat-icon {
+    color: #1976d2;
+  }
+}
+
+mat-dialog-content {
+  padding: 0 24px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.section {
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #666;
+    margin: 0 0 15px 0;
+  }
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .label {
+    font-size: 12px;
+    color: #999;
+  }
+
+  .value {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+
+    &.price {
+      color: #1976d2;
+      font-weight: 600;
+      font-size: 16px;
+    }
+
+    &.profit {
+      color: #4caf50;
+      font-weight: 600;
+      font-size: 16px;
+    }
+  }
+}
+
+.recommendation-section {
+  background: #f5f5f5;
+  padding: 15px;
+  border-radius: 8px;
+  border: none;
+
+  .recommendation-badge {
+    display: inline-block;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 10px;
+
+    &.strong-buy {
+      background: #4caf50;
+      color: white;
+    }
+
+    &.buy {
+      background: #2196f3;
+      color: white;
+    }
+
+    &.consider {
+      background: #ff9800;
+      color: white;
+    }
+
+    &.avoid {
+      background: #f44336;
+      color: white;
+    }
+  }
+
+  .reasoning {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #666;
+    margin: 0;
+  }
+}
+
+.guest-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+
+  mat-form-field {
+    width: 100%;
+  }
+}
+
+.warning-section {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 15px;
+
+  mat-icon {
+    color: #ff9800;
+    flex-shrink: 0;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #856404;
+
+    strong {
+      font-weight: 600;
+    }
+  }
+}
+
+mat-dialog-actions {
+  padding: 16px 24px;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    margin-left: 8px;
+  }
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .details-grid,
+  .guest-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,211 @@
+<div class="search-and-buy-container">
+  <!-- Search Form Card -->
+  <mat-card class="search-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>search</mat-icon>
+        חיפוש חדרים עם ניתוח AI
+      </mat-card-title>
+      <mat-card-subtitle>
+        חפש חדרים זמינים וקבל המלצות קנייה חכמות
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
+        <div class="search-form-grid">
+          <!-- Hotel ID -->
+          <mat-form-field appearance="outline">
+            <mat-label>מספר מלון</mat-label>
+            <input matInput type="number" formControlName="hotelId" placeholder="12345">
+            <mat-icon matPrefix>hotel</mat-icon>
+            <mat-error *ngIf="searchForm.get('hotelId')?.hasError('required')">
+              שדה חובה
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Check-in Date -->
+          <mat-form-field appearance="outline">
+            <mat-label>תאריך כניסה</mat-label>
+            <input matInput [matDatepicker]="checkInPicker" formControlName="checkIn">
+            <mat-datepicker-toggle matSuffix [for]="checkInPicker"></mat-datepicker-toggle>
+            <mat-datepicker #checkInPicker></mat-datepicker>
+            <mat-error *ngIf="searchForm.get('checkIn')?.hasError('required')">
+              שדה חובה
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Check-out Date -->
+          <mat-form-field appearance="outline">
+            <mat-label>תאריך יציאה</mat-label>
+            <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOut">
+            <mat-datepicker-toggle matSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
+            <mat-datepicker #checkOutPicker></mat-datepicker>
+            <mat-error *ngIf="searchForm.get('checkOut')?.hasError('required')">
+              שדה חובה
+            </mat-error>
+          </mat-form-field>
+
+          <!-- Adults -->
+          <mat-form-field appearance="outline">
+            <mat-label>מבוגרים</mat-label>
+            <input matInput type="number" formControlName="adults" min="1" max="10">
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <!-- Children -->
+          <mat-form-field appearance="outline">
+            <mat-label>ילדים</mat-label>
+            <input matInput type="number" formControlName="children" min="0" max="10">
+            <mat-icon matPrefix>child_care</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <div class="search-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="loading || searchForm.invalid">
+            <mat-icon>search</mat-icon>
+            חפש
+          </button>
+          <button mat-button type="button" (click)="clearSearch()" [disabled]="loading">
+            <mat-icon>clear</mat-icon>
+            נקה
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Loading Spinner -->
+  <div class="loading-spinner" *ngIf="loading">
+    <mat-spinner></mat-spinner>
+    <p>מחפש חדרים ומנתח נתונים...</p>
+  </div>
+
+  <!-- Hotel Analytics (if available) -->
+  <mat-card class="analytics-card" *ngIf="hotelAnalytics && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>analytics</mat-icon>
+        נתונים היסטוריים למלון
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="analytics-grid">
+        <div class="analytics-item">
+          <div class="analytics-label">סה"כ הזמנות</div>
+          <div class="analytics-value">{{ hotelAnalytics.totalBookings }}</div>
+        </div>
+        <div class="analytics-item">
+          <div class="analytics-label">רווח ממוצע</div>
+          <div class="analytics-value">{{ formatCurrency(hotelAnalytics.avgProfit) }}</div>
+        </div>
+        <div class="analytics-item">
+          <div class="analytics-label">מרווח ממוצע</div>
+          <div class="analytics-value">{{ hotelAnalytics.avgMarginPercent }}%</div>
+        </div>
+        <div class="analytics-item">
+          <div class="analytics-label">שיעור המרה</div>
+          <div class="analytics-value">{{ hotelAnalytics.conversionRate }}%</div>
+        </div>
+        <div class="analytics-item">
+          <div class="analytics-label">ביקוש (3 חודשים)</div>
+          <div class="analytics-value">{{ hotelAnalytics.searchDemand }} חיפושים</div>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Search Results -->
+  <mat-card class="results-card" *ngIf="searchResults.length > 0 && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>list</mat-icon>
+        תוצאות חיפוש ({{ searchResults.length }} חדרים)
+      </mat-card-title>
+      <mat-card-subtitle>
+        לחץ על "קנה עכשיו" לרכישה מהירה
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div class="results-table-container">
+        <table mat-table [dataSource]="searchResults" class="results-table">
+          
+          <!-- Room Name Column -->
+          <ng-container matColumnDef="roomName">
+            <th mat-header-cell *matHeaderCellDef>סוג חדר</th>
+            <td mat-cell *matCellDef="let room">
+              <strong>{{ room.roomName }}</strong>
+              <div class="room-policy">{{ room.cancellationPolicy }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Price Column -->
+          <ng-container matColumnDef="price">
+            <th mat-header-cell *matHeaderCellDef>מחיר קנייה</th>
+            <td mat-cell *matCellDef="let room">
+              <span class="price-badge">{{ formatCurrency(room.price) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Confidence Column -->
+          <ng-container matColumnDef="confidence">
+            <th mat-header-cell *matHeaderCellDef>רמת ביטחון AI</th>
+            <td mat-cell *matCellDef="let room">
+              <mat-chip [color]="getConfidenceColor(room.aiAnalysis.buyConfidence)" selected>
+                {{ room.aiAnalysis.buyConfidence }}%
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Profit Column -->
+          <ng-container matColumnDef="profit">
+            <th mat-header-cell *matHeaderCellDef>רווח צפוי</th>
+            <td mat-cell *matCellDef="let room">
+              <span class="profit-amount">{{ formatCurrency(room.aiAnalysis.expectedProfit) }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Margin Column -->
+          <ng-container matColumnDef="margin">
+            <th mat-header-cell *matHeaderCellDef>מרווח</th>
+            <td mat-cell *matCellDef="let room">
+              <span class="margin-percent">{{ room.aiAnalysis.expectedMargin }}%</span>
+            </td>
+          </ng-container>
+
+          <!-- Recommendation Column -->
+          <ng-container matColumnDef="recommendation">
+            <th mat-header-cell *matHeaderCellDef>המלצה</th>
+            <td mat-cell *matCellDef="let room">
+              <mat-chip [color]="getRecommendationColor(room.aiAnalysis.recommendation)" selected>
+                {{ room.aiAnalysis.recommendation }}
+              </mat-chip>
+              <div class="reasoning-text">{{ room.aiAnalysis.reasoning }}</div>
+            </td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>פעולות</th>
+            <td mat-cell *matCellDef="let room">
+              <button mat-raised-button color="primary" (click)="onBuyNow(room)" [disabled]="loading">
+                <mat-icon>shopping_cart</mat-icon>
+                קנה עכשיו
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- No Results Message -->
+  <div class="no-results" *ngIf="!loading && searchResults.length === 0 && searchForm.touched">
+    <mat-icon>info</mat-icon>
+    <p>לא נמצאו תוצאות. נסה לשנות את פרמטרי החיפוש.</p>
+  </div>
+</div>

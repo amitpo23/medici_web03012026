@@ -1,0 +1,192 @@
+<div class="revenue-optimizer-container">
+  <div class="optimizer-header">
+    <h2>
+      <mat-icon>attach_money</mat-icon>
+      Revenue Maximization
+    </h2>
+    <p class="subtitle">Multi-scenario optimization for maximum profitability</p>
+  </div>
+
+  <div class="optimizer-content">
+    <!-- Input Form -->
+    <mat-card class="input-card">
+      <mat-card-header>
+        <mat-card-title>Opportunity Parameters</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="input-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Hotel ID</mat-label>
+              <input matInput type="number" [(ngModel)]="hotelId" placeholder="Enter hotel ID">
+              <mat-icon matPrefix>hotel</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Buy Price (€)</mat-label>
+              <input matInput type="number" [(ngModel)]="buyPrice" placeholder="0.00">
+              <mat-icon matPrefix>euro</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Check-in</mat-label>
+              <input matInput type="date" [(ngModel)]="checkIn">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Check-out</mat-label>
+              <input matInput type="date" [(ngModel)]="checkOut">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary" 
+                    [disabled]="!hotelId || !buyPrice || loading"
+                    (click)="maximizeRevenue()">
+              <mat-icon>trending_up</mat-icon>
+              {{ loading ? 'Optimizing...' : 'Maximize Revenue' }}
+            </button>
+            <button mat-stroked-button (click)="reset()">
+              <mat-icon>refresh</mat-icon>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div *ngIf="error" class="error-message">
+          <mat-icon>error</mat-icon>
+          {{ error }}
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Results -->
+    <div *ngIf="optimization && !loading" class="results-section">
+      <!-- Optimal Strategy Card -->
+      <mat-card class="optimal-card">
+        <mat-card-content>
+          <div class="optimal-header">
+            <div class="strategy-badge">
+              <mat-icon>verified</mat-icon>
+              {{ formatStrategyName(selectedStrategy) }}
+            </div>
+            <div class="risk-badge" [style.background-color]="getRiskColor(optimization.riskLevel)">
+              {{ optimization.riskLevel }} Risk
+            </div>
+          </div>
+
+          <div class="optimal-price">
+            <span class="label">Optimal Price</span>
+            <span class="value">{{ formatCurrency(optimization.recommendedPrice) }}</span>
+          </div>
+
+          <div class="metrics-row">
+            <div class="metric">
+              <mat-icon>account_balance_wallet</mat-icon>
+              <div>
+                <span class="metric-label">Expected Revenue</span>
+                <span class="metric-value">{{ formatCurrency(optimization.expectedRevenue) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <mat-icon>trending_up</mat-icon>
+              <div>
+                <span class="metric-label">Expected Profit</span>
+                <span class="metric-value profit">{{ formatCurrency(optimization.expectedProfit) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <mat-icon>stars</mat-icon>
+              <div>
+                <span class="metric-label">Conversion Rate</span>
+                <span class="metric-value">{{ formatPercent(optimization.expectedConversionRate) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <mat-icon>psychology</mat-icon>
+              <div>
+                <span class="metric-label">Confidence</span>
+                <span class="metric-value">{{ formatPercent(optimization.confidence) }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Scenarios Comparison Chart -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>analytics</mat-icon>
+            Scenario Comparison
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-container">
+            <canvas #scenariosChart></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Scenarios Details -->
+      <mat-card class="scenarios-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>view_list</mat-icon>
+            All Scenarios
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="scenarios-grid">
+            <div *ngFor="let scenario of scenarios" 
+                 class="scenario-item"
+                 [class.selected]="scenario.strategy === selectedStrategy">
+              <div class="scenario-header">
+                <span class="scenario-name">{{ formatStrategyName(scenario.strategy) }}</span>
+                <mat-icon *ngIf="scenario.strategy === selectedStrategy" class="selected-icon">check_circle</mat-icon>
+              </div>
+
+              <div class="scenario-price">
+                {{ formatCurrency(scenario.price) }}
+              </div>
+
+              <div class="scenario-metrics">
+                <div class="scenario-metric">
+                  <span class="label">Revenue</span>
+                  <span class="value">{{ formatCurrency(scenario.expectedRevenue) }}</span>
+                </div>
+                <div class="scenario-metric">
+                  <span class="label">Profit</span>
+                  <span class="value">{{ formatCurrency(scenario.expectedProfit) }}</span>
+                </div>
+                <div class="scenario-metric">
+                  <span class="label">Conversion</span>
+                  <span class="value">{{ formatPercent(scenario.expectedConversionRate) }}</span>
+                </div>
+              </div>
+
+              <div class="scenario-footer">
+                <span class="risk-badge small" [style.background-color]="getRiskColor(scenario.riskLevel)">
+                  {{ scenario.riskLevel }}
+                </span>
+                <span class="confidence-badge small">
+                  {{ formatPercent(scenario.confidence) }} confidence
+                </span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="60"></mat-spinner>
+      <p>Analyzing 5 revenue scenarios...</p>
+    </div>
+  </div>
+</div>

@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
-import { RevenueAnalyticsService, KPIs, DailySummary, RevenueBreakdown, Forecast, TopPerformer, RevenueTrend } from '../../services/revenue-analytics.service';
 import { Subscription } from 'rxjs';
+import { DailySummary, Forecast, KPIs, RevenueAnalyticsService, RevenueBreakdown, RevenueTrend, TopPerformer } from '../../services/revenue-analytics.service';
 
 @Component({
   selector: 'app-revenue-dashboard',

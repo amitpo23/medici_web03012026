@@ -34,6 +34,25 @@
       <mat-icon>calculate</mat-icon>
       ROI Calculator
     </button>
+    <!-- Week 6 ML Tabs -->
+    <button mat-flat-button 
+            [class.active]="selectedTab === 3" 
+            (click)="selectedTab = 3">
+      <mat-icon>psychology</mat-icon>
+      ML Pricing
+    </button>
+    <button mat-flat-button 
+            [class.active]="selectedTab === 4" 
+            (click)="selectedTab = 4">
+      <mat-icon>visibility</mat-icon>
+      Competitor Tracking
+    </button>
+    <button mat-flat-button 
+            [class.active]="selectedTab === 5" 
+            (click)="selectedTab = 5">
+      <mat-icon>attach_money</mat-icon>
+      Revenue Optimizer
+    </button>
   </div>
 
   <div class="tab-content" [ngSwitch]="selectedTab">
@@ -45,6 +64,16 @@
     </div>
     <div *ngSwitchCase="2" class="tab-panel" @fadeIn>
       <app-roi-calculator></app-roi-calculator>
+    </div>
+    <!-- Week 6 ML Tabs -->
+    <div *ngSwitchCase="3" class="tab-panel" @fadeIn>
+      <app-ml-price-predictor></app-ml-price-predictor>
+    </div>
+    <div *ngSwitchCase="4" class="tab-panel" @fadeIn>
+      <app-competitor-tracker></app-competitor-tracker>
+    </div>
+    <div *ngSwitchCase="5" class="tab-panel" @fadeIn>
+      <app-revenue-optimizer></app-revenue-optimizer>
     </div>
   </div>
 </div>

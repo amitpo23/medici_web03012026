@@ -1,0 +1,240 @@
+<div class="ml-predictor-container">
+  <div class="predictor-header">
+    <h2>
+      <mat-icon>psychology</mat-icon>
+      ML Price Prediction
+    </h2>
+    <p class="subtitle">AI-powered price optimization using ensemble machine learning models</p>
+  </div>
+
+  <div class="predictor-content">
+    <!-- Input Form -->
+    <mat-card class="input-card">
+      <mat-card-header>
+        <mat-card-title>Opportunity Details</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="predictionForm" class="prediction-form">
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Hotel ID</mat-label>
+              <input matInput type="number" formControlName="hotelId" placeholder="Enter hotel ID">
+              <mat-icon matPrefix>hotel</mat-icon>
+              <mat-error *ngIf="predictionForm.get('hotelId')?.hasError('required')">
+                Hotel ID is required
+              </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Buy Price (€)</mat-label>
+              <input matInput type="number" formControlName="buyPrice" placeholder="0.00">
+              <mat-icon matPrefix>euro</mat-icon>
+              <mat-error *ngIf="predictionForm.get('buyPrice')?.hasError('required')">
+                Buy price is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Check-in Date</mat-label>
+              <input matInput type="date" formControlName="checkIn">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Check-out Date</mat-label>
+              <input matInput type="date" formControlName="checkOut">
+              <mat-icon matPrefix>event</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Room Type</mat-label>
+              <mat-select formControlName="roomType">
+                <mat-option value="STANDARD">Standard</mat-option>
+                <mat-option value="DELUXE">Deluxe</mat-option>
+                <mat-option value="SUITE">Suite</mat-option>
+                <mat-option value="EXECUTIVE">Executive</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>bed</mat-icon>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Current Demand</mat-label>
+              <mat-select formControlName="currentDemand">
+                <mat-option value="LOW">Low</mat-option>
+                <mat-option value="MEDIUM">Medium</mat-option>
+                <mat-option value="HIGH">High</mat-option>
+                <mat-option value="VERY_HIGH">Very High</mat-option>
+              </mat-select>
+              <mat-icon matPrefix>trending_up</mat-icon>
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary" 
+                    [disabled]="loading" 
+                    (click)="predictPrice()">
+              <mat-icon>smart_toy</mat-icon>
+              {{ loading ? 'Calculating...' : 'Predict Optimal Price' }}
+            </button>
+            <button mat-stroked-button type="button" (click)="reset()">
+              <mat-icon>refresh</mat-icon>
+              Reset
+            </button>
+          </div>
+        </form>
+
+        <div *ngIf="error" class="error-message">
+          <mat-icon>error</mat-icon>
+          {{ error }}
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Prediction Results -->
+    <div *ngIf="prediction && !loading" class="results-section">
+      <!-- Main Prediction Card -->
+      <mat-card class="main-prediction-card">
+        <mat-card-content>
+          <div class="prediction-header">
+            <div class="confidence-badge" [style.background-color]="getConfidenceColor(prediction.confidence)">
+              {{ getConfidenceLabel(prediction.confidence) }}
+              <span class="confidence-value">{{ formatPercent(prediction.confidence) }}</span>
+            </div>
+            <div class="risk-badge" [style.color]="getRiskColor(prediction.riskLevel)">
+              <mat-icon>{{ prediction.riskLevel === 'LOW' ? 'check_circle' : prediction.riskLevel === 'MEDIUM' ? 'warning' : 'error' }}</mat-icon>
+              {{ prediction.riskLevel }} Risk
+            </div>
+          </div>
+
+          <div class="optimal-price">
+            <span class="label">Optimal Selling Price</span>
+            <span class="price">{{ formatCurrency(prediction.optimalPrice) }}</span>
+          </div>
+
+          <div class="price-range-viz">
+            <div class="range-label">Price Range</div>
+            <div class="range-bar">
+              <div class="range-segment min">
+                <span class="value">{{ formatCurrency(prediction.priceRange.min) }}</span>
+              </div>
+              <div class="range-segment optimal" 
+                   [style.left.%]="getPriceRangePercentages().optimal">
+                <div class="marker"></div>
+                <span class="value">{{ formatCurrency(prediction.priceRange.recommended) }}</span>
+              </div>
+              <div class="range-segment max">
+                <span class="value">{{ formatCurrency(prediction.priceRange.max) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <mat-icon>trending_up</mat-icon>
+              <div class="metric-content">
+                <span class="metric-label">Expected Revenue</span>
+                <span class="metric-value">{{ formatCurrency(prediction.expectedRevenue) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <mat-icon>account_balance_wallet</mat-icon>
+              <div class="metric-content">
+                <span class="metric-label">Expected Profit</span>
+                <span class="metric-value profit">{{ formatCurrency(prediction.expectedProfit) }}</span>
+              </div>
+            </div>
+            <div class="metric">
+              <mat-icon>stars</mat-icon>
+              <div class="metric-content">
+                <span class="metric-label">Conversion Rate</span>
+                <span class="metric-value">{{ formatPercent(prediction.expectedConversion) }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Model Breakdown -->
+      <mat-card class="model-breakdown-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>analytics</mat-icon>
+            Model Breakdown
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="models-list">
+            <div class="model-item" *ngFor="let model of getModelBreakdown()">
+              <div class="model-info">
+                <div class="model-color" [style.background-color]="model.color"></div>
+                <span class="model-name">{{ model.name }}</span>
+              </div>
+              <span class="model-value" [style.color]="model.value >= 0 ? '#4caf50' : '#f44336'">
+                {{ model.value >= 0 ? '+' : '' }}{{ model.value.toFixed(2) }}
+                <span class="model-unit" *ngIf="model.name !== 'Seasonal Factor'">€</span>
+                <span class="model-unit" *ngIf="model.name === 'Seasonal Factor'">x</span>
+              </span>
+            </div>
+          </div>
+
+          <div class="ensemble-note">
+            <mat-icon>info</mat-icon>
+            <span>Ensemble prediction combines all models with intelligent weighting</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Features Insight -->
+      <mat-card class="features-card" *ngIf="prediction.features">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>lightbulb</mat-icon>
+            Key Factors
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="features-grid">
+            <div class="feature-item">
+              <mat-icon>schedule</mat-icon>
+              <div class="feature-content">
+                <span class="feature-label">Lead Time</span>
+                <span class="feature-value">{{ prediction.features.leadTime }} days</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <mat-icon>local_fire_department</mat-icon>
+              <div class="feature-content">
+                <span class="feature-label">Demand Level</span>
+                <span class="feature-value">{{ (prediction.features.demand * 100).toFixed(0) }}%</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <mat-icon>group</mat-icon>
+              <div class="feature-content">
+                <span class="feature-label">Competition</span>
+                <span class="feature-value">{{ prediction.features.competition }} competitors</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <mat-icon>wb_sunny</mat-icon>
+              <div class="feature-content">
+                <span class="feature-label">Seasonality</span>
+                <span class="feature-value">{{ (prediction.features.seasonality * 100).toFixed(0) }}%</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-state">
+      <mat-spinner diameter="60"></mat-spinner>
+      <p>Running ML models...</p>
+    </div>
+  </div>
+</div>

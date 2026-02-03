@@ -92,6 +92,22 @@ const monitoringRoutes = require('./routes/monitoring');
 const alertManagementRoutes = require('./routes/alert-management');
 const revenueAnalyticsRoutes = require('./routes/revenue-analytics');
 
+// NEW ROUTES - Enhanced Features (Added Feb 2026)
+const diagnosticsRoutes = require('./routes/diagnostics');
+const tradingRoutes = require('./routes/trading');
+const analyticsRoutes = require('./routes/analytics');
+const aiOpportunitiesRoutes = require('./routes/ai-opportunities');
+const pricingRoutes = require('./routes/pricing');
+const pricingAnalyticsRoutes = require('./routes/pricing-analytics');
+
+// WEEK 4 ROUTES - Unified AI Command Center (Added Feb 2026)
+const aiCommandRoutes = require('./routes/ai-command');
+const realtimeDashboardRoutes = require('./routes/realtime-dashboard');
+const workflowsRoutes = require('./routes/workflows');
+
+// WEEK 5 ROUTES - Smart Pricing v2 with ML (Added Feb 2026)
+const advancedPricingRoutes = require('./routes/advanced-pricing');
+
 // Public routes (no auth required - OPEN ACCESS FOR DEVELOPMENT)
 app.use('/sign-in', authLimiter, authRoutes);
 app.use('/health', healthRoutes);
@@ -116,6 +132,22 @@ app.use('/cancellations', cancellationsRoutes);
 app.use('/monitoring', monitoringRoutes);
 app.use('/alert-management', alertManagementRoutes);
 app.use('/revenue-analytics', revenueAnalyticsRoutes);
+
+// NEW Enhanced Routes - Diagnostics & Trading (Added Feb 2026)
+app.use('/api/diagnostics', diagnosticsRoutes); // System diagnostics & analysis
+app.use('/api/trading', tradingRoutes); // Complete trading workflow
+app.use('/analytics', analyticsRoutes); // Analytics & forecasting data
+app.use('/ai-opportunities', aiOpportunitiesRoutes); // AI opportunity management
+app.use('/pricing', pricingRoutes); // Smart pricing engine
+app.use('/pricing', pricingAnalyticsRoutes); // Advanced pricing analytics
+
+// WEEK 4 Routes - Unified AI Command Center (Added Feb 2026)
+app.use('/ai-command', aiCommandRoutes); // Natural language AI commands
+app.use('/realtime', realtimeDashboardRoutes); // Real-time dashboard
+app.use('/workflows', workflowsRoutes); // Automated decision workflows
+
+// WEEK 5 Routes - Smart Pricing v2 with ML (Added Feb 2026)
+app.use('/pricing', advancedPricingRoutes); // ML pricing, elasticity, competitor tracking, revenue optimization
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);

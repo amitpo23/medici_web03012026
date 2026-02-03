@@ -1,13 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Subject, forkJoin } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import {
-  DashboardService,
-  DashboardStats,
-  DashboardAlert,
-  HotelPerformance,
-  ForecastResponse,
-  WorkerStatus
+    DashboardAlert, DashboardService,
+    DashboardStats, ForecastResponse, HotelPerformance, WorkerStatus
 } from '../../services/dashboard.service';
 
 interface Activity {

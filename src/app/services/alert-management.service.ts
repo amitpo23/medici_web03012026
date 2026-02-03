@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, interval, Subject } from 'rxjs';
-import { switchMap, startWith, shareReplay } from 'rxjs/operators';
+import { Injectable } from '@angular/core';
+import { interval, Observable, Subject } from 'rxjs';
+import { shareReplay, startWith, switchMap } from 'rxjs/operators';
 
 export interface Alert {
   id: string;

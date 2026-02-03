@@ -1,6 +1,6 @@
-import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SearchIntelligenceService, CitySearchData } from '../../../services/search-intelligence.service';
+import { Component, OnInit } from '@angular/core';
+import { CitySearchData, SearchIntelligenceService } from '../../../../services/search-intelligence.service';
 
 @Component({
   selector: 'app-search-top-cities',

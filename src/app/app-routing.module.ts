@@ -29,7 +29,10 @@ const routes: Routes = [
   { path: 'system-admin', loadChildren: () => import('./modules/system-admin/system-admin.module').then(m => m.SystemAdminModule), canActivate: [AuthGuard] },
   
   // 🆕 System Monitoring & Analytics (Tasks 2, 3, 5)
-  { path: 'system', loadChildren: () => import('./modules/system-monitoring/system-monitoring.module').then(m => m.SystemMonitoringModule), canActivate: [AuthGuard] }
+  { path: 'system', loadChildren: () => import('./modules/system-monitoring/system-monitoring.module').then(m => m.SystemMonitoringModule), canActivate: [AuthGuard] },
+  
+  // 🆕 Trading Workflow - Search, Buy & Inventory Management
+  { path: 'trading', loadChildren: () => import('./modules/trading/trading.module').then(m => m.TradingModule), canActivate: [AuthGuard] }
 ];
 
 @NgModule({

@@ -1,11 +1,11 @@
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { BaseChartDirective } from 'ng2-charts';
+import { MaterialModule } from '../material/material.module';
+import { ProfitLossReportComponent } from './profit-loss-report/profit-loss-report.component';
 import { ReportsRoutingModule } from './reports-routing.module';
 import { ReportsComponent } from './reports.component';
-import { ProfitLossReportComponent } from './profit-loss-report/profit-loss-report.component';
-import { MaterialModule } from '../material/material.module';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgChartsModule } from 'ng2-charts';
 
 @NgModule({
   declarations: [
@@ -18,7 +18,7 @@ import { NgChartsModule } from 'ng2-charts';
     MaterialModule,
     FormsModule,
     ReactiveFormsModule,
-    NgChartsModule
+    BaseChartDirective
   ]
 })
 export class ReportsModule { }

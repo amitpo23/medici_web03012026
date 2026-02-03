@@ -29,27 +29,27 @@ async function getPendingReservations(pool) {
     const result = await pool.request().query(`
         SELECT 
             r.Id as ReservationId,
-            r.GuestName,
-            r.GuestEmail,
-            r.CheckIn,
-            r.CheckOut,
-            r.Adults,
-            r.Children,
-            r.TotalPrice,
-            r.Status,
-            r.ExternalReservationId,
-            h.id as HotelId,
-            h.HotelName,
+            r.CustomerName as GuestName,
+            ISNULL(r.CustomerEmail, 'noreply@medici.com') as GuestEmail,
+            r.datefrom as CheckIn,
+            r.dateto as CheckOut,
+            ISNULL(r.AdultCount, 2) as Adults,
+            ISNULL(r.ChildrenCount, 0) as Children,
+            r.AmountAfterTax as TotalPrice,
+            r.ResStatus as Status,
+            r.uniqueID as ExternalReservationId,
+            h.HotelId,
+            h.name as HotelName,
             h.InnstantHotelId,
-            rc.CategoryCode as RoomCode
-        FROM Med_Reservations r
-        INNER JOIN Med_Hotels h ON r.HotelId = h.id
-        INNER JOIN MED_RoomCategory rc ON r.RoomCategoryId = rc.id
-        WHERE r.Status = 'CONFIRMED'
+            r.RoomTypeCode as RoomCode
+        FROM Med_Reservation r
+        INNER JOIN Med_Hotels h ON r.HotelCode = h.ZenithHotelCode
+        WHERE r.ResStatus = 'Commit'
         AND r.SupplierBookingId IS NULL
-        AND r.AutoPurchaseEnabled = 1
+        AND ISNULL(r.AutoPurchaseEnabled, 1) = 1
+        AND r.IsCanceled = 0
         AND h.InnstantHotelId IS NOT NULL
-        ORDER BY r.CheckIn ASC
+        ORDER BY r.datefrom ASC
     `);
     
     return result.recordset;
@@ -100,7 +100,7 @@ async function purchaseRoom(pool, reservation) {
             .input('supplierConfirmation', bookingResult.confirmationNumber)
             .input('supplierPrice', bookingResult.totalPrice || bookingResult.price)
             .query(`
-                UPDATE Med_Reservations 
+                UPDATE Med_Reservation 
                 SET SupplierBookingId = @supplierBookingId,
                     SupplierConfirmation = @supplierConfirmation,
                     SupplierPrice = @supplierPrice,

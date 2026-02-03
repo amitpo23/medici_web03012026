@@ -1,11 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { FormGroup, FormBuilder } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { MatSnackBar, MatSnackBarHorizontalPosition, MatSnackBarVerticalPosition } from '@angular/material/snack-bar';
 import { AgGridAngular } from 'ag-grid-angular';
-import { GridApi, ColumnApi, CellClickedEvent, ColDef, FirstDataRenderedEvent, GridReadyEvent } from 'ag-grid-community';
+import { CellClickedEvent, ColDef, ColumnApi, FirstDataRenderedEvent, GridApi, GridReadyEvent } from 'ag-grid-community';
 import { DeviceDetectorService } from 'ngx-device-detector';
-import { Observable, Subject, startWith, map, debounceTime } from 'rxjs';
+import { debounceTime, map, Observable, startWith, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CockpitCommon } from 'src/app/common';
 import { MedHotel } from 'src/app/core/models/med-hotel';
