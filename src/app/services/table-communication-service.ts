@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription, timer } from 'rxjs';
-import { environment } from '../environments/environment';
+import { environment } from 'src/app/environments/environment';
 import { asObservable } from '../asObservable';
 
 @Injectable()

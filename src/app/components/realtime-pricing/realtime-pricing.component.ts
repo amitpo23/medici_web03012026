@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { interval, Subject, takeUntil } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 interface PriceUpdate {
   opportunityId: number;

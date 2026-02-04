@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { environment } from '../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 interface ProfitLossSummary {
   TotalRevenue: number;

@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { environment } from '../../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 import { PredictionService, PricePrediction } from '../../services/prediction.service';
 
 @Component({
