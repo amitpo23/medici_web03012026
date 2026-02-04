@@ -7,7 +7,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAICommandCenter } = require('../services/ai-command-center');
-const authenticateRequest = require('../middleware/auth');
+const { verifyToken: authenticateRequest } = require('../middleware/auth');
 const logger = require('../config/logger');
 
 /**

@@ -184,6 +184,35 @@ ${data.hotel ? `*Hotel:* ${data.hotel}\n` : ''}${data.reservationId ? `*Reservat
     const slackService = new SlackService();
     return slackService.sendMessage(message);
   }
+
+  /**
+   * Send alert (static, used by alerts-agent and alert-manager)
+   */
+  static async sendAlert(messageOrObj, detail) {
+    const slackService = new SlackService();
+    let text;
+    if (typeof messageOrObj === 'string') {
+      text = detail ? `*${messageOrObj}*\n${detail}` : messageOrObj;
+    } else {
+      const severity = messageOrObj.severity || 'info';
+      const emoji = severity === 'critical' ? ':rotating_light:' :
+                    severity === 'warning' ? ':warning:' : ':information_source:';
+      text = `${emoji} *${messageOrObj.title || 'Alert'}*\n${messageOrObj.message || ''}`;
+      if (messageOrObj.category) {
+        text += `\nCategory: ${messageOrObj.category}`;
+      }
+    }
+    return slackService.sendMessage(text, { icon: ':rotating_light:' });
+  }
 }
 
-module.exports = SlackService;
+// Export a singleton instance with static methods also available on it
+const instance = new SlackService();
+instance.sendPurchaseNotification = SlackService.sendPurchaseNotification;
+instance.sendCancellationNotification = SlackService.sendCancellationNotification;
+instance.sendError = SlackService.sendError;
+instance.sendNotification = SlackService.sendNotification;
+instance.sendAlert = SlackService.sendAlert;
+
+module.exports = instance;
+module.exports.SlackService = SlackService;

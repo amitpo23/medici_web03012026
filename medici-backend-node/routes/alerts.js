@@ -7,7 +7,6 @@ const express = require('express');
 const router = express.Router();
 const alertsAgent = require('../services/alerts-agent');
 const logger = require('../config/logger');
-const { getPool } = require('../config/database');
 
 /**
  * GET /alerts/status - Get alerts agent status
@@ -41,30 +40,19 @@ router.get('/rules', (req, res) => {
 });
 
 /**
- * GET /alerts/history - Get alert history
+ * GET /alerts/history - Get alert history (in-memory)
  */
 router.get('/history', async (req, res) => {
   try {
     const { limit = 50 } = req.query;
-    
-    // Get from database
-    const pool = await getPool();
-    const result = await pool.request()
-      .input('limit', parseInt(limit))
-      .query(`
-        SELECT TOP (@limit)
-          AlertId, RuleId, RuleName, Description, Severity, 
-          Timestamp, LogsCount, Status, ResolvedAt
-        FROM SystemAlerts
-        ORDER BY Timestamp DESC
-      `);
-    
+    const history = alertsAgent.getAlertHistory(parseInt(limit));
+
     res.json({
       success: true,
-      count: result.recordset.length,
-      alerts: result.recordset
+      count: history.length,
+      alerts: history
     });
-    
+
   } catch (error) {
     logger.error('Failed to get alert history', { error: error.message });
     res.status(500).json({ error: 'Failed to get alert history' });
@@ -159,34 +147,27 @@ router.post('/stop', (req, res) => {
 });
 
 /**
- * POST /alerts/:alertId/resolve - Resolve an alert
+ * POST /alerts/:alertId/resolve - Resolve an alert (in-memory)
  */
 router.post('/:alertId/resolve', async (req, res) => {
   try {
     const { alertId } = req.params;
-    const { notes } = req.body;
-    
-    const pool = await getPool();
-    
-    await pool.request()
-      .input('alertId', alertId)
-      .input('notes', notes || '')
-      .input('resolvedAt', new Date())
-      .query(`
-        UPDATE SystemAlerts
-        SET Status = 'resolved', 
-            ResolvedAt = @resolvedAt,
-            Notes = @notes
-        WHERE AlertId = @alertId
-      `);
-    
-    logger.info('Alert resolved', { alertId, notes });
-    
+
+    // Mark in alert history
+    const history = alertsAgent.getAlertHistory();
+    const alert = history.find(a => a.id === alertId);
+    if (alert) {
+      alert.status = 'resolved';
+      alert.resolvedAt = new Date();
+    }
+
+    logger.info('Alert resolved', { alertId });
+
     res.json({
       success: true,
       message: 'Alert resolved'
     });
-    
+
   } catch (error) {
     logger.error('Failed to resolve alert', { error: error.message });
     res.status(500).json({ error: error.message });
@@ -194,30 +175,29 @@ router.post('/:alertId/resolve', async (req, res) => {
 });
 
 /**
- * GET /alerts/stats - Get alert statistics
+ * GET /alerts/stats - Get alert statistics (in-memory)
  */
 router.get('/stats', async (req, res) => {
   try {
-    const pool = await getPool();
-    
-    const result = await pool.request().query(`
-      SELECT 
-        COUNT(*) as TotalAlerts,
-        SUM(CASE WHEN Status = 'active' THEN 1 ELSE 0 END) as ActiveAlerts,
-        SUM(CASE WHEN Status = 'resolved' THEN 1 ELSE 0 END) as ResolvedAlerts,
-        SUM(CASE WHEN Severity = 'critical' THEN 1 ELSE 0 END) as CriticalAlerts,
-        SUM(CASE WHEN Severity = 'high' THEN 1 ELSE 0 END) as HighAlerts,
-        SUM(CASE WHEN Severity = 'medium' THEN 1 ELSE 0 END) as MediumAlerts
-      FROM SystemAlerts
-      WHERE Timestamp >= DATEADD(DAY, -7, GETDATE())
-    `);
-    
+    const history = alertsAgent.getAlertHistory();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const recent = history.filter(a => new Date(a.timestamp) >= sevenDaysAgo);
+
+    const stats = {
+      TotalAlerts: recent.length,
+      ActiveAlerts: recent.filter(a => !a.resolvedAt).length,
+      ResolvedAlerts: recent.filter(a => a.resolvedAt).length,
+      CriticalAlerts: recent.filter(a => a.severity === 'critical').length,
+      HighAlerts: recent.filter(a => a.severity === 'high').length,
+      MediumAlerts: recent.filter(a => a.severity === 'medium').length
+    };
+
     res.json({
       success: true,
-      stats: result.recordset[0],
+      stats,
       period: 'Last 7 days'
     });
-    
+
   } catch (error) {
     logger.error('Failed to get alert stats', { error: error.message });
     res.status(500).json({ error: error.message });

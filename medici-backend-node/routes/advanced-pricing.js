@@ -10,7 +10,7 @@ const { getMLPricingService } = require('../services/ml-pricing-service');
 const { getCompetitorTrackingService } = require('../services/competitor-tracking-service');
 const { getPriceElasticityService } = require('../services/price-elasticity-service');
 const { getRevenueMaximizationService } = require('../services/revenue-maximization-service');
-const authenticateRequest = require('../middleware/auth');
+const { verifyToken: authenticateRequest } = require('../middleware/auth');
 const logger = require('../config/logger');
 
 /**

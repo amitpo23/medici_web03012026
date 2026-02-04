@@ -3,7 +3,6 @@
  */
 
 const sgMail = require('@sendgrid/mail');
-const logger = require('../config/logger');
 
 class EmailService {
   constructor() {
@@ -26,7 +25,7 @@ class EmailService {
    */
   async sendEmail(options) {
     if (!this.apiKey) {
-      logger.warn('[Email] SendGrid API key not configured');
+      console.warn('[Email] SendGrid API key not configured');
       return { success: false, error: 'API key not configured' };
     }
 
@@ -40,10 +39,10 @@ class EmailService {
       };
 
       await sgMail.send(msg);
-      logger.info('[Email] Sent successfully to:', msg.to);
+      console.log('[Email] Sent successfully to:', msg.to);
       return { success: true };
     } catch (error) {
-      logger.error('[Email] Error sending:', { error: error.message });
+      console.error('[Email] Error sending:', error.message);
       return { success: false, error: error.message };
     }
   }
@@ -123,6 +122,25 @@ class EmailService {
     `;
 
     return this.sendEmail({ subject, html, text: `Cancellation: ${cancellation.hotelName}` });
+  }
+
+  /**
+   * Send email (alias for sendEmail, used by alerts-agent)
+   */
+  async send(options) {
+    return this.sendEmail(options);
+  }
+
+  /**
+   * Send alert email (used by alert-manager)
+   */
+  async sendAlertEmail(options) {
+    return this.sendEmail({
+      to: options.to,
+      subject: options.subject,
+      html: options.body || options.html,
+      text: options.body || options.text
+    });
   }
 
   /**

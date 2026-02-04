@@ -282,31 +282,11 @@ class AlertsAgent {
   }
 
   /**
-   * Save alert to database
+   * Save alert (in-memory, SystemAlerts table not available)
    */
   async saveAlertToDatabase(alert) {
-    try {
-      const pool = await getPool();
-      
-      await pool.request()
-        .input('alertId', alert.id)
-        .input('ruleId', alert.ruleId)
-        .input('ruleName', alert.ruleName)
-        .input('description', alert.description)
-        .input('severity', alert.severity)
-        .input('timestamp', alert.timestamp)
-        .input('logsCount', alert.logsCount)
-        .query(`
-          INSERT INTO SystemAlerts 
-          (AlertId, RuleId, RuleName, Description, Severity, Timestamp, LogsCount, Status)
-          VALUES 
-          (@alertId, @ruleId, @ruleName, @description, @severity, @timestamp, @logsCount, 'active')
-        `);
-      
-      logger.info('Alert saved to database', { alertId: alert.id });
-    } catch (error) {
-      logger.error('Failed to save alert to database', { error: error.message });
-    }
+    // Store in memory history (SystemAlerts table does not exist)
+    logger.info('Alert saved to history', { alertId: alert.id });
   }
 
   // ============ Alert Condition Checkers ============

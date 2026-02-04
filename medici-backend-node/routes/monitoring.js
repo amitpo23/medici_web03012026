@@ -99,7 +99,7 @@ router.get('/activity', async (req, res) => {
       SELECT TOP ${limit}
         'booking' as type,
         BookingNumber as reference,
-        SaleDate as timestamp,
+        DateCreate as timestamp,
         Price as amount,
         CityName as details
       FROM [MED_ֹOֹֹpportunities]
@@ -161,14 +161,14 @@ router.get('/trends', async (req, res) => {
       )
       SELECT 
         DATEPART(HOUR, h.hour_start) as hour,
-        ISNULL(COUNT(o.ID), 0) as bookings,
+        ISNULL(COUNT(o.OpportunityId), 0) as bookings,
         ISNULL(SUM(o.Price), 0) as revenue,
-        ISNULL(SUM(o.Price - o.PurchasePrice), 0) as profit
+        ISNULL(SUM(o.PushPrice - o.Price), 0) as profit
       FROM Hours h
-      LEFT JOIN [MED_ֹOֹֹpportunities] o ON 
+      LEFT JOIN [MED_ֹOֹֹpportunities] o ON
         o.IsSale = 1 AND
-        o.SaleDate >= h.hour_start AND
-        o.SaleDate < DATEADD(HOUR, 1, h.hour_start)
+        o.DateCreate >= h.hour_start AND
+        o.DateCreate < DATEADD(HOUR, 1, h.hour_start)
       GROUP BY DATEPART(HOUR, h.hour_start), h.hour_start
       ORDER BY h.hour_start DESC
     `);
