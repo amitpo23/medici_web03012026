@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
 import { Subject, takeUntil } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 Chart.register(...registerables);
 

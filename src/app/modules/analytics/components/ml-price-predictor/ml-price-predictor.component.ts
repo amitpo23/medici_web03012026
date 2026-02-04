@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { environment } from '../../../../../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 interface MLPrediction {
   optimalPrice: number;
