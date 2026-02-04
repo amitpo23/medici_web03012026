@@ -15,7 +15,7 @@ const healthMonitor = require('./services/health-monitor');
 const { setupSwagger } = require('./config/swagger');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 8080; // Azure deployment fix
 
 // Security middleware
 app.use(helmet({
