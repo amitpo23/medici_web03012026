@@ -103,7 +103,9 @@ class SecretsManager {
 
       // Try Key Vault if configured
       if (this.client) {
-        const secret = await this.client.getSecret(name);
+        // Convert underscore names to hyphen for Key Vault (DB_SERVER -> DB-SERVER)
+        const keyVaultName = name.replace(/_/g, '-');
+        const secret = await this.client.getSecret(keyVaultName);
         this.secrets.set(name, secret.value);
         return secret.value;
       }
