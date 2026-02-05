@@ -463,9 +463,9 @@ router.get('/ai-signals', async (req, res) => {
           o.AIConfidence as confidence,
           o.AIPriorityScore as priorityScore,
           o.AIRiskLevel as riskLevel,
-          o.DateFrom as checkIn,
+          o.DateForm as checkIn,
           o.DateTo as checkOut,
-          DATEDIFF(day, GETDATE(), o.DateFrom) as daysToCheckIn,
+          DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
           o.DateCreate as signalDate,
           o.IsActive
         FROM [MED_ֹOֹֹpportunities] o
@@ -474,7 +474,7 @@ router.get('/ai-signals', async (req, res) => {
           AND o.AIConfidence >= @minConfidence
           AND o.IsActive = 1
           AND o.IsSale = 0
-          AND o.DateFrom >= GETDATE()
+          AND o.DateForm >= GETDATE()
         ORDER BY o.AIConfidence DESC, o.AIPriorityScore DESC
       `);
 
@@ -703,8 +703,8 @@ router.get('/market-overview', async (req, res) => {
       SELECT
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as activeInventory,
         (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as unrealizedValue,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0 AND DateFrom >= GETDATE()) as openOpportunities,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE AIGenerated = 1 AND AIConfidence >= 0.7 AND IsActive = 1 AND DateFrom >= GETDATE()) as highConfidenceSignals,
+        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0 AND DateForm >= GETDATE()) as openOpportunities,
+        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE AIGenerated = 1 AND AIConfidence >= 0.7 AND IsActive = 1 AND DateForm >= GETDATE()) as highConfidenceSignals,
         (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
         (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklySales
     `);
