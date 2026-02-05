@@ -18,7 +18,7 @@ router.get('/tables', async (req, res) => {
       SELECT
         t.name AS TableName,
         s.name AS SchemaName,
-        p.rows AS RowCount,
+        p.rows AS [RowCount],
         SUM(a.total_pages) * 8 / 1024 AS SizeMB
       FROM sys.tables t
       INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
