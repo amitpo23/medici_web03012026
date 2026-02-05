@@ -230,6 +230,9 @@
                 </div>
             </div>
 
+            <!-- Notification Center -->
+            <app-notification-center></app-notification-center>
+
             <!-- User Menu -->
             <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User menu">
                 <mat-icon>account_circle</mat-icon>
@@ -255,6 +258,9 @@
         <main class="content-area" role="main">
             <router-outlet></router-outlet>
         </main>
+
+        <!-- Quick Actions FAB -->
+        <app-quick-actions></app-quick-actions>
     </mat-drawer-content>
 </mat-drawer-container>
 

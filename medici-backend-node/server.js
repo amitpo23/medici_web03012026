@@ -113,6 +113,9 @@ const workflowsRoutes = require('./routes/workflows');
 // WEEK 5 ROUTES - Smart Pricing v2 with ML (Added Feb 2026)
 const advancedPricingRoutes = require('./routes/advanced-pricing');
 
+// ADD-ON ROUTES - Standalone features (Added Feb 2026)
+const activityFeedRoutes = require('./routes/activity-feed');
+
 // Public routes (no auth required)
 app.use('/sign-in', authLimiter, authRoutes);
 app.use('/health', healthRoutes);
@@ -157,6 +160,9 @@ app.use('/workflows', verifyToken, workflowsRoutes);
 
 // Protected WEEK 5 Routes - Smart Pricing v2 with ML (Added Feb 2026)
 app.use('/pricing', verifyToken, advancedPricingRoutes);
+
+// Protected ADD-ON Routes - Standalone features (Added Feb 2026)
+app.use('/activity-feed', verifyToken, activityFeedRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);

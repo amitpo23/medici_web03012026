@@ -13,6 +13,10 @@ import { TableCommunicationService } from './services/table-communication-servic
 import { MAT_RIPPLE_GLOBAL_OPTIONS } from '@angular/material/core';
 import { LOADING_BAR_CONFIG } from '@ngx-loading-bar/core';
 
+// Standalone Add-on Components
+import { NotificationCenterComponent } from './components/notification-center/notification-center.component';
+import { QuickActionsComponent } from './components/quick-actions/quick-actions.component';
+
 @NgModule({
   declarations: [
     AppComponent
@@ -25,7 +29,10 @@ import { LOADING_BAR_CONFIG } from '@ngx-loading-bar/core';
     AuthModule,
     FormsModule,
     ReactiveFormsModule,
-    MaterialModule
+    MaterialModule,
+    // Standalone Add-on Components
+    NotificationCenterComponent,
+    QuickActionsComponent
   ],
   providers: [TableCommunicationService,
     {
