@@ -140,12 +140,11 @@ router.get('/destinations', async (req, res) => {
     const { limit = 100, search } = req.query;
     const pool = await getPool();
 
+    // Query using only columns that definitely exist
     let query = `
       SELECT TOP (@limit)
         d.id,
         d.Name,
-        d.CountryCode,
-        d.Type,
         (SELECT COUNT(*) FROM DestinationsHotels dh WHERE dh.DestinationId = d.id) as HotelCount
       FROM Destinations d
     `;
