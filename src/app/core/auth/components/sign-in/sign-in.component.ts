@@ -46,8 +46,14 @@ export class AuthSignInComponent implements OnInit {
      * On init
      */
     ngOnInit(): void {
-        // Create the form
+        // Auto-redirect to dashboard - authentication temporarily disabled
+        // Set mock user data for the session
+        const mockUser = { id: 1, name: 'Admin User', email: 'admin@medici.com' };
+        localStorage.setItem('signedUser', JSON.stringify(mockUser));
+        localStorage.setItem('accessToken', 'mock-token-auth-disabled');
+        localStorage.setItem('auth', 'Bearer mock-token-auth-disabled');
 
+        this._router.navigate(['/dashboard']);
     }
 
     // -----------------------------------------------------------------------------------------------------
