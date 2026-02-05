@@ -262,7 +262,7 @@ router.get('/portfolio', async (req, res) => {
           MAX(pushPrice - price) as bestTrade
         FROM MED_Book
         WHERE IsSold = 1
-          AND Lastupdate >= DATEADD(day, -@days, GETDATE())
+          AND DateInsert >= DATEADD(day, -@days, GETDATE())
       `);
 
     // Calculate portfolio summary
@@ -589,14 +589,14 @@ router.get('/performance-metrics', async (req, res) => {
       .input('days', sql.Int, parseInt(days))
       .query(`
         SELECT
-          CAST(Lastupdate AS DATE) as date,
+          CAST(DateInsert AS DATE) as date,
           SUM(pushPrice - price) as dailyProfit,
           COUNT(*) as trades,
           SUM(CASE WHEN pushPrice > price THEN 1 ELSE 0 END) as wins
         FROM MED_Book
         WHERE IsSold = 1
-          AND Lastupdate >= DATEADD(day, -@days, GETDATE())
-        GROUP BY CAST(Lastupdate AS DATE)
+          AND DateInsert >= DATEADD(day, -@days, GETDATE())
+        GROUP BY CAST(DateInsert AS DATE)
         ORDER BY date ASC
       `);
 
@@ -705,8 +705,8 @@ router.get('/market-overview', async (req, res) => {
         (SELECT SUM(pushPrice - price) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as unrealizedValue,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0 AND DateFrom >= GETDATE()) as openOpportunities,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE AIGenerated = 1 AND AIConfidence >= 0.7 AND IsActive = 1 AND DateFrom >= GETDATE()) as highConfidenceSignals,
-        (SELECT SUM(pushPrice - price) FROM MED_Book WHERE IsSold = 1 AND Lastupdate >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
-        (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND Lastupdate >= DATEADD(day, -7, GETDATE())) as weeklySales
+        (SELECT SUM(pushPrice - price) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
+        (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklySales
     `);
 
     // Recent activity
