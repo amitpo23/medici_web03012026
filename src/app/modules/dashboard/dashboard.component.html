@@ -11,10 +11,19 @@
           Today
         </button>
         <button mat-stroked-button [class.mat-primary]="dateRange === 'week'" (click)="setDateRange('week')" type="button">
-          This Week
+          Week
         </button>
         <button mat-stroked-button [class.mat-primary]="dateRange === 'month'" (click)="setDateRange('month')" type="button">
-          This Month
+          Month
+        </button>
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'quarter'" (click)="setDateRange('quarter')" type="button">
+          Quarter
+        </button>
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'year'" (click)="setDateRange('year')" type="button">
+          Year
+        </button>
+        <button mat-stroked-button [class.mat-primary]="dateRange === 'all'" (click)="setDateRange('all')" type="button">
+          All Time
         </button>
       </div>
       <button mat-raised-button color="primary" (click)="refreshData()" type="button">

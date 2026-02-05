@@ -23,7 +23,7 @@ interface Activity {
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
-  dateRange: 'today' | 'week' | 'month' = 'month';
+  dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all' = 'year';
   private destroy$ = new Subject<void>();
 
   // KPI Data from backend
@@ -95,7 +95,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  setDateRange(range: 'today' | 'week' | 'month'): void {
+  setDateRange(range: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all'): void {
     this.dateRange = range;
     this.loadDashboardData();
   }
@@ -167,7 +167,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
       case 'today': return 1;
       case 'week': return 7;
       case 'month': return 30;
-      default: return 30;
+      case 'quarter': return 90;
+      case 'year': return 365;
+      case 'all': return 3650;
+      default: return 365;
     }
   }
 

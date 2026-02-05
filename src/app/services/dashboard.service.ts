@@ -82,7 +82,7 @@ export class DashboardService {
 
   constructor(private http: HttpClient) {}
 
-  getStats(period: number = 30): Observable<DashboardStats> {
+  getStats(period: number = 365): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.baseUrl}Dashboard/Stats?period=${period}`);
   }
 
