@@ -115,6 +115,7 @@ const advancedPricingRoutes = require('./routes/advanced-pricing');
 
 // ADD-ON ROUTES - Standalone features (Added Feb 2026)
 const activityFeedRoutes = require('./routes/activity-feed');
+const dataExplorerRoutes = require('./routes/data-explorer');
 
 // Public routes (no auth required)
 app.use('/sign-in', authLimiter, authRoutes);
@@ -163,6 +164,7 @@ app.use('/pricing', verifyToken, advancedPricingRoutes);
 
 // Protected ADD-ON Routes - Standalone features (Added Feb 2026)
 app.use('/activity-feed', verifyToken, activityFeedRoutes);
+app.use('/data-explorer', verifyToken, dataExplorerRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
