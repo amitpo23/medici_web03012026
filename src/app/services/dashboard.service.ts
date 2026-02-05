@@ -83,22 +83,22 @@ export class DashboardService {
   constructor(private http: HttpClient) {}
 
   getStats(period: number = 30): Observable<DashboardStats> {
-    return this.http.get<DashboardStats>(`${this.baseUrl}dashboard/Stats?period=${period}`);
+    return this.http.get<DashboardStats>(`${this.baseUrl}Dashboard/Stats?period=${period}`);
   }
 
   getAlerts(): Observable<DashboardAlert[]> {
-    return this.http.get<DashboardAlert[]>(`${this.baseUrl}dashboard/Alerts`);
+    return this.http.get<DashboardAlert[]>(`${this.baseUrl}Dashboard/Alerts`);
   }
 
   getHotelPerformance(limit: number = 10): Observable<HotelPerformance[]> {
-    return this.http.get<HotelPerformance[]>(`${this.baseUrl}dashboard/HotelPerformance?limit=${limit}`);
+    return this.http.get<HotelPerformance[]>(`${this.baseUrl}Dashboard/HotelPerformance?limit=${limit}`);
   }
 
   getForecast(days: number = 30): Observable<ForecastResponse> {
-    return this.http.get<ForecastResponse>(`${this.baseUrl}dashboard/Forecast?days=${days}`);
+    return this.http.get<ForecastResponse>(`${this.baseUrl}Dashboard/Forecast?days=${days}`);
   }
 
   getWorkerStatus(): Observable<WorkerStatus> {
-    return this.http.get<WorkerStatus>(`${this.baseUrl}dashboard/WorkerStatus`);
+    return this.http.get<WorkerStatus>(`${this.baseUrl}Dashboard/WorkerStatus`);
   }
 }
