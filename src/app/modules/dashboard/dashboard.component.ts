@@ -5,6 +5,7 @@ import {
     DashboardAlert, DashboardService,
     DashboardStats, ForecastResponse, HotelPerformance, WorkerStatus
 } from '../../services/dashboard.service';
+import { environment } from '../../environments/environment.prod';
 
 interface Activity {
   type: string;
@@ -176,8 +177,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadSystemMonitoringData(): void {
+    const apiBase = environment.apiUrl;
+
     // Load system health
-    fetch(`${window.location.origin}/api/monitoring/health`)
+    fetch(`${apiBase}/monitoring/health`)
       .then(res => res.json())
       .then(data => {
         this.systemHealth.status = data.status || 'healthy';
@@ -191,15 +194,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.systemHealth.text = 'All Systems Operational';
       });
 
-    // Load active alerts
-    fetch(`${window.location.origin}/api/alert-management/active`)
+    // Load active alerts from backend
+    fetch(`${apiBase}/alerts/history?limit=20`)
       .then(res => res.json())
-      .then(alerts => {
-        this.activeAlerts = alerts.length;
+      .then(response => {
+        const alerts = response.alerts || [];
+        this.activeAlerts = alerts.filter((a: any) => !a.resolvedAt).length;
         this.alertsBreakdown = {
           critical: alerts.filter((a: any) => a.severity === 'critical').length,
-          warning: alerts.filter((a: any) => a.severity === 'warning').length,
-          info: alerts.filter((a: any) => a.severity === 'info').length
+          warning: alerts.filter((a: any) => a.severity === 'high' || a.severity === 'warning').length,
+          info: alerts.filter((a: any) => a.severity === 'medium' || a.severity === 'info').length
         };
       })
       .catch(() => {
