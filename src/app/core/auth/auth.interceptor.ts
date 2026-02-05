@@ -28,15 +28,14 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(newReq).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === 401) {
-          // Unauthorized - sign out and redirect to login
-          this._authService.signOut();
-          this._router.navigate(['/sign-in']);
-        } else if (error.status === 403) {
-          // Forbidden - user doesn't have permission
+        // TEMPORARY: Auth disabled - don't redirect on 401
+        // if (error.status === 401) {
+        //   this._authService.signOut();
+        //   this._router.navigate(['/sign-in']);
+        // }
+        if (error.status === 403) {
           console.error('Access forbidden:', error.url);
         } else if (error.status === 0 || error.status === 503) {
-          // Network error or service unavailable
           console.error('Service unavailable or network error');
         }
 
