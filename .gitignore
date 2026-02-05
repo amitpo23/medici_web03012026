@@ -48,8 +48,3 @@ node_modules/
 medici-backend-node/node_modules/
 .vercel
 .env*.local
-
-# Environment files
-.env
-.env.*
-!.env.example

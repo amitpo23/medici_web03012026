@@ -37,7 +37,7 @@ jobs:
       - name: Create deployment package
         run: |
           cd medici-backend-node
-          zip -r ../node-app.zip . -x "*.git*" -x "logs/*.log" -x "node_modules/*" -x ".env" -x "*.env*"
+          zip -r ../node-app.zip . -x "*.git*" -x "logs/*.log" -x "node_modules/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

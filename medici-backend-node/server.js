@@ -25,13 +25,8 @@ app.use(helmet({
 
 // Middleware
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-        'https://admin.medicihotels.com',
-        'https://medici-web03012026.vercel.app',
-        'https://medici-web.vercel.app',
-        'https://medici-frontend.vercel.app'
-      ]
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://admin.medicihotels.com', 'https://medici-web.vercel.app', 'https://medici-frontend.vercel.app']
     : '*',
   credentials: true,
   optionsSuccessStatus: 200
@@ -113,50 +108,46 @@ const workflowsRoutes = require('./routes/workflows');
 // WEEK 5 ROUTES - Smart Pricing v2 with ML (Added Feb 2026)
 const advancedPricingRoutes = require('./routes/advanced-pricing');
 
-// Public routes (no auth required)
+// Public routes (no auth required - OPEN ACCESS FOR DEVELOPMENT)
 app.use('/sign-in', authLimiter, authRoutes);
 app.use('/health', healthRoutes);
+app.use('/Dashboard', dashboardRoutes);
+app.use('/Opportunity', opportunityRoutes);
+app.use('/Book', bookingRoutes);
+app.use('/Reservation', reservationRoutes);
+app.use('/SalesRoom', salesRoomRoutes);
 app.use('/Search', searchRoutes);
+app.use('/Errors', errorsRoutes);
 app.use('/hotels', hotelsRoutes);
+app.use('/Misc', miscRoutes);
+app.use('/ZenithApi', zenithRoutes);
+app.use('/ai', aiPredictionRoutes);
+app.use('/reports', reportsRoutes);
+app.use('/ai-chat', aiChatRoutes);
+app.use('/scraper', scraperRoutes);
+app.use('/logs', logsRoutes);
+app.use('/alerts', alertsRoutes);
+app.use('/search-intelligence', searchIntelligenceRoutes);
+app.use('/cancellations', cancellationsRoutes);
+app.use('/monitoring', monitoringRoutes);
+app.use('/alert-management', alertManagementRoutes);
+app.use('/revenue-analytics', revenueAnalyticsRoutes);
 
-// Protected routes (require authentication)
-app.use('/Dashboard', verifyToken, dashboardRoutes);
-app.use('/Opportunity', verifyToken, opportunityRoutes);
-app.use('/Book', verifyToken, bookingRoutes);
-app.use('/Reservation', verifyToken, reservationRoutes);
-app.use('/SalesRoom', verifyToken, salesRoomRoutes);
-app.use('/Errors', verifyToken, errorsRoutes);
-app.use('/Misc', verifyToken, miscRoutes);
-app.use('/ZenithApi', verifyToken, zenithRoutes);
-app.use('/ai', verifyToken, aiPredictionRoutes);
-app.use('/reports', verifyToken, reportsRoutes);
-app.use('/ai-chat', verifyToken, aiChatRoutes);
-app.use('/scraper', verifyToken, scraperRoutes);
-app.use('/alerts', verifyToken, alertsRoutes);
-app.use('/search-intelligence', verifyToken, searchIntelligenceRoutes);
-app.use('/cancellations', verifyToken, cancellationsRoutes);
-app.use('/alert-management', verifyToken, alertManagementRoutes);
-app.use('/revenue-analytics', verifyToken, revenueAnalyticsRoutes);
+// NEW Enhanced Routes - Diagnostics & Trading (Added Feb 2026)
+app.use('/api/diagnostics', diagnosticsRoutes); // System diagnostics & analysis
+app.use('/api/trading', tradingRoutes); // Complete trading workflow
+app.use('/analytics', analyticsRoutes); // Analytics & forecasting data
+app.use('/ai-opportunities', aiOpportunitiesRoutes); // AI opportunity management
+app.use('/pricing', pricingRoutes); // Smart pricing engine
+app.use('/pricing', pricingAnalyticsRoutes); // Advanced pricing analytics
 
-// Admin-only routes
-app.use('/logs', verifyToken, requireAdmin, logsRoutes);
-app.use('/monitoring', verifyToken, requireAdmin, monitoringRoutes);
+// WEEK 4 Routes - Unified AI Command Center (Added Feb 2026)
+app.use('/ai-command', aiCommandRoutes); // Natural language AI commands
+app.use('/realtime', realtimeDashboardRoutes); // Real-time dashboard
+app.use('/workflows', workflowsRoutes); // Automated decision workflows
 
-// Protected Enhanced Routes - Diagnostics & Trading (Added Feb 2026)
-app.use('/api/diagnostics', verifyToken, requireAdmin, diagnosticsRoutes);
-app.use('/api/trading', verifyToken, tradingRoutes);
-app.use('/analytics', verifyToken, analyticsRoutes);
-app.use('/ai-opportunities', verifyToken, aiOpportunitiesRoutes);
-app.use('/pricing', verifyToken, pricingRoutes);
-app.use('/pricing', verifyToken, pricingAnalyticsRoutes);
-
-// Protected WEEK 4 Routes - Unified AI Command Center (Added Feb 2026)
-app.use('/ai-command', verifyToken, aiCommandRoutes);
-app.use('/realtime', verifyToken, realtimeDashboardRoutes);
-app.use('/workflows', verifyToken, workflowsRoutes);
-
-// Protected WEEK 5 Routes - Smart Pricing v2 with ML (Added Feb 2026)
-app.use('/pricing', verifyToken, advancedPricingRoutes);
+// WEEK 5 Routes - Smart Pricing v2 with ML (Added Feb 2026)
+app.use('/pricing', advancedPricingRoutes); // ML pricing, elasticity, competitor tracking, revenue optimization
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
