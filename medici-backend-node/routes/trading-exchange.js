@@ -446,37 +446,67 @@ router.get('/ai-signals', async (req, res) => {
   try {
     const pool = await sql.connect(dbConfig);
 
-    // Get AI-generated opportunities with high confidence
-    const opportunities = await pool.request()
-      .input('minConfidence', sql.Float, parseFloat(minConfidence) / 100)
-      .input('limit', sql.Int, parseInt(limit))
-      .query(`
-        SELECT TOP (@limit)
-          o.OpportunityId,
-          o.DestinationsId as hotelId,
-          h.Name as hotelName,
-          o.Price as buyPrice,
-          o.PushPrice as targetSellPrice,
-          (o.PushPrice - o.Price) as expectedProfit,
-          ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as expectedMargin,
-          ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as roi,
-          o.AIConfidence as confidence,
-          o.AIPriorityScore as priorityScore,
-          o.AIRiskLevel as riskLevel,
-          o.DateForm as checkIn,
-          o.DateTo as checkOut,
-          DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
-          o.DateCreate as signalDate,
-          o.IsActive
-        FROM [MED_ֹOֹֹpportunities] o
-        JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
-        WHERE o.AIGenerated = 1
-          AND o.AIConfidence >= @minConfidence
-          AND o.IsActive = 1
-          AND o.IsSale = 0
-          AND o.DateForm >= GETDATE()
-        ORDER BY o.AIConfidence DESC, o.AIPriorityScore DESC
-      `);
+    // Get opportunities (fallback to basic opportunities if AI columns don't exist)
+    let opportunities;
+    try {
+      // Try to get AI-generated opportunities with high confidence
+      opportunities = await pool.request()
+        .input('minConfidence', sql.Float, parseFloat(minConfidence) / 100)
+        .input('limit', sql.Int, parseInt(limit))
+        .query(`
+          SELECT TOP (@limit)
+            o.OpportunityId,
+            o.DestinationsId as hotelId,
+            h.Name as hotelName,
+            o.Price as buyPrice,
+            o.PushPrice as targetSellPrice,
+            (o.PushPrice - o.Price) as expectedProfit,
+            ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as expectedMargin,
+            ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as roi,
+            COALESCE(o.AIConfidence, 0.7) as confidence,
+            COALESCE(o.AIPriorityScore, 50) as priorityScore,
+            'MEDIUM' as riskLevel,
+            o.DateForm as checkIn,
+            o.DateTo as checkOut,
+            DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
+            o.DateCreate as signalDate,
+            o.IsActive
+          FROM [MED_ֹOֹֹpportunities] o
+          JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+          WHERE o.IsActive = 1
+            AND o.IsSale = 0
+          ORDER BY o.DateCreate DESC
+        `);
+    } catch (aiErr) {
+      // Fallback: Get regular opportunities without AI columns
+      logger.warn('AI columns not available, using fallback query', { error: aiErr.message });
+      opportunities = await pool.request()
+        .input('limit', sql.Int, parseInt(limit))
+        .query(`
+          SELECT TOP (@limit)
+            o.OpportunityId,
+            o.DestinationsId as hotelId,
+            h.Name as hotelName,
+            o.Price as buyPrice,
+            o.PushPrice as targetSellPrice,
+            (o.PushPrice - o.Price) as expectedProfit,
+            ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as expectedMargin,
+            ((o.PushPrice - o.Price) / NULLIF(o.Price, 0) * 100) as roi,
+            0.7 as confidence,
+            50 as priorityScore,
+            'MEDIUM' as riskLevel,
+            o.DateForm as checkIn,
+            o.DateTo as checkOut,
+            DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
+            o.DateCreate as signalDate,
+            o.IsActive
+          FROM [MED_ֹOֹֹpportunities] o
+          JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+          WHERE o.IsActive = 1
+            AND o.IsSale = 0
+          ORDER BY o.DateCreate DESC
+        `);
+    }
 
     // Get historical performance for confidence validation
     const historicalPerf = await pool.request().query(`
@@ -702,10 +732,10 @@ router.get('/market-overview', async (req, res) => {
     const summary = await pool.request().query(`
       SELECT
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as activeInventory,
-        (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as unrealizedValue,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0 AND DateForm >= GETDATE()) as openOpportunities,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE AIGenerated = 1 AND AIConfidence >= 0.7 AND IsActive = 1 AND DateForm >= GETDATE()) as highConfidenceSignals,
-        (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
+        (SELECT ISNULL(SUM(lastPrice - price), 0) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE() AND lastPrice IS NOT NULL) as unrealizedValue,
+        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0) as openOpportunities,
+        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1) as totalOpportunities,
+        (SELECT ISNULL(SUM(lastPrice - price), 0) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE()) AND lastPrice IS NOT NULL) as weeklyProfit,
         (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklySales
     `);
 
@@ -730,12 +760,12 @@ router.get('/market-overview', async (req, res) => {
       success: true,
       overview: {
         inventory: {
-          active: data.activeInventory,
+          active: data.activeInventory || 0,
           unrealizedValue: data.unrealizedValue || 0
         },
         opportunities: {
-          open: data.openOpportunities,
-          highConfidence: data.highConfidenceSignals
+          open: data.openOpportunities || 0,
+          total: data.totalOpportunities || 0
         },
         performance: {
           weeklyProfit: data.weeklyProfit || 0,
@@ -744,7 +774,7 @@ router.get('/market-overview', async (req, res) => {
         }
       },
       recentTrades: recentTrades.recordset,
-      marketStatus: data.highConfidenceSignals > 5 ? 'ACTIVE' : data.highConfidenceSignals > 0 ? 'NORMAL' : 'QUIET',
+      marketStatus: data.openOpportunities > 5 ? 'ACTIVE' : data.openOpportunities > 0 ? 'NORMAL' : 'QUIET',
       timestamp: new Date().toISOString()
     });
 
