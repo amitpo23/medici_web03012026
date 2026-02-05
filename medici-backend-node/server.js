@@ -1,8 +1,11 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
 require('dotenv').config();
+
+const socketService = require('./services/socket-service');
 
 const logger = require('./config/logger');
 const requestId = require('./middleware/request-id');
@@ -241,24 +244,33 @@ app.use((err, req, res, next) => {
 // Verify database connection before starting
 const { getPool } = require('./config/database');
 
+// Create HTTP server for Socket.IO integration
+const server = http.createServer(app);
+
 async function startServer() {
   try {
     await getPool();
     logger.info('Database connection verified');
-    
+
+    // Initialize Socket.IO
+    socketService.initialize(server);
+
+    // Connect logger to Socket.IO for real-time error push
+    logger.setSocketService(socketService);
+
     // Start server only after DB check
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       logger.info('🚀 Medici Hotels Server Started', {
         port: PORT,
         environment: process.env.NODE_ENV || 'development',
         database: process.env.DB_DATABASE || 'not configured',
         nodeVersion: process.version
       });
-      
+
       // Start Alerts Agent
       logger.info('Starting Alerts Agent...');
       alertsAgent.start(5); // Scan every 5 minutes
-      
+
       console.log(`\n╔═══════════════════════════════════════════════════════════╗`);
       console.log(`║  🚀 MEDICI HOTELS API - RUNNING                          ║`);
       console.log(`╚═══════════════════════════════════════════════════════════╝\n`);
@@ -268,7 +280,8 @@ async function startServer() {
       console.log(`📝 Logs: ./logs/`);
       console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
       console.log(`💚 Health: http://localhost:${PORT}/health`);
-      console.log(`📊 Metrics: http://localhost:${PORT}/health/metrics\n`);
+      console.log(`📊 Metrics: http://localhost:${PORT}/health/metrics`);
+      console.log(`🔌 Socket.IO: Enabled\n`);
       console.log(`🌐 Main Endpoints:`);
       console.log(`   • Auth: /sign-in`);
       console.log(`   • Opportunities: /Opportunity`);

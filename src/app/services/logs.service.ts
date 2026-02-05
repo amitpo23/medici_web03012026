@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from 'src/app/environments/environment';
+import { environment } from '../environments/environment.prod';
 
 export interface LogFile {
   name: string;
@@ -47,6 +47,19 @@ export interface LogStats {
   statusCodes?: {
     [key: string]: number;
   };
+}
+
+export interface ChartData {
+  timeSeries: Array<{
+    hour: string;
+    requests: number;
+    errors: number;
+    avgResponseTime: number;
+  }>;
+  statusDistribution: { [key: string]: number };
+  levelDistribution: { [key: string]: number };
+  methodDistribution: { [key: string]: number };
+  responseTimeDistribution: { [key: string]: number };
 }
 
 @Injectable({
@@ -111,7 +124,19 @@ export class LogsService {
     success: boolean;
     stats: LogStats;
   }> {
-    return this.http.get<any>(`${this.apiUrl}/stats`);
+    return this.http.get<any>(`${this.apiUrl}/stats/summary`);
+  }
+
+  /**
+   * Get chart data for log visualization
+   */
+  getChartData(hours: number = 24): Observable<{
+    success: boolean;
+    period: string;
+    charts: ChartData;
+  }> {
+    const params = new HttpParams().set('hours', hours.toString());
+    return this.http.get<any>(`${this.apiUrl}/analytics/charts`, { params });
   }
 
   /**

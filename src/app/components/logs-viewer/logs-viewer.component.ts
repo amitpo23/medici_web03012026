@@ -4,14 +4,19 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { BaseChartDirective } from 'ng2-charts';
+import { Chart, ChartConfiguration, ChartData, registerables } from 'chart.js';
 import {
-    LogEntry, LogFile, LogSearchParams, LogsService, LogStats
+    LogEntry, LogFile, LogSearchParams, LogsService, LogStats, ChartData as LogChartData
 } from '../../services/logs.service';
+
+// Register all chart.js components
+Chart.register(...registerables);
 
 @Component({
   selector: 'app-logs-viewer',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   templateUrl: './logs-viewer.component.html',
   styleUrls: ['./logs-viewer.component.scss']
 })
@@ -41,10 +46,76 @@ export class LogsViewerComponent implements OnInit, OnDestroy {
   statsLoading = false;
 
   // UI State
-  activeTab: 'viewer' | 'search' | 'stats' = 'viewer';
+  activeTab: 'viewer' | 'search' | 'stats' | 'charts' = 'viewer';
   autoRefresh = false;
   refreshInterval = 10; // seconds
   private refreshSubscription?: Subscription;
+
+  // Charts
+  chartsLoading = false;
+  chartHours = 24;
+
+  // Time series chart (requests over time)
+  timeSeriesChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
+  };
+  timeSeriesChartOptions: ChartConfiguration<'line'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Requests & Errors Over Time' }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  };
+
+  // Status distribution pie chart
+  statusChartData: ChartData<'doughnut'> = {
+    labels: [],
+    datasets: []
+  };
+  statusChartOptions: ChartConfiguration<'doughnut'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'right' },
+      title: { display: true, text: 'HTTP Status Distribution' }
+    }
+  };
+
+  // Method distribution bar chart
+  methodChartData: ChartData<'bar'> = {
+    labels: [],
+    datasets: []
+  };
+  methodChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'HTTP Methods Distribution' }
+    }
+  };
+
+  // Response time distribution bar chart
+  responseTimeChartData: ChartData<'bar'> = {
+    labels: [],
+    datasets: []
+  };
+  responseTimeChartOptions: ChartConfiguration<'bar'>['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Response Time Distribution' }
+    },
+    scales: {
+      y: { beginAtZero: true }
+    }
+  };
 
   // Advanced search
   advancedSearch: LogSearchParams = {
@@ -213,10 +284,86 @@ export class LogsViewerComponent implements OnInit, OnDestroy {
 
   setActiveTab(tab: typeof this.activeTab): void {
     this.activeTab = tab;
-    
+
     if (tab === 'stats') {
       this.loadStats();
+    } else if (tab === 'charts') {
+      this.loadChartData();
     }
+  }
+
+  loadChartData(): void {
+    this.chartsLoading = true;
+
+    this.logsService.getChartData(this.chartHours).subscribe({
+      next: (response) => {
+        const charts = response.charts;
+
+        // Time series chart
+        const labels = charts.timeSeries.map(d => {
+          const date = new Date(d.hour + ':00:00Z');
+          return date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
+        });
+
+        this.timeSeriesChartData = {
+          labels,
+          datasets: [
+            {
+              label: 'Requests',
+              data: charts.timeSeries.map(d => d.requests),
+              borderColor: '#3498db',
+              backgroundColor: 'rgba(52, 152, 219, 0.1)',
+              fill: true,
+              tension: 0.4
+            },
+            {
+              label: 'Errors',
+              data: charts.timeSeries.map(d => d.errors),
+              borderColor: '#e74c3c',
+              backgroundColor: 'rgba(231, 76, 60, 0.1)',
+              fill: true,
+              tension: 0.4
+            }
+          ]
+        };
+
+        // Status distribution
+        this.statusChartData = {
+          labels: Object.keys(charts.statusDistribution),
+          datasets: [{
+            data: Object.values(charts.statusDistribution),
+            backgroundColor: ['#27ae60', '#3498db', '#f39c12', '#e74c3c']
+          }]
+        };
+
+        // Method distribution
+        this.methodChartData = {
+          labels: Object.keys(charts.methodDistribution),
+          datasets: [{
+            data: Object.values(charts.methodDistribution),
+            backgroundColor: ['#3498db', '#27ae60', '#f39c12', '#e74c3c', '#95a5a6']
+          }]
+        };
+
+        // Response time distribution
+        this.responseTimeChartData = {
+          labels: Object.keys(charts.responseTimeDistribution),
+          datasets: [{
+            data: Object.values(charts.responseTimeDistribution),
+            backgroundColor: '#9b59b6'
+          }]
+        };
+
+        this.chartsLoading = false;
+      },
+      error: () => {
+        this.chartsLoading = false;
+      }
+    });
+  }
+
+  onChartHoursChange(): void {
+    this.loadChartData();
   }
 
   getFilteredEntries(): LogEntry[] {
@@ -320,5 +467,13 @@ export class LogsViewerComponent implements OnInit, OnDestroy {
 
   objectKeys(obj: any): string[] {
     return Object.keys(obj || {});
+  }
+
+  parseInt(value: string): number {
+    return Number.parseInt(value, 10);
+  }
+
+  parseFloat(value: string): number {
+    return Number.parseFloat(value);
   }
 }

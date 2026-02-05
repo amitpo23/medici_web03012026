@@ -74,23 +74,29 @@
 
   <!-- Tabs -->
   <div class="tabs">
-    <button 
-      class="tab" 
+    <button
+      class="tab"
       [class.active]="activeTab === 'viewer'"
       (click)="setActiveTab('viewer')">
       📋 צפייה בלוגים
     </button>
-    <button 
-      class="tab" 
+    <button
+      class="tab"
       [class.active]="activeTab === 'search'"
       (click)="setActiveTab('search')">
       🔍 חיפוש מתקדם
     </button>
-    <button 
-      class="tab" 
+    <button
+      class="tab"
       [class.active]="activeTab === 'stats'"
       (click)="setActiveTab('stats')">
       📊 סטטיסטיקות
+    </button>
+    <button
+      class="tab"
+      [class.active]="activeTab === 'charts'"
+      (click)="setActiveTab('charts')">
+      📈 גרפים
     </button>
   </div>
 
@@ -387,6 +393,77 @@
             </span>
             <span class="status-count">{{ stats.statusCodes[code] }} פעמים</span>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Tab -->
+  <div class="tab-content" *ngIf="activeTab === 'charts'">
+    <div class="charts-controls">
+      <label for="chart-hours">תקופה:</label>
+      <select id="chart-hours" [(ngModel)]="chartHours" (change)="onChartHoursChange()">
+        <option [value]="6">6 שעות</option>
+        <option [value]="12">12 שעות</option>
+        <option [value]="24">24 שעות</option>
+        <option [value]="48">48 שעות</option>
+        <option [value]="72">72 שעות</option>
+      </select>
+      <button class="btn-refresh" (click)="loadChartData()" [disabled]="chartsLoading">
+        🔄 רענן
+      </button>
+    </div>
+
+    <div class="loading" *ngIf="chartsLoading">טוען נתוני גרפים...</div>
+
+    <div class="charts-container" *ngIf="!chartsLoading">
+      <!-- Time Series Chart -->
+      <div class="chart-card full-width">
+        <h4>📈 בקשות ושגיאות לאורך זמן</h4>
+        <div class="chart-wrapper" style="height: 300px;">
+          <canvas baseChart
+            [data]="timeSeriesChartData"
+            [options]="timeSeriesChartOptions"
+            type="line">
+          </canvas>
+        </div>
+      </div>
+
+      <div class="charts-row">
+        <!-- Status Distribution -->
+        <div class="chart-card">
+          <h4>🎯 פילוח Status Codes</h4>
+          <div class="chart-wrapper" style="height: 250px;">
+            <canvas baseChart
+              [data]="statusChartData"
+              [options]="statusChartOptions"
+              type="doughnut">
+            </canvas>
+          </div>
+        </div>
+
+        <!-- Method Distribution -->
+        <div class="chart-card">
+          <h4>🔧 פילוח HTTP Methods</h4>
+          <div class="chart-wrapper" style="height: 250px;">
+            <canvas baseChart
+              [data]="methodChartData"
+              [options]="methodChartOptions"
+              type="bar">
+            </canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Response Time Distribution -->
+      <div class="chart-card full-width">
+        <h4>⏱️ התפלגות זמני תגובה</h4>
+        <div class="chart-wrapper" style="height: 250px;">
+          <canvas baseChart
+            [data]="responseTimeChartData"
+            [options]="responseTimeChartOptions"
+            type="bar">
+          </canvas>
         </div>
       </div>
     </div>

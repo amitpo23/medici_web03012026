@@ -6,9 +6,12 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient } from '@angular/common/http';
 import { interval, Subscription } from 'rxjs';
 import { environment } from '../../environments/environment.prod';
+import { SocketService, SocketNotification } from '../../services/socket.service';
+import { LiveToastComponent, LiveToastData } from '../live-toast/live-toast.component';
 
 interface Notification {
   id: string;
@@ -211,19 +214,92 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
   notifications: Notification[] = [];
   unreadCount = 0;
   private pollSubscription?: Subscription;
+  private socketSubscription?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private socketService: SocketService,
+    private snackBar: MatSnackBar
+  ) {}
 
   ngOnInit(): void {
     this.loadNotifications();
-    // Poll every 30 seconds
-    this.pollSubscription = interval(30000).subscribe(() => {
+
+    // Real-time Socket.IO notifications
+    this.socketSubscription = this.socketService.getNotifications().subscribe((notification) => {
+      this.handleSocketNotification(notification);
+    });
+
+    // Fallback polling (increased to 60 seconds since we have real-time now)
+    this.pollSubscription = interval(60000).subscribe(() => {
       this.loadNotifications();
     });
   }
 
   ngOnDestroy(): void {
     this.pollSubscription?.unsubscribe();
+    this.socketSubscription?.unsubscribe();
+  }
+
+  private handleSocketNotification(notification: SocketNotification): void {
+    const typeMap: Record<string, 'alert' | 'opportunity' | 'booking' | 'system'> = {
+      'new-booking': 'booking',
+      'booking-cancelled': 'booking',
+      'new-opportunity': 'opportunity',
+      'alert-triggered': 'alert',
+      'log-entry': 'system'
+    };
+
+    const titleMap: Record<string, string> = {
+      'new-booking': 'New Booking!',
+      'booking-cancelled': 'Booking Cancelled',
+      'new-opportunity': 'New Opportunity',
+      'alert-triggered': 'Alert',
+      'log-entry': notification.data['level'] === 'error' ? 'Error Log' : 'Warning Log'
+    };
+
+    const type = typeMap[notification.event] || 'system';
+    const title = titleMap[notification.event] || notification.event;
+    const message = String(
+      notification.data['hotelName'] ||
+      notification.data['message'] ||
+      'New event received'
+    );
+
+    // Determine severity based on event type
+    let severity: 'critical' | 'high' | 'medium' | 'low' = 'medium';
+    if (notification.event === 'alert-triggered') {
+      severity = 'high';
+    } else if (notification.event === 'log-entry') {
+      severity = notification.data['level'] === 'error' ? 'critical' : 'high';
+    }
+
+    // Add to notifications list
+    this.notifications.unshift({
+      id: `socket-${Date.now()}`,
+      type,
+      title,
+      message,
+      severity,
+      timestamp: new Date(notification.timestamp),
+      read: false
+    });
+    this.unreadCount++;
+
+    // Show toast notification - use special types for log entries
+    let toastType: LiveToastData['type'] = type;
+    if (notification.event === 'log-entry') {
+      toastType = notification.data['level'] === 'error' ? 'error' : 'warning';
+    }
+
+    const toastData: LiveToastData = { type: toastType, title, message };
+    this.snackBar.openFromComponent(LiveToastComponent, {
+      data: toastData,
+      duration: 5000,
+      horizontalPosition: 'right',
+      verticalPosition: 'top',
+      panelClass: ['live-toast-panel']
+    });
   }
 
   loadNotifications(): void {

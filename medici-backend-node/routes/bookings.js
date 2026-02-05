@@ -3,6 +3,7 @@ const router = express.Router();
 const { getPool } = require('../config/database');
 const logger = require('../config/logger');
 const InnstantClient = require('../services/innstant-client');
+const socketService = require('../services/socket-service');
 
 const innstantClient = new InnstantClient();
 
@@ -664,6 +665,16 @@ router.post('/Confirm', async (req, res) => {
 
     logger.info(`[Book] Created bookId ${bookId} - confirmation ${bookResult.confirmationNumber}`);
 
+    // Emit Socket.IO event for real-time notification
+    socketService.emit('new-booking', {
+      bookingId: bookId,
+      hotelName: preBook.HotelName,
+      price: preBook.Price,
+      checkIn: preBook.DateForm,
+      checkOut: preBook.DateTo,
+      confirmationNumber: bookResult.confirmationNumber
+    });
+
     res.json({
       success: true,
       bookId: bookId,
@@ -678,9 +689,9 @@ router.post('/Confirm', async (req, res) => {
 
   } catch (err) {
     logger.error('Error confirming booking', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Booking confirmation failed', 
-      message: err.message 
+    res.status(500).json({
+      error: 'Booking confirmation failed',
+      message: err.message
     });
   }
 });
@@ -921,6 +932,14 @@ router.delete('/CancelDirect', async (req, res) => {
 
     logger.info(`[Cancel] Cancelled bookId ${bookId}`);
 
+    // Emit Socket.IO event for real-time notification
+    socketService.emit('booking-cancelled', {
+      bookingId: bookId,
+      hotelName: book.HotelName,
+      reason,
+      cancelledWithSupplier: cancelWithSupplier && cancellationResult?.success
+    });
+
     res.json({
       success: true,
       message: 'Booking cancelled successfully',
@@ -932,9 +951,9 @@ router.delete('/CancelDirect', async (req, res) => {
 
   } catch (err) {
     logger.error('Error cancelling booking', { error: err.message, stack: err.stack });
-    res.status(500).json({ 
-      error: 'Cancellation failed', 
-      message: err.message 
+    res.status(500).json({
+      error: 'Cancellation failed',
+      message: err.message
     });
   }
 });

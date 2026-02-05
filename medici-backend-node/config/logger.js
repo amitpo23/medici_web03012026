@@ -1,12 +1,16 @@
 /**
  * Winston Logger Configuration
  * Comprehensive logging system with rotation, levels, and formats
+ * Includes real-time Socket.IO push for error notifications
  */
 
 const winston = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 const fs = require('fs');
+
+// Socket.IO reference (set after server starts)
+let socketService = null;
 
 // Create logs directory if it doesn't exist
 const logsDir = path.join(__dirname, '../logs');
@@ -83,6 +87,34 @@ const debugLogsTransport = new DailyRotateFile({
   level: 'debug'
 });
 
+// Custom Transport: Socket.IO real-time push for errors and warnings
+class SocketIOTransport extends winston.Transport {
+  constructor(opts) {
+    super(opts);
+    this.name = 'socketio';
+    this.level = opts.level || 'error';
+  }
+
+  log(info, callback) {
+    setImmediate(() => {
+      if (socketService && socketService.isInitialized()) {
+        // Only push errors and warnings to avoid flooding
+        if (info.level === 'error' || info.level === 'warn') {
+          socketService.emit('log-entry', {
+            level: info.level,
+            message: info.message,
+            timestamp: info.timestamp || new Date().toISOString(),
+            meta: { ...info, level: undefined, message: undefined, timestamp: undefined }
+          });
+        }
+      }
+    });
+    callback();
+  }
+}
+
+const socketTransport = new SocketIOTransport({ level: 'warn' });
+
 // Create Winston logger
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -91,10 +123,17 @@ const logger = winston.createLogger({
     consoleTransport,
     allLogsTransport,
     errorLogsTransport,
-    httpLogsTransport
+    httpLogsTransport,
+    socketTransport
   ],
   exitOnError: false
 });
+
+// Set Socket.IO service reference (called from server.js after socket init)
+logger.setSocketService = (service) => {
+  socketService = service;
+  logger.info('[Logger] Socket.IO transport connected');
+};
 
 // Add debug logs only in development
 if (process.env.NODE_ENV !== 'production') {

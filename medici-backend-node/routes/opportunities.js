@@ -3,6 +3,7 @@ const router = express.Router();
 const { getPool, sql } = require('../config/database');
 const zenithPushService = require('../services/zenith-push-service');
 const logger = require('../config/logger');
+const socketService = require('../services/socket-service');
 
 // Get all opportunities (paginated)
 router.get('/Opportunities', async (req, res) => {
@@ -163,6 +164,17 @@ router.post('/InsertOpp', async (req, res) => {
         logger.error('Zenith push error', { error: zenithError.message, opportunityId });
       }
     }
+
+    // Emit Socket.IO event for real-time notification
+    socketService.emit('new-opportunity', {
+      opportunityId,
+      hotelId,
+      margin: calculatedPushPrice - calculatedBuyPrice,
+      buyPrice: calculatedBuyPrice,
+      pushPrice: calculatedPushPrice,
+      dateFrom: startDateStr,
+      dateTo: endDateStr
+    });
 
     res.json({
       success: true,

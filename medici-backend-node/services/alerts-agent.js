@@ -9,6 +9,7 @@ const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const emailService = require('./email-service');
 const slackService = require('./slack-service');
+const socketService = require('./socket-service');
 
 class AlertsAgent {
   constructor() {
@@ -204,23 +205,32 @@ class AlertsAgent {
    * Execute alert actions
    */
   async executeAlertActions(rule, alert, logs) {
-    logger.warn('🚨 ALERT TRIGGERED', { 
-      alert: rule.name, 
-      severity: rule.severity 
+    logger.warn('🚨 ALERT TRIGGERED', {
+      alert: rule.name,
+      severity: rule.severity
     });
-    
+
     const actions = rule.action.split(',');
-    
+
+    // Send real-time Socket.IO notification
+    socketService.emit('alert-triggered', {
+      alertId: alert.id,
+      rule: rule.name,
+      severity: rule.severity,
+      message: rule.description,
+      ruleId: rule.id
+    });
+
     // Send email
     if (actions.includes('email')) {
       await this.sendEmailAlert(rule, alert, logs);
     }
-    
+
     // Send Slack notification
     if (actions.includes('slack')) {
       await this.sendSlackAlert(rule, alert, logs);
     }
-    
+
     // Save to database
     await this.saveAlertToDatabase(alert);
   }
