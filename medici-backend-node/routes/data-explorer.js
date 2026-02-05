@@ -173,29 +173,40 @@ router.get('/sales-office/summary', async (req, res) => {
   try {
     const pool = await getPool();
 
-    const [orders, bookings, details] = await Promise.all([
-      pool.request().query(`
+    // Try to access SalesOffice schema - may not have permissions
+    let orders = { TotalOrders: 0, CompletedOrders: 0, PendingOrders: 0 };
+    let bookings = 0;
+    let details = 0;
+
+    try {
+      const ordersResult = await pool.request().query(`
         SELECT
           COUNT(*) as TotalOrders,
           SUM(CASE WHEN Status = 'completed' THEN 1 ELSE 0 END) as CompletedOrders,
           SUM(CASE WHEN Status = 'pending' THEN 1 ELSE 0 END) as PendingOrders
         FROM [SalesOffice].[Orders]
-      `),
-      pool.request().query(`
+      `);
+      orders = ordersResult.recordset[0];
+    } catch (e) { /* SalesOffice.Orders not accessible */ }
+
+    try {
+      const bookingsResult = await pool.request().query(`
         SELECT COUNT(*) as TotalBookings FROM [SalesOffice].[Bookings]
-      `),
-      pool.request().query(`
+      `);
+      bookings = bookingsResult.recordset[0].TotalBookings;
+    } catch (e) { /* SalesOffice.Bookings not accessible */ }
+
+    try {
+      const detailsResult = await pool.request().query(`
         SELECT COUNT(*) as TotalDetails FROM [SalesOffice].[Details]
-      `)
-    ]);
+      `);
+      details = detailsResult.recordset[0].TotalDetails;
+    } catch (e) { /* SalesOffice.Details not accessible */ }
 
     res.json({
       success: true,
-      summary: {
-        orders: orders.recordset[0],
-        bookings: bookings.recordset[0].TotalBookings,
-        details: details.recordset[0].TotalDetails
-      }
+      summary: { orders, bookings, details },
+      note: orders.TotalOrders === 0 ? 'SalesOffice schema may require different permissions' : undefined
     });
   } catch (err) {
     logger.error('Error getting sales office summary', { error: err.message });
@@ -442,18 +453,19 @@ router.get('/comprehensive-stats', async (req, res) => {
   try {
     const pool = await getPool();
 
-    const stats = await pool.request().query(`
+    // Core stats that should always work
+    const coreStats = await pool.request().query(`
       SELECT
         (SELECT COUNT(*) FROM MED_Book) as TotalBookings,
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1) as ActiveBookings,
         (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1) as SoldBookings,
-        (SELECT SUM(price) FROM MED_Book) as TotalBookingValue,
+        (SELECT ISNULL(SUM(price), 0) FROM MED_Book) as TotalBookingValue,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities]) as TotalOpportunities,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1) as ActiveOpportunities,
         (SELECT COUNT(*) FROM Med_Hotels) as TotalHotels,
         (SELECT COUNT(*) FROM Med_Hotels WHERE isActive = 1) as ActiveHotels,
         (SELECT COUNT(*) FROM Med_Reservation) as TotalReservations,
-        (SELECT SUM(AmountAfterTax) FROM Med_Reservation) as TotalReservationValue,
+        (SELECT ISNULL(SUM(AmountAfterTax), 0) FROM Med_Reservation) as TotalReservationValue,
         (SELECT COUNT(*) FROM MED_PreBook) as TotalPreBookings,
         (SELECT COUNT(*) FROM MED_CancelBook) as TotalCancellations,
         (SELECT COUNT(*) FROM Destinations) as TotalDestinations,
@@ -462,11 +474,28 @@ router.get('/comprehensive-stats', async (req, res) => {
         (SELECT COUNT(*) FROM Med_HotelsToPush WHERE IsActive = 1) as PendingPushes,
         (SELECT COUNT(*) FROM RoomPriceUpdateLog) as PriceUpdates,
         (SELECT COUNT(*) FROM BackOfficeOPT) as BackOfficeOptions,
-        (SELECT COUNT(*) FROM [SalesOffice].[Orders]) as SalesOrders,
         (SELECT COUNT(*) FROM MED_Log) as SystemLogs
     `);
 
-    res.json({ success: true, stats: stats.recordset[0] });
+    // Try to get SalesOffice stats separately (might not have access)
+    let salesOrders = 0;
+    try {
+      const salesResult = await pool.request().query(`
+        SELECT COUNT(*) as cnt FROM [SalesOffice].[Orders]
+      `);
+      salesOrders = salesResult.recordset[0]?.cnt || 0;
+    } catch (e) {
+      // SalesOffice schema might not be accessible
+      logger.warn('Could not access SalesOffice.Orders', { error: e.message });
+    }
+
+    res.json({
+      success: true,
+      stats: {
+        ...coreStats.recordset[0],
+        SalesOrders: salesOrders
+      }
+    });
   } catch (err) {
     logger.error('Error getting comprehensive stats', { error: err.message });
     res.status(500).json({ error: err.message });
