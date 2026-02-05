@@ -50,7 +50,7 @@ router.get('/price-history/:hotelId', async (req, res) => {
           SELECT
             ${groupBy} as period,
             price,
-            pushPrice,
+            lastPrice,
             ROW_NUMBER() OVER (PARTITION BY ${groupBy} ORDER BY DateInsert ASC) as rn_first,
             ROW_NUMBER() OVER (PARTITION BY ${groupBy} ORDER BY DateInsert DESC) as rn_last
           FROM MED_Book
@@ -64,8 +64,8 @@ router.get('/price-history/:hotelId', async (req, res) => {
           MIN(price) as low,
           MIN(CASE WHEN rn_last = 1 THEN price END) as [close],
           COUNT(*) as volume,
-          AVG(pushPrice - price) as avgProfit,
-          AVG((pushPrice - price) / NULLIF(pushPrice, 0) * 100) as avgMargin
+          AVG(lastPrice - price) as avgProfit,
+          AVG((lastPrice - price) / NULLIF(lastPrice, 0) * 100) as avgMargin
         FROM PriceData
         GROUP BY period
         ORDER BY period ASC
@@ -125,15 +125,15 @@ router.get('/order-book/:hotelId', async (req, res) => {
       .input('levels', sql.Int, parseInt(levels))
       .query(`
         SELECT TOP (@levels)
-          ROUND(pushPrice, 0) as price,
+          ROUND(lastPrice, 0) as price,
           COUNT(*) as quantity,
-          SUM(pushPrice) as totalValue
+          SUM(lastPrice) as totalValue
         FROM MED_Book
         WHERE HotelId = @hotelId
           AND IsActive = 1
           AND IsSold = 0
           AND startDate >= GETDATE()
-        GROUP BY ROUND(pushPrice, 0)
+        GROUP BY ROUND(lastPrice, 0)
         ORDER BY price DESC
       `);
 
@@ -229,10 +229,10 @@ router.get('/portfolio', async (req, res) => {
         b.HotelId,
         h.Name as hotelName,
         b.price as buyPrice,
-        b.pushPrice as sellPrice,
+        b.lastPrice as sellPrice,
         b.lastPrice as marketPrice,
-        (b.pushPrice - b.price) as unrealizedPnL,
-        ((b.pushPrice - b.price) / NULLIF(b.price, 0) * 100) as unrealizedPnLPercent,
+        (b.lastPrice - b.price) as unrealizedPnL,
+        ((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) as unrealizedPnLPercent,
         b.startDate as checkIn,
         b.endDate as checkOut,
         DATEDIFF(day, GETDATE(), b.startDate) as daysToCheckIn,
@@ -253,13 +253,13 @@ router.get('/portfolio', async (req, res) => {
       .query(`
         SELECT
           COUNT(*) as totalTrades,
-          SUM(pushPrice - price) as totalProfit,
-          AVG(pushPrice - price) as avgProfit,
-          AVG((pushPrice - price) / NULLIF(price, 0) * 100) as avgMargin,
-          SUM(CASE WHEN pushPrice > price THEN 1 ELSE 0 END) as wins,
-          SUM(CASE WHEN pushPrice <= price THEN 1 ELSE 0 END) as losses,
-          MIN(pushPrice - price) as worstTrade,
-          MAX(pushPrice - price) as bestTrade
+          SUM(lastPrice - price) as totalProfit,
+          AVG(lastPrice - price) as avgProfit,
+          AVG((lastPrice - price) / NULLIF(price, 0) * 100) as avgMargin,
+          SUM(CASE WHEN lastPrice > price THEN 1 ELSE 0 END) as wins,
+          SUM(CASE WHEN lastPrice <= price THEN 1 ELSE 0 END) as losses,
+          MIN(lastPrice - price) as worstTrade,
+          MAX(lastPrice - price) as bestTrade
         FROM MED_Book
         WHERE IsSold = 1
           AND DateInsert >= DATEADD(day, -@days, GETDATE())
@@ -361,8 +361,8 @@ router.get('/market-data', async (req, res) => {
             AVG(b.price) as avgPrice,
             MIN(b.price) as minPrice,
             MAX(b.price) as maxPrice,
-            AVG(b.pushPrice - b.price) as avgProfit,
-            AVG((b.pushPrice - b.price) / NULLIF(b.price, 0) * 100) as avgMargin,
+            AVG(b.lastPrice - b.price) as avgProfit,
+            AVG((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) as avgMargin,
             SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as soldCount,
             SUM(CASE WHEN b.IsActive = 1 AND b.IsSold = 0 THEN 1 ELSE 0 END) as activeCount
           FROM MED_Book b
@@ -481,8 +481,8 @@ router.get('/ai-signals', async (req, res) => {
     // Get historical performance for confidence validation
     const historicalPerf = await pool.request().query(`
       SELECT
-        AVG(CASE WHEN pushPrice > price THEN 1.0 ELSE 0.0 END) as winRate,
-        AVG((pushPrice - price) / NULLIF(price, 0) * 100) as avgMargin
+        AVG(CASE WHEN lastPrice > price THEN 1.0 ELSE 0.0 END) as winRate,
+        AVG((lastPrice - price) / NULLIF(price, 0) * 100) as avgMargin
       FROM MED_Book
       WHERE IsSold = 1
         AND DateInsert >= DATEADD(month, -3, GETDATE())
@@ -573,13 +573,13 @@ router.get('/performance-metrics', async (req, res) => {
           SUM(CASE WHEN IsSold = 1 THEN 1 ELSE 0 END) as soldTrades,
           SUM(CASE WHEN IsActive = 1 AND IsSold = 0 THEN 1 ELSE 0 END) as activeTrades,
           SUM(price) as totalInvested,
-          SUM(CASE WHEN IsSold = 1 THEN pushPrice ELSE 0 END) as totalRevenue,
-          SUM(CASE WHEN IsSold = 1 THEN pushPrice - price ELSE 0 END) as realizedProfit,
-          SUM(CASE WHEN IsActive = 1 AND IsSold = 0 THEN pushPrice - price ELSE 0 END) as unrealizedProfit,
-          AVG(CASE WHEN IsSold = 1 THEN pushPrice - price ELSE NULL END) as avgProfit,
-          AVG(CASE WHEN IsSold = 1 THEN (pushPrice - price) / NULLIF(price, 0) * 100 ELSE NULL END) as avgROI,
-          SUM(CASE WHEN IsSold = 1 AND pushPrice > price THEN 1 ELSE 0 END) as winningTrades,
-          SUM(CASE WHEN IsSold = 1 AND pushPrice <= price THEN 1 ELSE 0 END) as losingTrades
+          SUM(CASE WHEN IsSold = 1 THEN lastPrice ELSE 0 END) as totalRevenue,
+          SUM(CASE WHEN IsSold = 1 THEN lastPrice - price ELSE 0 END) as realizedProfit,
+          SUM(CASE WHEN IsActive = 1 AND IsSold = 0 THEN lastPrice - price ELSE 0 END) as unrealizedProfit,
+          AVG(CASE WHEN IsSold = 1 THEN lastPrice - price ELSE NULL END) as avgProfit,
+          AVG(CASE WHEN IsSold = 1 THEN (lastPrice - price) / NULLIF(price, 0) * 100 ELSE NULL END) as avgROI,
+          SUM(CASE WHEN IsSold = 1 AND lastPrice > price THEN 1 ELSE 0 END) as winningTrades,
+          SUM(CASE WHEN IsSold = 1 AND lastPrice <= price THEN 1 ELSE 0 END) as losingTrades
         FROM MED_Book
         WHERE DateInsert >= DATEADD(day, -@days, GETDATE())
       `);
@@ -590,9 +590,9 @@ router.get('/performance-metrics', async (req, res) => {
       .query(`
         SELECT
           CAST(DateInsert AS DATE) as date,
-          SUM(pushPrice - price) as dailyProfit,
+          SUM(lastPrice - price) as dailyProfit,
           COUNT(*) as trades,
-          SUM(CASE WHEN pushPrice > price THEN 1 ELSE 0 END) as wins
+          SUM(CASE WHEN lastPrice > price THEN 1 ELSE 0 END) as wins
         FROM MED_Book
         WHERE IsSold = 1
           AND DateInsert >= DATEADD(day, -@days, GETDATE())
@@ -606,20 +606,20 @@ router.get('/performance-metrics', async (req, res) => {
       .query(`
         SELECT
           CASE
-            WHEN (pushPrice - price) / NULLIF(price, 0) * 100 < 15 THEN 'LOW'
-            WHEN (pushPrice - price) / NULLIF(price, 0) * 100 < 30 THEN 'MEDIUM'
+            WHEN (lastPrice - price) / NULLIF(price, 0) * 100 < 15 THEN 'LOW'
+            WHEN (lastPrice - price) / NULLIF(price, 0) * 100 < 30 THEN 'MEDIUM'
             ELSE 'HIGH'
           END as riskLevel,
           COUNT(*) as trades,
-          AVG(pushPrice - price) as avgProfit,
-          SUM(CASE WHEN pushPrice > price THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100 as winRate
+          AVG(lastPrice - price) as avgProfit,
+          SUM(CASE WHEN lastPrice > price THEN 1.0 ELSE 0.0 END) / COUNT(*) * 100 as winRate
         FROM MED_Book
         WHERE IsSold = 1
           AND DateInsert >= DATEADD(day, -@days, GETDATE())
         GROUP BY
           CASE
-            WHEN (pushPrice - price) / NULLIF(price, 0) * 100 < 15 THEN 'LOW'
-            WHEN (pushPrice - price) / NULLIF(price, 0) * 100 < 30 THEN 'MEDIUM'
+            WHEN (lastPrice - price) / NULLIF(price, 0) * 100 < 15 THEN 'LOW'
+            WHEN (lastPrice - price) / NULLIF(price, 0) * 100 < 30 THEN 'MEDIUM'
             ELSE 'HIGH'
           END
       `);
@@ -702,10 +702,10 @@ router.get('/market-overview', async (req, res) => {
     const summary = await pool.request().query(`
       SELECT
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as activeInventory,
-        (SELECT SUM(pushPrice - price) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as unrealizedValue,
+        (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as unrealizedValue,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0 AND DateFrom >= GETDATE()) as openOpportunities,
         (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE AIGenerated = 1 AND AIConfidence >= 0.7 AND IsActive = 1 AND DateFrom >= GETDATE()) as highConfidenceSignals,
-        (SELECT SUM(pushPrice - price) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
+        (SELECT SUM(lastPrice - price) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklyProfit,
         (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklySales
     `);
 
@@ -715,8 +715,8 @@ router.get('/market-overview', async (req, res) => {
         b.id as tradeId,
         h.Name as hotelName,
         b.price as buyPrice,
-        b.pushPrice as sellPrice,
-        (b.pushPrice - b.price) as profit,
+        b.lastPrice as sellPrice,
+        (b.lastPrice - b.price) as profit,
         b.IsSold,
         b.DateInsert as timestamp
       FROM MED_Book b
