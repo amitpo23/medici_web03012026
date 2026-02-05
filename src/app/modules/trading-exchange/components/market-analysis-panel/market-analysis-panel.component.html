@@ -1,0 +1,100 @@
+<div class="market-analysis-panel">
+  <!-- Header -->
+  <div class="panel-header">
+    <h3>Market Analysis</h3>
+    <button mat-icon-button (click)="loadData()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="30"></mat-spinner>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error" class="panel-content">
+    <!-- Market Status -->
+    <div *ngIf="marketOverview" class="market-status">
+      <div class="status-badge" [class]="marketOverview.marketStatus.toLowerCase()">
+        <mat-icon>{{ marketOverview.marketStatus === 'ACTIVE' ? 'trending_up' : 'show_chart' }}</mat-icon>
+        <span>{{ marketOverview.marketStatus }}</span>
+      </div>
+
+      <!-- Overview Stats -->
+      <div class="overview-stats">
+        <div class="stat">
+          <span class="stat-value">{{ marketOverview.overview.inventory.active }}</span>
+          <span class="stat-label">Active</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ marketOverview.overview.opportunities.highConfidence }}</span>
+          <span class="stat-label">Signals</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ formatCurrency(marketOverview.overview.performance.weeklyProfit) }}</span>
+          <span class="stat-label">Weekly P&L</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Market Tickers -->
+    <div class="tickers-section">
+      <h4>Top Markets</h4>
+      <div class="tickers-list">
+        <div
+          *ngFor="let ticker of marketData"
+          class="ticker-row"
+          (click)="onTickerClick(ticker)"
+        >
+          <div class="ticker-info">
+            <span class="ticker-symbol">{{ ticker.symbol }}</span>
+            <span class="ticker-name">{{ ticker.name }}</span>
+          </div>
+          <div class="ticker-price">
+            <span class="price">{{ formatCurrency(ticker.price) }}</span>
+            <span class="change" [class]="getChangeClass(ticker.changePercent24h)">
+              {{ formatPercent(ticker.changePercent24h) }}
+            </span>
+          </div>
+          <div class="ticker-signal">
+            <span class="signal-badge" [style.background]="tradingService.getSignalColor(ticker.signal)">
+              {{ ticker.signal.replace('_', ' ') }}
+            </span>
+          </div>
+          <div class="ticker-stats">
+            <span class="volume">Vol: {{ ticker.volume }}</span>
+            <span class="margin">Margin: {{ ticker.avgMargin?.toFixed(1) }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div *ngIf="marketOverview?.recentTrades?.length" class="recent-trades">
+      <h4>Recent Activity</h4>
+      <div class="trades-list">
+        <div *ngFor="let trade of marketOverview.recentTrades.slice(0, 5)" class="trade-row">
+          <div class="trade-info">
+            <span class="hotel">{{ trade.hotelName }}</span>
+            <span class="time">{{ trade.timestamp | date:'short' }}</span>
+          </div>
+          <div class="trade-details">
+            <span class="status" [class.sold]="trade.IsSold">
+              {{ trade.IsSold ? 'SOLD' : 'BOUGHT' }}
+            </span>
+            <span class="profit" [class]="trade.profit > 0 ? 'positive' : 'negative'">
+              {{ formatCurrency(trade.profit) }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

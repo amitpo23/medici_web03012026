@@ -1,0 +1,140 @@
+<div class="trading-signals-container">
+  <!-- Header -->
+  <div class="signals-header">
+    <h3>AI Trading Signals</h3>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Strength</mat-label>
+        <mat-select [(value)]="filterStrength">
+          <mat-option value="all">All</mat-option>
+          <mat-option value="STRONG">Strong Only</mat-option>
+          <mat-option value="MODERATE">Moderate</mat-option>
+          <mat-option value="WEAK">Weak</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-icon-button (click)="loadSignals()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Consensus Banner -->
+  <div *ngIf="consensus" class="consensus-banner" [class]="consensus.direction.toLowerCase()">
+    <div class="consensus-main">
+      <mat-icon>{{ consensus.direction === 'BULLISH' ? 'trending_up' : 'trending_flat' }}</mat-icon>
+      <span class="direction">{{ consensus.direction }}</span>
+      <span class="condition">{{ consensus.marketCondition }}</span>
+    </div>
+    <div class="consensus-stats">
+      <span>{{ consensus.buySignals }}/{{ consensus.totalSignals }} Buy Signals</span>
+      <span class="separator">|</span>
+      <span>Avg Confidence: {{ consensus.avgConfidence }}%</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Analyzing market...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+    <button mat-button color="primary" (click)="loadSignals()">Retry</button>
+  </div>
+
+  <!-- Signals List -->
+  <div *ngIf="!loading && !error" class="signals-list">
+    <div
+      *ngFor="let signal of filteredSignals"
+      class="signal-card"
+      [class]="getStrengthClass(signal.strength)"
+      (click)="onSignalClick(signal)"
+    >
+      <!-- Signal Header -->
+      <div class="signal-header">
+        <div class="signal-type">
+          <mat-icon [style.color]="tradingService.getSignalColor(signal.type)">
+            {{ getSignalIcon(signal.type) }}
+          </mat-icon>
+          <span class="type-label" [style.color]="tradingService.getSignalColor(signal.type)">
+            {{ signal.strength }} {{ signal.type }}
+          </span>
+        </div>
+        <div class="confidence-badge" [style.background]="tradingService.getConfidenceColor(signal.confidence)">
+          {{ signal.confidence }}%
+        </div>
+      </div>
+
+      <!-- Asset Info -->
+      <div class="asset-info">
+        <span class="hotel-name">{{ signal.asset.hotelName }}</span>
+        <span class="dates">
+          {{ signal.asset.checkIn | date:'d MMM' }} - {{ signal.asset.checkOut | date:'d MMM' }}
+          ({{ signal.asset.daysToCheckIn }}d)
+        </span>
+      </div>
+
+      <!-- Pricing Info -->
+      <div class="pricing-info">
+        <div class="price-item">
+          <span class="label">Buy</span>
+          <span class="value">{{ formatPrice(signal.pricing.buyPrice) }}</span>
+        </div>
+        <div class="price-arrow">
+          <mat-icon>arrow_forward</mat-icon>
+        </div>
+        <div class="price-item">
+          <span class="label">Target</span>
+          <span class="value target">{{ formatPrice(signal.pricing.targetPrice) }}</span>
+        </div>
+        <div class="price-item profit">
+          <span class="label">Profit</span>
+          <span class="value">{{ formatPrice(signal.pricing.expectedProfit) }}</span>
+        </div>
+      </div>
+
+      <!-- ROI Bar -->
+      <div class="roi-bar">
+        <div class="roi-fill" [style.width.%]="signal.pricing.roi > 100 ? 100 : signal.pricing.roi"></div>
+        <span class="roi-label">{{ formatPercent(signal.pricing.roi) }} ROI</span>
+      </div>
+
+      <!-- Reasons -->
+      <div class="reasons">
+        <div *ngFor="let reason of signal.reasons.slice(0, 3)" class="reason">
+          <mat-icon>check_circle</mat-icon>
+          <span>{{ reason.text }}</span>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="signal-footer">
+        <div class="meta">
+          <span class="risk" [style.color]="tradingService.getRiskColor(signal.riskLevel)">
+            Risk: {{ signal.riskLevel }}
+          </span>
+          <span class="expires">Valid: {{ signal.expiresIn }}</span>
+        </div>
+        <button mat-raised-button color="primary" (click)="onBuyClick(signal, $event)">
+          <mat-icon>shopping_cart</mat-icon>
+          BUY NOW
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredSignals.length === 0" class="empty-state">
+      <mat-icon>signal_cellular_off</mat-icon>
+      <span>No signals match your criteria</span>
+    </div>
+  </div>
+
+  <!-- Historical Performance -->
+  <div *ngIf="historicalPerformance" class="historical-perf">
+    <span>Historical Win Rate: {{ historicalPerformance.winRate }}%</span>
+    <span>Avg Margin: {{ historicalPerformance.avgMargin }}%</span>
+  </div>
+</div>

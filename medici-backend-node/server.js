@@ -116,6 +116,7 @@ const advancedPricingRoutes = require('./routes/advanced-pricing');
 // ADD-ON ROUTES - Standalone features (Added Feb 2026)
 const activityFeedRoutes = require('./routes/activity-feed');
 const dataExplorerRoutes = require('./routes/data-explorer');
+const tradingExchangeRoutes = require('./routes/trading-exchange');
 
 // Public routes (no auth required)
 app.use('/sign-in', authLimiter, authRoutes);
@@ -149,6 +150,7 @@ app.use('/monitoring', verifyToken, requireAdmin, monitoringRoutes);
 // Protected Enhanced Routes - Diagnostics & Trading (Added Feb 2026)
 app.use('/api/diagnostics', verifyToken, requireAdmin, diagnosticsRoutes);
 app.use('/api/trading', verifyToken, tradingRoutes);
+app.use('/api/trading-exchange', verifyToken, tradingExchangeRoutes);
 app.use('/analytics', verifyToken, analyticsRoutes);
 app.use('/ai-opportunities', verifyToken, aiOpportunitiesRoutes);
 app.use('/pricing', verifyToken, pricingRoutes);

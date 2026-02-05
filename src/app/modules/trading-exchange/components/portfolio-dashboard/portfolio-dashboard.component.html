@@ -1,0 +1,179 @@
+<div class="portfolio-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <h2>Portfolio Dashboard</h2>
+    <div class="header-actions">
+      <mat-form-field appearance="outline">
+        <mat-label>Period</mat-label>
+        <mat-select [(value)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+          <mat-option *ngFor="let p of periods" [value]="p">{{ p }} Days</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-icon-button (click)="loadData()" [disabled]="loading">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading portfolio...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+    <button mat-button color="primary" (click)="loadData()">Retry</button>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!loading && !error && portfolio" class="dashboard-content">
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <span class="card-label">Total Cost Basis</span>
+          <span class="card-value">{{ formatCurrency(portfolio.summary.totalCostBasis) }}</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <span class="card-label">Market Value</span>
+          <span class="card-value">{{ formatCurrency(portfolio.summary.totalMarketValue) }}</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card pnl-card" [class]="getPnLClass(portfolio.summary.totalPnL)">
+        <mat-card-content>
+          <span class="card-label">Total P&L</span>
+          <span class="card-value">{{ formatCurrency(portfolio.summary.totalPnL) }}</span>
+          <span class="card-percent">{{ formatPercent(portfolio.summary.unrealizedPnLPercent) }}</span>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="summary-card">
+        <mat-card-content>
+          <span class="card-label">Positions</span>
+          <span class="card-value">{{ portfolio.summary.totalPositions }}</span>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- P&L Breakdown -->
+    <div class="pnl-breakdown">
+      <div class="pnl-item realized">
+        <mat-icon>check_circle</mat-icon>
+        <div class="pnl-details">
+          <span class="pnl-label">Realized P&L</span>
+          <span class="pnl-value" [class]="getPnLClass(portfolio.summary.totalRealizedPnL)">
+            {{ formatCurrency(portfolio.summary.totalRealizedPnL) }}
+          </span>
+        </div>
+      </div>
+      <div class="pnl-item unrealized">
+        <mat-icon>hourglass_empty</mat-icon>
+        <div class="pnl-details">
+          <span class="pnl-label">Unrealized P&L</span>
+          <span class="pnl-value" [class]="getPnLClass(portfolio.summary.totalUnrealizedPnL)">
+            {{ formatCurrency(portfolio.summary.totalUnrealizedPnL) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div *ngIf="performanceMetrics" class="performance-section">
+      <h3>Trading Performance</h3>
+      <div class="metrics-grid">
+        <div class="metric">
+          <span class="metric-value">{{ performanceMetrics.metrics.winRate }}%</span>
+          <span class="metric-label">Win Rate</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value">{{ performanceMetrics.metrics.winningTrades }}</span>
+          <span class="metric-label">Winning Trades</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value">{{ performanceMetrics.metrics.losingTrades }}</span>
+          <span class="metric-label">Losing Trades</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value">{{ formatCurrency(performanceMetrics.metrics.avgProfit) }}</span>
+          <span class="metric-label">Avg Profit</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value">{{ performanceMetrics.metrics.profitFactor }}x</span>
+          <span class="metric-label">Profit Factor</span>
+        </div>
+        <div class="metric">
+          <span class="metric-value negative">{{ formatCurrency(performanceMetrics.metrics.maxDrawdown) }}</span>
+          <span class="metric-label">Max Drawdown</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Holdings Table -->
+    <div class="holdings-section">
+      <h3>Active Holdings ({{ portfolio.holdings.length }})</h3>
+      <table mat-table [dataSource]="portfolio.holdings" class="holdings-table">
+        <!-- Hotel Name -->
+        <ng-container matColumnDef="hotelName">
+          <th mat-header-cell *matHeaderCellDef>Hotel</th>
+          <td mat-cell *matCellDef="let row">{{ row.hotelName }}</td>
+        </ng-container>
+
+        <!-- Buy Price -->
+        <ng-container matColumnDef="buyPrice">
+          <th mat-header-cell *matHeaderCellDef>Buy Price</th>
+          <td mat-cell *matCellDef="let row">{{ formatCurrency(row.buyPrice) }}</td>
+        </ng-container>
+
+        <!-- Sell Price -->
+        <ng-container matColumnDef="sellPrice">
+          <th mat-header-cell *matHeaderCellDef>Sell Price</th>
+          <td mat-cell *matCellDef="let row">{{ formatCurrency(row.sellPrice) }}</td>
+        </ng-container>
+
+        <!-- P&L -->
+        <ng-container matColumnDef="pnl">
+          <th mat-header-cell *matHeaderCellDef>P&L</th>
+          <td mat-cell *matCellDef="let row" [class]="getPnLClass(row.unrealizedPnL)">
+            {{ formatCurrency(row.unrealizedPnL) }}
+          </td>
+        </ng-container>
+
+        <!-- P&L % -->
+        <ng-container matColumnDef="pnlPercent">
+          <th mat-header-cell *matHeaderCellDef>%</th>
+          <td mat-cell *matCellDef="let row" [class]="getPnLClass(row.unrealizedPnLPercent)">
+            {{ formatPercent(row.unrealizedPnLPercent) }}
+          </td>
+        </ng-container>
+
+        <!-- Days to Check-in -->
+        <ng-container matColumnDef="daysToCheckIn">
+          <th mat-header-cell *matHeaderCellDef>Days</th>
+          <td mat-cell *matCellDef="let row" [class.urgent]="row.daysToCheckIn <= 7">
+            {{ row.daysToCheckIn }}d
+          </td>
+        </ng-container>
+
+        <!-- Risk -->
+        <ng-container matColumnDef="risk">
+          <th mat-header-cell *matHeaderCellDef>Cancel</th>
+          <td mat-cell *matCellDef="let row">
+            <span class="cancel-type" [class]="row.CancellationType?.toLowerCase()">
+              {{ row.CancellationType }}
+            </span>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </div>
+  </div>
+</div>

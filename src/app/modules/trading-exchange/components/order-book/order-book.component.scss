@@ -1,0 +1,201 @@
+.order-book-container {
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 16px;
+  height: 100%;
+
+  .order-book-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+
+    h3 {
+      margin: 0;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    button {
+      color: #8f8f8f;
+    }
+  }
+
+  .loading-state,
+  .error-state,
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: #5f5f7f;
+    gap: 8px;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  .error-state {
+    color: #f44336;
+  }
+
+  .spread-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px;
+    background: #16162a;
+    border-radius: 4px;
+    margin-bottom: 12px;
+
+    .spread-label {
+      color: #8f8f8f;
+      font-size: 12px;
+    }
+
+    .spread-value {
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .spread-percent {
+      color: #8f8f8f;
+      font-size: 12px;
+    }
+  }
+
+  .column-headers {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #2d2d44;
+    font-size: 11px;
+    color: #8f8f8f;
+    text-transform: uppercase;
+
+    .bid-header,
+    .ask-header {
+      display: flex;
+      width: 50%;
+
+      span {
+        flex: 1;
+        text-align: center;
+      }
+    }
+
+    .bid-header {
+      padding-right: 4px;
+    }
+
+    .ask-header {
+      padding-left: 4px;
+    }
+  }
+
+  .levels-container {
+    .levels-row {
+      display: flex;
+      border-bottom: 1px solid #1f1f35;
+
+      &:hover {
+        background: #22223a;
+      }
+    }
+
+    .bid-level,
+    .ask-level {
+      display: flex;
+      width: 50%;
+      padding: 6px 4px;
+      position: relative;
+      font-size: 13px;
+
+      span {
+        position: relative;
+        z-index: 1;
+        flex: 1;
+        text-align: center;
+      }
+
+      .quantity {
+        color: #8f8f8f;
+      }
+
+      &.empty {
+        color: #3d3d5c;
+      }
+    }
+
+    .bid-level {
+      .bid-bar {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(76, 175, 80, 0.2);
+      }
+
+      .bid-price {
+        color: #4caf50;
+        font-weight: 500;
+      }
+    }
+
+    .ask-level {
+      .ask-bar {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        background: rgba(244, 67, 54, 0.2);
+      }
+
+      .ask-price {
+        color: #f44336;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .order-book-summary {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px solid #2d2d44;
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+
+      .label {
+        font-size: 11px;
+        color: #8f8f8f;
+        text-transform: uppercase;
+      }
+
+      .value {
+        font-size: 14px;
+        font-weight: 500;
+        color: #fff;
+
+        &.bid-color {
+          color: #4caf50;
+        }
+
+        &.ask-color {
+          color: #f44336;
+        }
+      }
+    }
+  }
+}

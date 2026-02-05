@@ -32,7 +32,10 @@ const routes: Routes = [
   { path: 'system', loadChildren: () => import('./modules/system-monitoring/system-monitoring.module').then(m => m.SystemMonitoringModule), canActivate: [AuthGuard] },
   
   // 🆕 Trading Workflow - Search, Buy & Inventory Management
-  { path: 'trading', loadChildren: () => import('./modules/trading/trading.module').then(m => m.TradingModule), canActivate: [AuthGuard] }
+  { path: 'trading', loadChildren: () => import('./modules/trading/trading.module').then(m => m.TradingModule), canActivate: [AuthGuard] },
+
+  // 🆕 Smart Room Trading Exchange - Professional Trading Platform
+  { path: 'exchange', loadChildren: () => import('./modules/trading-exchange/trading-exchange.module').then(m => m.TradingExchangeModule), canActivate: [AuthGuard] }
 ];
 
 @NgModule({

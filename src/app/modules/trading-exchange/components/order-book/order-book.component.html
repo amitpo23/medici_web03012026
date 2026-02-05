@@ -1,0 +1,91 @@
+<div class="order-book-container">
+  <div class="order-book-header">
+    <h3>Order Book</h3>
+    <button mat-icon-button (click)="loadOrderBook()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <mat-spinner diameter="30"></mat-spinner>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-state">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Order Book Content -->
+  <div *ngIf="orderBook && !loading && !error" class="order-book-content">
+    <!-- Spread Info -->
+    <div class="spread-info">
+      <span class="spread-label">Spread</span>
+      <span class="spread-value">{{ formatPrice(orderBook.summary.spread) }}</span>
+      <span class="spread-percent">({{ orderBook.summary.spreadPercent }}%)</span>
+    </div>
+
+    <!-- Column Headers -->
+    <div class="column-headers">
+      <div class="bid-header">
+        <span>Qty</span>
+        <span>Bid</span>
+      </div>
+      <div class="ask-header">
+        <span>Ask</span>
+        <span>Qty</span>
+      </div>
+    </div>
+
+    <!-- Order Book Levels -->
+    <div class="levels-container">
+      <!-- Bids (Left) and Asks (Right) side by side -->
+      <div class="levels-row" *ngFor="let i of [0,1,2,3,4,5,6,7,8,9]">
+        <!-- Bid Level -->
+        <div class="bid-level" *ngIf="orderBook.bids[i]">
+          <div class="bid-bar" [style.width.%]="getBidBarWidth(orderBook.bids[i])"></div>
+          <span class="quantity">{{ orderBook.bids[i].quantity }}</span>
+          <span class="price bid-price">{{ formatPrice(orderBook.bids[i].price) }}</span>
+        </div>
+        <div class="bid-level empty" *ngIf="!orderBook.bids[i]">
+          <span class="quantity">-</span>
+          <span class="price">-</span>
+        </div>
+
+        <!-- Ask Level -->
+        <div class="ask-level" *ngIf="orderBook.asks[i]">
+          <div class="ask-bar" [style.width.%]="getAskBarWidth(orderBook.asks[i])"></div>
+          <span class="price ask-price">{{ formatPrice(orderBook.asks[i].price) }}</span>
+          <span class="quantity">{{ orderBook.asks[i].quantity }}</span>
+        </div>
+        <div class="ask-level empty" *ngIf="!orderBook.asks[i]">
+          <span class="price">-</span>
+          <span class="quantity">-</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="order-book-summary">
+      <div class="summary-item">
+        <span class="label">Best Bid</span>
+        <span class="value bid-color">{{ formatPrice(orderBook.summary.bestBid) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Mid Price</span>
+        <span class="value">{{ formatPrice(orderBook.summary.midPrice) }}</span>
+      </div>
+      <div class="summary-item">
+        <span class="label">Best Ask</span>
+        <span class="value ask-color">{{ formatPrice(orderBook.summary.bestAsk) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Hotel Selected -->
+  <div *ngIf="(!hotelId || hotelId <= 0) && !loading" class="no-data">
+    <mat-icon>list_alt</mat-icon>
+    <span>Select a hotel to view order book</span>
+  </div>
+</div>

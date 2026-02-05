@@ -1,0 +1,77 @@
+<div class="trading-exchange">
+  <!-- Top Bar -->
+  <div class="exchange-header">
+    <div class="header-left">
+      <h1>Smart Room Trading Exchange</h1>
+      <span class="subtitle">Professional Hotel Room Trading Platform</span>
+    </div>
+    <div class="header-right">
+      <div class="auto-refresh">
+        <mat-slide-toggle
+          [(ngModel)]="autoRefresh"
+          color="primary"
+        >
+          Auto Refresh
+        </mat-slide-toggle>
+      </div>
+      <button mat-icon-button (click)="refreshAll()" matTooltip="Refresh All">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="exchange-layout">
+    <!-- Left Panel - Market Analysis & Signals -->
+    <div class="left-panel">
+      <app-market-analysis-panel
+        (hotelSelected)="onHotelSelected($event)"
+      ></app-market-analysis-panel>
+    </div>
+
+    <!-- Center Panel - Charts & Order Book -->
+    <div class="center-panel">
+      <!-- Price Chart -->
+      <div class="chart-container">
+        <app-price-chart
+          #priceChart
+          [hotelId]="selectedHotelId"
+          [height]="350"
+        ></app-price-chart>
+      </div>
+
+      <!-- Order Book -->
+      <div class="order-book-container">
+        <app-order-book
+          #orderBook
+          [hotelId]="selectedHotelId"
+          [levels]="10"
+        ></app-order-book>
+      </div>
+    </div>
+
+    <!-- Right Panel - Trading Signals -->
+    <div class="right-panel">
+      <app-trading-signals
+        (signalSelected)="onSignalSelected($event)"
+        (buyClicked)="onBuyClicked($event)"
+      ></app-trading-signals>
+    </div>
+  </div>
+
+  <!-- Bottom Panel - Portfolio Dashboard Link -->
+  <div class="bottom-actions">
+    <a mat-stroked-button routerLink="portfolio" color="primary">
+      <mat-icon>account_balance_wallet</mat-icon>
+      View Full Portfolio
+    </a>
+    <a mat-stroked-button routerLink="/trading/search-and-buy" color="accent">
+      <mat-icon>search</mat-icon>
+      Search & Buy
+    </a>
+    <a mat-stroked-button routerLink="/trading/inventory-management" color="warn">
+      <mat-icon>inventory_2</mat-icon>
+      Manage Inventory
+    </a>
+  </div>
+</div>

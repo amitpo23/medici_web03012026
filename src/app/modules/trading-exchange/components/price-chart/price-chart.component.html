@@ -1,0 +1,46 @@
+<div class="price-chart-container">
+  <!-- Header -->
+  <div class="chart-header">
+    <div class="symbol-info">
+      <span class="symbol">{{ symbol }}</span>
+      <span class="hotel-name">{{ hotelName }}</span>
+    </div>
+    <div class="timeframe-selector">
+      <button
+        *ngFor="let tf of timeframes"
+        [class.active]="selectedTimeframe === tf"
+        (click)="onTimeframeChange(tf)"
+        class="timeframe-btn"
+      >
+        {{ tf }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner diameter="40"></mat-spinner>
+    <span>Loading price data...</span>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-message">
+    <mat-icon>warning</mat-icon>
+    <span>{{ error }}</span>
+    <button mat-button color="primary" (click)="loadPriceData()">Retry</button>
+  </div>
+
+  <!-- Chart Container -->
+  <div
+    #chartContainer
+    class="chart-canvas"
+    [style.height.px]="height"
+    [class.hidden]="loading || error"
+  ></div>
+
+  <!-- No Hotel Selected -->
+  <div *ngIf="!hotelId || hotelId <= 0" class="no-data">
+    <mat-icon>show_chart</mat-icon>
+    <span>Select a hotel to view price chart</span>
+  </div>
+</div>
