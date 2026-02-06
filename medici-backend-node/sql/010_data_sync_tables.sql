@@ -76,6 +76,36 @@ END
 GO
 
 -- =====================================================
+-- Table: MED_SyncedRoomSales
+-- Stores sold room data synced from .NET API
+-- =====================================================
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[MED_SyncedRoomSales]') AND type in (N'U'))
+BEGIN
+    CREATE TABLE [dbo].[MED_SyncedRoomSales] (
+        [Id] INT IDENTITY(1,1) PRIMARY KEY,
+        [SaleId] INT NOT NULL,
+        [HotelId] INT,
+        [HotelName] NVARCHAR(500),
+        [CheckIn] DATE,
+        [CheckOut] DATE,
+        [BuyPrice] DECIMAL(10,2) DEFAULT 0,
+        [PushPrice] DECIMAL(10,2) DEFAULT 0,
+        [Profit] DECIMAL(10,2) DEFAULT 0,
+        [Status] NVARCHAR(50),
+        [LastSync] DATETIME DEFAULT GETDATE(),
+        [RawData] NVARCHAR(MAX),
+        CONSTRAINT [UQ_SyncedRoomSales_SaleId] UNIQUE ([SaleId])
+    );
+
+    CREATE INDEX [IX_SyncedRoomSales_HotelId] ON [dbo].[MED_SyncedRoomSales] ([HotelId]);
+    CREATE INDEX [IX_SyncedRoomSales_CheckIn] ON [dbo].[MED_SyncedRoomSales] ([CheckIn]);
+    CREATE INDEX [IX_SyncedRoomSales_LastSync] ON [dbo].[MED_SyncedRoomSales] ([LastSync] DESC);
+
+    PRINT 'Created table: MED_SyncedRoomSales';
+END
+GO
+
+-- =====================================================
 -- Table: MED_DataSyncLog
 -- Logs all data sync operations
 -- =====================================================

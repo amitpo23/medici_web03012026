@@ -133,6 +133,7 @@ const activityFeedRoutes = require('./routes/activity-feed');
 const dataExplorerRoutes = require('./routes/data-explorer');
 const tradingExchangeRoutes = require('./routes/trading-exchange');
 const dataSyncRoutes = require('./routes/data-sync');
+const dotnetProxyRoutes = require('./routes/dotnet-proxy');
 
 // Data Sync Worker
 const DataSyncWorker = require('./workers/data-sync-worker');
@@ -188,6 +189,7 @@ app.use('/pricing', verifyToken, advancedPricingRoutes);
 app.use('/activity-feed', verifyToken, activityFeedRoutes);
 app.use('/data-explorer', verifyToken, dataExplorerRoutes);
 app.use('/data-sync', verifyToken, dataSyncRoutes);
+app.use('/dotnet', verifyToken, dotnetProxyRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);

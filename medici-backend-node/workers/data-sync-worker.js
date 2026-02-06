@@ -1,14 +1,17 @@
 /**
- * Data Sync Worker - Fetches data from external B2B API every hour
+ * Data Sync Worker - Fetches data from Medici .NET Backend API every hour
  *
- * Purpose: Sync room availability, bookings, and dashboard data from external sources
+ * Purpose: Sync room availability, bookings, dashboard data from production .NET backend
  * Schedule: Every hour (0 * * * *)
  *
- * Endpoints to sync (configured via env):
- * - GetRoomsActive: Active room inventory
- * - GetDashboardInfo: Dashboard statistics
- * - GetBookings: Recent bookings
- * - GetOpportunities: Available opportunities
+ * Base URL: https://medici-backend.azurewebsites.net
+ * Auth: Basic Auth via /api/auth/OnlyNightUsersTokenAPI
+ *
+ * Endpoints to sync (all POST):
+ * - /api/hotels/GetRoomsActive: Active room inventory
+ * - /api/hotels/GetDashboardInfo: Dashboard statistics
+ * - /api/hotels/GetRoomsSales: Sold rooms
+ * - /api/hotels/GetOpportunities: Available opportunities
  */
 
 const cron = require('node-cron');
@@ -22,6 +25,8 @@ class DataSyncWorker {
     this.isRunning = false;
     this.cronJob = null;
     this.lastSync = null;
+    this.authToken = null;
+    this.tokenExpiry = null;
     this.syncStats = {
       totalSyncs: 0,
       successfulSyncs: 0,
@@ -29,44 +34,85 @@ class DataSyncWorker {
       lastError: null
     };
 
-    // External API configuration
+    // Medici .NET Backend API configuration
     this.apiConfig = {
-      baseUrl: process.env.B2B_API_URL || process.env.INNSTANT_SEARCH_URL,
-      authToken: process.env.B2B_API_TOKEN || process.env.INNSTANT_ACCESS_TOKEN,
-      applicationKey: process.env.B2B_APPLICATION_KEY || process.env.INNSTANT_APPLICATION_KEY
+      baseUrl: process.env.MEDICI_DOTNET_API_URL || 'https://medici-backend.azurewebsites.net',
+      clientSecret: process.env.MEDICI_API_CLIENT_SECRET || ''
     };
 
-    // Endpoints to sync
+    // Endpoints to sync (all use POST method per Swagger spec)
     this.endpoints = [
       {
         name: 'GetRoomsActive',
         path: '/api/hotels/GetRoomsActive',
-        method: 'GET',
+        method: 'POST',
         handler: this.syncActiveRooms.bind(this),
-        enabled: true
+        enabled: true,
+        requestBody: {} // RoomsActiveApiParams - can filter by date, hotel, etc.
       },
       {
         name: 'GetDashboardInfo',
         path: '/api/hotels/GetDashboardInfo',
-        method: 'GET',
+        method: 'POST',
         handler: this.syncDashboardInfo.bind(this),
-        enabled: true
+        enabled: true,
+        requestBody: {} // DashboardApiParams
       },
       {
-        name: 'GetBookings',
-        path: '/api/hotels/GetBookings',
-        method: 'GET',
-        handler: this.syncBookings.bind(this),
-        enabled: true
+        name: 'GetRoomsSales',
+        path: '/api/hotels/GetRoomsSales',
+        method: 'POST',
+        handler: this.syncRoomsSales.bind(this),
+        enabled: true,
+        requestBody: {}
       },
       {
         name: 'GetOpportunities',
         path: '/api/hotels/GetOpportunities',
-        method: 'GET',
+        method: 'POST',
         handler: this.syncOpportunities.bind(this),
-        enabled: true
+        enabled: true,
+        requestBody: {}
       }
     ];
+  }
+
+  /**
+   * Authenticate with the .NET API and get token
+   */
+  async authenticate() {
+    try {
+      // Check if we have a valid token
+      if (this.authToken && this.tokenExpiry && new Date() < this.tokenExpiry) {
+        return this.authToken;
+      }
+
+      logger.info('[DataSyncWorker] Authenticating with Medici .NET API...');
+
+      const formData = new FormData();
+      formData.append('client_secret', this.apiConfig.clientSecret);
+
+      const response = await axios.post(
+        `${this.apiConfig.baseUrl}/api/auth/OnlyNightUsersTokenAPI`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          },
+          timeout: 30000
+        }
+      );
+
+      this.authToken = response.data.token || response.data.access_token || response.data;
+      // Token valid for 1 hour, refresh 5 minutes early
+      this.tokenExpiry = new Date(Date.now() + 55 * 60 * 1000);
+
+      logger.info('[DataSyncWorker] Authentication successful');
+      return this.authToken;
+    } catch (error) {
+      logger.error('[DataSyncWorker] Authentication failed:', { error: error.message });
+      throw error;
+    }
   }
 
   /**
@@ -74,8 +120,7 @@ class DataSyncWorker {
    */
   getHeaders() {
     return {
-      'aether-access-token': this.apiConfig.authToken,
-      'aether-application-key': this.apiConfig.applicationKey,
+      'Authorization': `Bearer ${this.authToken}`,
       'Content-Type': 'application/json',
       'Accept': 'application/json'
     };
@@ -127,8 +172,16 @@ class DataSyncWorker {
     const startTime = Date.now();
 
     logger.info('[DataSyncWorker] ====== Starting hourly data sync ======');
+    logger.info(`[DataSyncWorker] API Base URL: ${this.apiConfig.baseUrl}`);
 
     try {
+      // Authenticate first
+      if (this.apiConfig.clientSecret) {
+        await this.authenticate();
+      } else {
+        logger.warn('[DataSyncWorker] No client_secret configured, skipping authentication');
+      }
+
       const results = [];
 
       for (const endpoint of this.endpoints) {
@@ -141,7 +194,11 @@ class DataSyncWorker {
           const result = await this.fetchAndProcess(endpoint);
           results.push({ name: endpoint.name, success: true, ...result });
         } catch (error) {
-          logger.error(`[DataSyncWorker] Failed to sync ${endpoint.name}:`, { error: error.message });
+          logger.error(`[DataSyncWorker] Failed to sync ${endpoint.name}:`, {
+            error: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+          });
           results.push({ name: endpoint.name, success: false, error: error.message });
         }
       }
@@ -176,7 +233,8 @@ class DataSyncWorker {
   }
 
   /**
-   * Fetch data from external API and process it
+   * Fetch data from .NET API and process it
+   * All endpoints use POST method per Swagger spec
    */
   async fetchAndProcess(endpoint) {
     const url = `${this.apiConfig.baseUrl}${endpoint.path}`;
@@ -185,14 +243,18 @@ class DataSyncWorker {
       method: endpoint.method,
       url: url,
       headers: this.getHeaders(),
-      timeout: 30000 // 30 second timeout
+      data: endpoint.requestBody || {},
+      timeout: 60000 // 60 second timeout for large datasets
     });
 
+    // Handle different response structures
+    const data = response.data?.data || response.data?.Data || response.data;
+
     // Call the specific handler for this endpoint
-    const processed = await endpoint.handler(response.data);
+    const processed = await endpoint.handler(data);
 
     return {
-      recordsFetched: response.data?.length || (response.data ? 1 : 0),
+      recordsFetched: Array.isArray(data) ? data.length : (data ? 1 : 0),
       recordsProcessed: processed
     };
   }
@@ -282,51 +344,62 @@ class DataSyncWorker {
   }
 
   /**
-   * Sync bookings from external API
+   * Sync sold rooms from .NET API (GetRoomsSales)
    */
-  async syncBookings(data) {
+  async syncRoomsSales(data) {
     if (!data || !Array.isArray(data)) {
-      logger.warn('[DataSyncWorker] No booking data received');
+      logger.warn('[DataSyncWorker] No room sales data received');
       return 0;
     }
 
     const pool = await getPool();
     let processedCount = 0;
 
-    for (const booking of data) {
+    for (const sale of data) {
       try {
-        // Check if booking exists
-        const existingResult = await pool.request()
-          .input('externalId', sql.NVarChar, String(booking.bookingId || booking.BookingId || booking.id))
-          .query(`SELECT BookID FROM MED_Book WHERE ExternalBookingId = @externalId`);
-
-        if (existingResult.recordset.length === 0) {
-          // Insert new booking
-          await pool.request()
-            .input('externalId', sql.NVarChar, String(booking.bookingId || booking.BookingId || booking.id))
-            .input('hotelId', sql.Int, booking.hotelId || booking.HotelId)
-            .input('checkIn', sql.Date, booking.checkIn || booking.CheckIn)
-            .input('checkOut', sql.Date, booking.checkOut || booking.CheckOut)
-            .input('guestName', sql.NVarChar, booking.guestName || booking.GuestName || '')
-            .input('price', sql.Decimal(10, 2), booking.price || booking.Price || 0)
-            .input('status', sql.NVarChar, booking.status || booking.Status || 'confirmed')
-            .input('syncDate', sql.DateTime, new Date())
-            .query(`
-              INSERT INTO MED_Book
-              (ExternalBookingId, HotelId, DateFrom, DateTo, GuestName, Price, Status, SyncDate)
-              VALUES (@externalId, @hotelId, @checkIn, @checkOut, @guestName, @price, @status, @syncDate)
-            `);
-          processedCount++;
-        }
+        // Log the synced sale for tracking
+        await pool.request()
+          .input('syncDate', sql.DateTime, new Date())
+          .input('saleId', sql.Int, sale.id || sale.Id || sale.prebookId || sale.PrebookId)
+          .input('hotelId', sql.Int, sale.hotelId || sale.HotelId)
+          .input('hotelName', sql.NVarChar, sale.hotelName || sale.HotelName || '')
+          .input('checkIn', sql.Date, sale.checkIn || sale.CheckIn || sale.dateFrom || sale.DateFrom)
+          .input('checkOut', sql.Date, sale.checkOut || sale.CheckOut || sale.dateTo || sale.DateTo)
+          .input('buyPrice', sql.Decimal(10, 2), sale.buyPrice || sale.BuyPrice || sale.price || sale.Price || 0)
+          .input('pushPrice', sql.Decimal(10, 2), sale.pushPrice || sale.PushPrice || 0)
+          .input('profit', sql.Decimal(10, 2), (sale.pushPrice || sale.PushPrice || 0) - (sale.buyPrice || sale.BuyPrice || sale.price || sale.Price || 0))
+          .input('status', sql.NVarChar, sale.status || sale.Status || 'sold')
+          .input('jsonData', sql.NVarChar(sql.MAX), JSON.stringify(sale))
+          .query(`
+            MERGE INTO MED_SyncedRoomSales AS target
+            USING (SELECT @saleId AS SaleId) AS source
+            ON target.SaleId = source.SaleId
+            WHEN MATCHED THEN
+              UPDATE SET
+                HotelId = @hotelId,
+                HotelName = @hotelName,
+                CheckIn = @checkIn,
+                CheckOut = @checkOut,
+                BuyPrice = @buyPrice,
+                PushPrice = @pushPrice,
+                Profit = @profit,
+                Status = @status,
+                LastSync = @syncDate,
+                RawData = @jsonData
+            WHEN NOT MATCHED THEN
+              INSERT (SaleId, HotelId, HotelName, CheckIn, CheckOut, BuyPrice, PushPrice, Profit, Status, LastSync, RawData)
+              VALUES (@saleId, @hotelId, @hotelName, @checkIn, @checkOut, @buyPrice, @pushPrice, @profit, @status, @syncDate, @jsonData);
+          `);
+        processedCount++;
       } catch (error) {
-        logger.error('[DataSyncWorker] Error processing booking:', {
-          bookingId: booking.bookingId || booking.BookingId,
+        logger.error('[DataSyncWorker] Error processing room sale:', {
+          saleId: sale.id || sale.Id,
           error: error.message
         });
       }
     }
 
-    logger.info(`[DataSyncWorker] Synced ${processedCount} new bookings`);
+    logger.info(`[DataSyncWorker] Synced ${processedCount} room sales`);
     return processedCount;
   }
 
