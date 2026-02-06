@@ -42,6 +42,13 @@ class WorkerCoordinator {
         healthCheckInterval: 120000, // 2 minutes
         maxConsecutiveFailures: 3,
         enabled: true
+      },
+      'data-sync-worker': {
+        name: 'Data Sync Worker',
+        schedule: '0 * * * *', // Every hour
+        healthCheckInterval: 600000, // 10 minutes
+        maxConsecutiveFailures: 2,
+        enabled: true
       }
     };
     

@@ -132,6 +132,11 @@ const advancedPricingRoutes = require('./routes/advanced-pricing');
 const activityFeedRoutes = require('./routes/activity-feed');
 const dataExplorerRoutes = require('./routes/data-explorer');
 const tradingExchangeRoutes = require('./routes/trading-exchange');
+const dataSyncRoutes = require('./routes/data-sync');
+
+// Data Sync Worker
+const DataSyncWorker = require('./workers/data-sync-worker');
+const dataSyncWorker = new DataSyncWorker();
 
 // Public routes (no auth required)
 app.use('/sign-in', authLimiter, authRoutes);
@@ -182,6 +187,7 @@ app.use('/pricing', verifyToken, advancedPricingRoutes);
 // Protected ADD-ON Routes - Standalone features (Added Feb 2026)
 app.use('/activity-feed', verifyToken, activityFeedRoutes);
 app.use('/data-explorer', verifyToken, dataExplorerRoutes);
+app.use('/data-sync', verifyToken, dataSyncRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
@@ -283,6 +289,11 @@ async function startServer() {
       logger.info('Starting Alerts Agent...');
       alertsAgent.start(5); // Scan every 5 minutes
 
+      // Start Data Sync Worker (hourly sync from external APIs)
+      logger.info('Starting Data Sync Worker...');
+      dataSyncWorker.start();
+      dataSyncRoutes.setWorkerInstance(dataSyncWorker);
+
       console.log(`\n╔═══════════════════════════════════════════════════════════╗`);
       console.log(`║  🚀 MEDICI HOTELS API - RUNNING                          ║`);
       console.log(`╚═══════════════════════════════════════════════════════════╝\n`);
@@ -303,7 +314,8 @@ async function startServer() {
       console.log(`   • AI Predictions: /ai`);
       console.log(`   • Scraper: /scraper`);
       console.log(`   • Logs: /logs`);
-      console.log(`   • Alerts: /alerts\n`);
+      console.log(`   • Alerts: /alerts`);
+      console.log(`   • Data Sync: /data-sync (hourly external API sync)\n`);
     });
   } catch (err) {
     logger.error('Failed to connect to database at startup', { error: err.message });
