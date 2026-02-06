@@ -48,6 +48,7 @@
     "node-cron": "^3.0.3",
     "openai": "^6.16.0",
     "opossum": "^9.0.0",
+    "pdfkit": "^0.17.2",
     "playwright": "^1.57.0",
     "redis": "^5.10.0",
     "semver": "^7.7.3",

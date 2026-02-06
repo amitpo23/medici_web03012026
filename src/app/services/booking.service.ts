@@ -105,4 +105,33 @@ export class BookingService {
     const limit = params?.limit || 50;
     return this.http.get<any[]>(`${this.baseUrl}Book/Archive?page=${page}&limit=${limit}`);
   }
+
+  /**
+   * Download booking confirmation PDF
+   */
+  downloadConfirmationPDF(bookingId: number): void {
+    const url = `${this.baseUrl}Documents/BookingConfirmation/${bookingId}`;
+
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `booking-MED-${bookingId.toString().padStart(6, '0')}.pdf`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+      },
+      error: (err) => {
+        console.error('Failed to download PDF', err);
+      }
+    });
+  }
+
+  /**
+   * Get booking confirmation PDF as blob
+   */
+  getConfirmationPDF(bookingId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}Documents/BookingConfirmation/${bookingId}`, {
+      responseType: 'blob'
+    });
+  }
 }

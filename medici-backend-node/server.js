@@ -134,6 +134,11 @@ const dataExplorerRoutes = require('./routes/data-explorer');
 const tradingExchangeRoutes = require('./routes/trading-exchange');
 const dataSyncRoutes = require('./routes/data-sync');
 const dotnetProxyRoutes = require('./routes/dotnet-proxy');
+const documentsRoutes = require('./routes/documents');
+
+// Enhanced error handling (Following nodejs-backend-patterns skill)
+const { errorHandler, notFoundHandler, setupUncaughtHandlers } = require('./middleware/error-handler');
+setupUncaughtHandlers();
 
 // Data Sync Worker
 const DataSyncWorker = require('./workers/data-sync-worker');
@@ -190,6 +195,7 @@ app.use('/activity-feed', verifyToken, activityFeedRoutes);
 app.use('/data-explorer', verifyToken, dataExplorerRoutes);
 app.use('/data-sync', verifyToken, dataSyncRoutes);
 app.use('/dotnet', verifyToken, dotnetProxyRoutes);
+app.use('/Documents', verifyToken, documentsRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
@@ -223,7 +229,8 @@ app.get('/', (req, res) => {
       alerts: '/alerts (מערכת התראות ומעקב)',
       health: '/health (בדיקת תקינות מערכת)',
       searchIntelligence: '/search-intelligence (ניתוח מגמות חיפוש ו-8.3M search records)',
-      cancellations: '/cancellations (ניתוח מקיף של כל הביטולים במערכת)'
+      cancellations: '/cancellations (ניתוח מקיף של כל הביטולים במערכת)',
+      documents: '/Documents (PDF generation - booking confirmations, invoices)'
     },
     newFeatures: {
       searchInnstant: 'POST /Search/InnstantPrice - GPT-style search with smart defaults',
@@ -246,20 +253,10 @@ app.get('/api', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handling middleware (Enhanced with nodejs-backend-patterns skill)
 app.use(errorLogger);
-app.use((err, req, res, next) => {
-  logger.error('Server error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url
-  });
-  
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
-  });
-});
+app.use(notFoundHandler); // Handle 404 for unmatched routes
+app.use(errorHandler);    // Global error handler with proper status codes
 
 // Verify database connection before starting
 const { getPool } = require('./config/database');
