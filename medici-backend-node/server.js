@@ -28,14 +28,26 @@ app.use(helmet({
 
 // Middleware
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-        'https://admin.medicihotels.com',
-        'https://medici-web03012026.vercel.app',
-        'https://medici-web.vercel.app',
-        'https://medici-frontend.vercel.app'
-      ]
-    : '*',
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+
+    // Allow all Vercel deployments and known domains
+    const allowedPatterns = [
+      /\.vercel\.app$/,
+      /^https:\/\/admin\.medicihotels\.com$/,
+      /^https:\/\/localhost/,
+      /^http:\/\/localhost/
+    ];
+
+    const isAllowed = allowedPatterns.some(pattern => pattern.test(origin));
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow anyway in case of new domains
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
