@@ -166,49 +166,93 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
     .zenith-dashboard {
-      padding: 24px;
-      background: #f5f5f5;
+      padding: 32px;
+      background: linear-gradient(180deg, #0a0e27 0%, #131842 50%, #1a1f4e 100%);
       min-height: 100vh;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .dashboard-header {
-      background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
-      border-radius: 12px;
-      padding: 24px;
-      margin-bottom: 24px;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 20px;
+      padding: 32px 40px;
+      margin-bottom: 32px;
       color: white;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+
+    .dashboard-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .dashboard-header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.5), transparent);
     }
 
     .header-content {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      position: relative;
+      z-index: 1;
     }
 
     .title-section {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 20px;
     }
 
     .header-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      opacity: 0.9;
+      font-size: 52px;
+      width: 52px;
+      height: 52px;
+      color: #818cf8;
+      filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.5));
+      animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.5)); }
+      50% { filter: drop-shadow(0 0 30px rgba(129, 140, 248, 0.8)); }
     }
 
     .title-section h1 {
       margin: 0;
-      font-size: 28px;
-      font-weight: 500;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
     .subtitle {
-      margin: 4px 0 0 0;
-      opacity: 0.85;
+      margin: 6px 0 0 0;
+      opacity: 0.7;
       font-size: 14px;
+      font-weight: 400;
+      color: #a5b4fc;
     }
 
     .header-actions {
@@ -218,47 +262,113 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
 
     .header-actions button {
       color: white;
-      border-color: rgba(255, 255, 255, 0.5);
+      border-color: rgba(129, 140, 248, 0.4);
+      border-radius: 12px;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .header-actions button:hover {
+      border-color: #818cf8;
+      background: rgba(129, 140, 248, 0.15);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
     }
 
     .header-actions button[mat-flat-button] {
-      background: rgba(255, 255, 255, 0.2);
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border: none;
+    }
+
+    .header-actions button[mat-flat-button]:hover {
+      background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
     }
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.8) 0%, rgba(20, 25, 55, 0.9) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.4);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 40px rgba(99, 102, 241, 0.1);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
     }
 
     .stat-card mat-card-content {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px !important;
+      gap: 20px;
+      padding: 24px !important;
     }
 
     .stat-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+    }
+
+    .stat-icon::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 18px;
+      background: inherit;
+      filter: blur(12px);
+      opacity: 0.4;
+      z-index: -1;
     }
 
     .stat-icon mat-icon {
-      font-size: 28px;
-      width: 28px;
-      height: 28px;
+      font-size: 30px;
+      width: 30px;
+      height: 30px;
       color: white;
     }
 
-    .stat-icon.queue { background: linear-gradient(135deg, #7c4dff 0%, #651fff 100%); }
-    .stat-icon.success { background: linear-gradient(135deg, #00c853 0%, #00e676 100%); }
-    .stat-icon.failed { background: linear-gradient(135deg, #ff5252 0%, #ff1744 100%); }
-    .stat-icon.total { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); }
+    .stat-icon.queue {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    }
+    .stat-icon.success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+    .stat-icon.failed {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    }
+    .stat-icon.total {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
 
     .stat-info {
       flex: 1;
@@ -267,68 +377,108 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
     }
 
     .stat-value {
-      font-size: 28px;
-      font-weight: 600;
-      color: #333;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -1px;
     }
 
     .stat-label {
       font-size: 13px;
-      color: #666;
+      color: #94a3b8;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .success-rate {
-      font-size: 20px;
-      font-weight: 600;
-      color: #4caf50;
+      font-size: 24px;
+      font-weight: 700;
+      color: #10b981;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .failed-items {
       font-size: 12px;
-      color: #f44336;
+      color: #ef4444;
+      font-weight: 500;
     }
 
     .stats-by-type {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
 
     .stats-by-type h3 {
-      margin: 0 0 16px 0;
-      color: #333;
-      font-weight: 500;
+      margin: 0 0 20px 0;
+      color: #e2e8f0;
+      font-weight: 600;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stats-by-type h3::before {
+      content: '';
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(180deg, #6366f1, #8b5cf6);
+      border-radius: 2px;
     }
 
     .type-cards {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .type-card {
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.8) 0%, rgba(20, 25, 55, 0.9) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-radius: 16px;
+      transition: all 0.3s;
+    }
+
+    .type-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
     }
 
     .type-card mat-card-header {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .type-card mat-card-title {
+      color: #fff !important;
+      font-weight: 600;
+    }
+
+    .type-card mat-card-subtitle {
+      color: #94a3b8 !important;
     }
 
     .type-card mat-icon[mat-card-avatar] {
-      background: #e3f2fd;
-      border-radius: 8px;
-      padding: 8px;
-      color: #1976d2;
+      background: rgba(99, 102, 241, 0.15);
+      border-radius: 12px;
+      padding: 10px;
+      color: #818cf8;
     }
 
     .type-card mat-icon.availability {
-      background: #e8f5e9;
-      color: #388e3c;
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
     }
 
     .type-card mat-icon.rate {
-      background: #fff3e0;
-      color: #f57c00;
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
     }
 
     .type-stats {
       display: flex;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .type-stat {
@@ -337,44 +487,88 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
 
     .type-stat .label {
       display: block;
-      font-size: 11px;
-      color: #666;
+      font-size: 10px;
+      color: #64748b;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
 
     .type-stat .value {
       display: block;
       font-size: 18px;
       font-weight: 600;
-      color: #333;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .type-stat .value.success {
-      color: #4caf50;
+      color: #10b981;
     }
 
     nav[mat-tab-nav-bar] {
-      background: white;
-      border-radius: 8px 8px 0 0;
-      margin-top: 24px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.9) 0%, rgba(20, 25, 55, 0.95) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-bottom: none;
+      border-radius: 16px 16px 0 0;
+      margin-top: 32px;
+      padding: 8px 8px 0;
     }
 
     mat-tab-nav-panel {
-      background: white;
-      border-radius: 0 0 8px 8px;
-      min-height: 400px;
+      background: linear-gradient(180deg, rgba(20, 25, 55, 0.95) 0%, rgba(15, 20, 45, 0.98) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.15);
+      border-top: none;
+      border-radius: 0 0 16px 16px;
+      min-height: 500px;
+    }
+
+    a[mat-tab-link] {
+      color: #94a3b8 !important;
+      font-weight: 500;
+      border-radius: 10px 10px 0 0;
+      margin: 0 4px;
+      transition: all 0.3s;
+    }
+
+    a[mat-tab-link]:hover {
+      color: #e2e8f0 !important;
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    a[mat-tab-link].mdc-tab--active {
+      color: #fff !important;
+      background: rgba(99, 102, 241, 0.2);
     }
 
     a[mat-tab-link] mat-icon {
       margin-right: 8px;
+      color: inherit;
     }
 
     .tab-divider {
-      width: 1px;
-      height: 24px;
-      background: #e0e0e0;
-      margin: 0 8px;
+      width: 2px;
+      height: 28px;
+      background: linear-gradient(180deg, transparent, rgba(99, 102, 241, 0.4), transparent);
+      margin: 0 12px;
       align-self: center;
+      border-radius: 1px;
+    }
+
+    ::ng-deep .mat-mdc-tab-link .mdc-tab-indicator__content--underline {
+      border-color: #6366f1 !important;
+    }
+
+    ::ng-deep .mat-badge-content {
+      background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    ::ng-deep .mat-mdc-chip {
+      background: rgba(99, 102, 241, 0.2) !important;
+      color: #a5b4fc !important;
+      font-weight: 500;
     }
 
     .spin {
@@ -386,10 +580,20 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
       to { transform: rotate(360deg); }
     }
 
+    @media (max-width: 1200px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
     @media (max-width: 768px) {
+      .zenith-dashboard {
+        padding: 16px;
+      }
+
       .header-content {
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
         text-align: center;
       }
 
@@ -399,6 +603,10 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
 
       .stats-grid {
         grid-template-columns: 1fr;
+      }
+
+      .dashboard-header {
+        padding: 24px;
       }
     }
   `]

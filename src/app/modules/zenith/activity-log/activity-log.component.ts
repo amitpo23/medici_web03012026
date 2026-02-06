@@ -220,12 +220,18 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
     .activity-log {
-      padding: 24px;
+      padding: 32px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .filters-card {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
     }
 
     .filters {
@@ -235,30 +241,71 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
       flex-wrap: wrap;
     }
 
+    ::ng-deep .filters .mat-mdc-text-field-wrapper {
+      background: rgba(15, 20, 45, 0.6) !important;
+      border-radius: 10px !important;
+    }
+
+    ::ng-deep .filters .mdc-notched-outline__leading,
+    ::ng-deep .filters .mdc-notched-outline__notch,
+    ::ng-deep .filters .mdc-notched-outline__trailing {
+      border-color: rgba(99, 102, 241, 0.2) !important;
+    }
+
+    ::ng-deep .filters .mat-mdc-select-value,
+    ::ng-deep .filters .mat-mdc-floating-label,
+    ::ng-deep .filters input {
+      color: #94a3b8 !important;
+    }
+
     .search-field {
       flex: 1;
-      min-width: 200px;
+      min-width: 220px;
+    }
+
+    .filters button[mat-flat-button] {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .filters button[mat-stroked-button] {
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #94a3b8;
+      border-radius: 10px;
     }
 
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 14px;
+      transition: all 0.3s;
+    }
+
+    .stat-card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
     }
 
     .stat-card mat-card-content {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 16px !important;
+      gap: 18px;
+      padding: 20px !important;
     }
 
     .stat-card mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
-      color: #1976d2;
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: #818cf8;
     }
 
     .stat-info {
@@ -267,13 +314,18 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
     }
 
     .stat-value {
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .stat-label {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .loading-state {
@@ -281,31 +333,56 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px;
-      color: #666;
+      padding: 80px;
+      color: #94a3b8;
     }
 
     .loading-state span {
-      margin-top: 16px;
+      margin-top: 20px;
+      font-weight: 500;
     }
 
     .table-card {
       overflow: hidden;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
     }
 
     .logs-table {
       width: 100%;
+      background: transparent !important;
     }
 
-    .logs-table th {
+    ::ng-deep .logs-table th {
+      background: rgba(15, 20, 45, 0.6) !important;
+      color: #94a3b8 !important;
       font-weight: 600;
-      background: #fafafa;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15) !important;
     }
 
-    mat-chip mat-icon {
-      font-size: 16px;
-      width: 16px;
-      height: 16px;
+    ::ng-deep .logs-table td {
+      color: #e2e8f0 !important;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.08) !important;
+    }
+
+    ::ng-deep .logs-table tr:hover td {
+      background: rgba(99, 102, 241, 0.08) !important;
+    }
+
+    ::ng-deep .logs-table .mat-mdc-chip {
+      background: rgba(99, 102, 241, 0.15) !important;
+      font-size: 11px;
+      height: 26px;
+    }
+
+    ::ng-deep .logs-table .mat-mdc-chip mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
       margin-right: 4px;
     }
 
@@ -319,54 +396,56 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
       -webkit-box-orient: vertical;
       overflow: hidden;
       font-size: 13px;
+      color: #94a3b8;
     }
 
     .references {
       display: flex;
       flex-wrap: wrap;
-      gap: 4px;
+      gap: 6px;
     }
 
     .ref-badge {
       display: inline-flex;
       align-items: center;
-      padding: 2px 8px;
-      border-radius: 12px;
+      padding: 4px 10px;
+      border-radius: 8px;
       font-size: 11px;
-      font-weight: 500;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .ref-badge.reservation {
-      background: #e3f2fd;
-      color: #1565c0;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
     }
 
     .ref-badge.booking {
-      background: #e8f5e9;
-      color: #2e7d32;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
     }
 
     .ref-badge.opportunity {
-      background: #fff3e0;
-      color: #ef6c00;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
     }
 
     .ref-badge.hotel {
-      background: #f3e5f5;
-      color: #7b1fa2;
+      background: rgba(139, 92, 246, 0.15);
+      color: #a78bfa;
     }
 
     .user-cell {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
 
     .user-cell mat-icon {
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #666;
+      color: #64748b;
     }
 
     .date-cell {
@@ -376,80 +455,97 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
 
     .date-cell .date {
       font-weight: 500;
+      color: #e2e8f0;
     }
 
     .date-cell .time {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 60px;
-      color: #999;
+      padding: 80px;
+      color: #475569;
     }
 
     .empty-state mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+      font-size: 72px;
+      width: 72px;
+      height: 72px;
+      margin-bottom: 20px;
+      color: #334155;
     }
 
     .view-toggle {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: white;
-      border-radius: 24px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      padding: 4px;
+      bottom: 28px;
+      right: 28px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.95) 0%, rgba(20, 25, 55, 0.98) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      padding: 6px;
       display: flex;
-      gap: 4px;
+      gap: 6px;
+    }
+
+    .view-toggle button {
+      color: #64748b;
+      border-radius: 10px;
     }
 
     .view-toggle button.active {
-      background: #1976d2;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
       color: white;
     }
 
-    /* Timeline Styles */
+    /* Timeline Styles - Premium Dark */
     .timeline-card {
-      margin-top: 24px;
+      margin-top: 28px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
+    }
+
+    ::ng-deep .timeline-card mat-card-title {
+      color: #f1f5f9 !important;
     }
 
     .timeline {
       position: relative;
-      padding-left: 40px;
+      padding-left: 48px;
     }
 
     .timeline::before {
       content: '';
       position: absolute;
-      left: 15px;
+      left: 18px;
       top: 0;
       bottom: 0;
       width: 2px;
-      background: #e0e0e0;
+      background: linear-gradient(180deg, #6366f1 0%, rgba(99, 102, 241, 0.2) 100%);
+      border-radius: 1px;
     }
 
     .timeline-item {
       position: relative;
-      padding-bottom: 24px;
+      padding-bottom: 28px;
     }
 
     .timeline-marker {
       position: absolute;
-      left: -40px;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      background: #e0e0e0;
+      left: -48px;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .timeline-marker mat-icon {
@@ -459,51 +555,62 @@ import { ZenithService, ActivityLogEntry } from '../../../services/zenith.servic
       color: white;
     }
 
-    .timeline-item.reservation .timeline-marker { background: #1976d2; }
-    .timeline-item.booking .timeline-marker { background: #4caf50; }
-    .timeline-item.opportunity .timeline-marker { background: #ff9800; }
-    .timeline-item.push .timeline-marker { background: #9c27b0; }
-    .timeline-item.cancel .timeline-marker { background: #f44336; }
+    .timeline-item.reservation .timeline-marker { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .timeline-item.booking .timeline-marker { background: linear-gradient(135deg, #10b981, #059669); }
+    .timeline-item.opportunity .timeline-marker { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .timeline-item.push .timeline-marker { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .timeline-item.cancel .timeline-marker { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
     .timeline-content {
-      background: #fafafa;
-      border-radius: 8px;
-      padding: 16px;
+      background: rgba(15, 20, 45, 0.6);
+      border: 1px solid rgba(99, 102, 241, 0.1);
+      border-radius: 12px;
+      padding: 18px;
+      transition: all 0.3s;
+    }
+
+    .timeline-content:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      background: rgba(99, 102, 241, 0.08);
     }
 
     .timeline-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .action-name {
       font-weight: 600;
+      color: #f1f5f9;
     }
 
     .timestamp {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .timeline-details {
-      margin: 0 0 8px 0;
+      margin: 0 0 10px 0;
       font-size: 14px;
-      color: #333;
+      color: #94a3b8;
+      line-height: 1.5;
     }
 
     .timeline-refs {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       font-size: 12px;
-      color: #666;
+      color: #818cf8;
     }
 
     .timeline-user {
       font-size: 12px;
-      color: #999;
+      color: #64748b;
       font-style: italic;
+      margin-top: 8px;
     }
 
     @media (max-width: 768px) {

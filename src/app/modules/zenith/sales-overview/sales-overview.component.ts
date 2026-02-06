@@ -200,19 +200,41 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
     .sales-overview {
-      padding: 24px;
+      padding: 32px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100%;
     }
 
     .period-selector {
       display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
+      gap: 12px;
+      margin-bottom: 32px;
+      align-items: center;
+    }
+
+    .period-selector button {
+      background: rgba(30, 35, 75, 0.6);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #94a3b8;
+      border-radius: 10px;
+      font-weight: 500;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .period-selector button:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #e2e8f0;
     }
 
     .period-selector button.active {
-      background: #1976d2;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-color: transparent;
       color: white;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
     }
 
     .loading-state {
@@ -220,19 +242,37 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px;
-      color: #666;
+      padding: 80px;
+      color: #94a3b8;
     }
 
     .loading-state span {
-      margin-top: 16px;
+      margin-top: 20px;
+      font-weight: 500;
+    }
+
+    ::ng-deep .loading-state .mat-mdc-progress-spinner circle {
+      stroke: #6366f1 !important;
     }
 
     h3 {
-      margin: 24px 0 16px 0;
-      font-size: 16px;
-      font-weight: 500;
-      color: #333;
+      margin: 32px 0 20px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h3::before {
+      content: '';
+      width: 4px;
+      height: 16px;
+      background: linear-gradient(180deg, #6366f1, #8b5cf6);
+      border-radius: 2px;
     }
 
     h3:first-of-type {
@@ -242,27 +282,81 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
+      gap: 20px;
     }
 
     .stats-grid.three-cols {
       grid-template-columns: repeat(3, 1fr);
     }
 
+    .stat-card {
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-card.available::before { background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+    .stat-card.sold::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-card.cancelled::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.profit::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+    .stat-card.pending::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.approved::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-card.res-cancelled::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+    .stat-card.revenue::before { background: linear-gradient(90deg, #06b6d4, #22d3ee); }
+    .stat-card.pushes::before { background: linear-gradient(90deg, #6366f1, #818cf8); }
+    .stat-card.push-success::before { background: linear-gradient(90deg, #10b981, #34d399); }
+    .stat-card.push-failed::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+
     .stat-card mat-card-content {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 20px !important;
+      gap: 20px;
+      padding: 24px !important;
     }
 
     .stat-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
+      width: 60px;
+      height: 60px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
+      position: relative;
+    }
+
+    .stat-icon::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: 17px;
+      background: inherit;
+      filter: blur(15px);
+      opacity: 0.35;
+      z-index: -1;
     }
 
     .stat-icon mat-icon {
@@ -272,17 +366,17 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
       color: white;
     }
 
-    .stat-card.available .stat-icon { background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%); }
-    .stat-card.sold .stat-icon { background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); }
-    .stat-card.cancelled .stat-icon { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-    .stat-card.profit .stat-icon { background: linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%); }
-    .stat-card.pending .stat-icon { background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%); }
-    .stat-card.approved .stat-icon { background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); }
-    .stat-card.res-cancelled .stat-icon { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); }
-    .stat-card.revenue .stat-icon { background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%); }
-    .stat-card.pushes .stat-icon { background: linear-gradient(135deg, #607d8b 0%, #455a64 100%); }
-    .stat-card.push-success .stat-icon { background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%); }
-    .stat-card.push-failed .stat-icon { background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%); }
+    .stat-card.available .stat-icon { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+    .stat-card.sold .stat-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card.cancelled .stat-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card.profit .stat-icon { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+    .stat-card.pending .stat-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .stat-card.approved .stat-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card.res-cancelled .stat-icon { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .stat-card.revenue .stat-icon { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); }
+    .stat-card.pushes .stat-icon { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); }
+    .stat-card.push-success .stat-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+    .stat-card.push-failed .stat-icon { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
 
     .stat-info {
       flex: 1;
@@ -291,48 +385,65 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
     }
 
     .stat-value {
-      font-size: 24px;
-      font-weight: 600;
-      color: #333;
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.5px;
     }
 
     .stat-label {
-      font-size: 13px;
-      color: #666;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
     }
 
     .rate {
-      font-size: 18px;
-      font-weight: 600;
-      color: #4caf50;
+      font-size: 22px;
+      font-weight: 700;
+      color: #10b981;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .activity-card {
-      margin-top: 16px;
+      margin-top: 20px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
     }
 
     .activity-list {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      padding: 8px;
     }
 
     .activity-item {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: #fafafa;
-      border-radius: 8px;
-      border-left: 4px solid #ccc;
+      gap: 16px;
+      padding: 16px;
+      background: rgba(15, 20, 45, 0.6);
+      border-radius: 12px;
+      border-left: 4px solid rgba(99, 102, 241, 0.3);
+      transition: all 0.3s;
     }
 
-    .activity-item.pending { border-left-color: #ff9800; }
-    .activity-item.approved { border-left-color: #4caf50; }
-    .activity-item.cancelled { border-left-color: #f44336; }
+    .activity-item:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-left-color: #6366f1;
+    }
+
+    .activity-item.pending { border-left-color: #f59e0b; }
+    .activity-item.approved { border-left-color: #10b981; }
+    .activity-item.cancelled { border-left-color: #ef4444; }
 
     .activity-item mat-icon {
-      color: #666;
+      color: #64748b;
     }
 
     .activity-details {
@@ -342,37 +453,47 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
     }
 
     .activity-hotel {
-      font-weight: 500;
+      font-weight: 600;
+      color: #e2e8f0;
     }
 
     .activity-ref {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .activity-amount {
-      font-weight: 600;
-      color: #1976d2;
+      font-weight: 700;
+      color: #6366f1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 16px;
     }
 
     .activity-date {
       font-size: 12px;
-      color: #999;
+      color: #475569;
+    }
+
+    ::ng-deep .activity-item .mat-mdc-chip {
+      font-size: 11px;
+      height: 24px;
     }
 
     .no-activity {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 40px;
-      color: #999;
+      padding: 60px;
+      color: #475569;
     }
 
     .no-activity mat-icon {
-      font-size: 48px;
-      width: 48px;
-      height: 48px;
-      margin-bottom: 8px;
+      font-size: 56px;
+      width: 56px;
+      height: 56px;
+      margin-bottom: 12px;
+      color: #334155;
     }
 
     .spin {
@@ -394,6 +515,9 @@ import { ZenithService, SalesOverview } from '../../../services/zenith.service';
     }
 
     @media (max-width: 768px) {
+      .sales-overview {
+        padding: 20px;
+      }
       .stats-grid,
       .stats-grid.three-cols {
         grid-template-columns: 1fr;

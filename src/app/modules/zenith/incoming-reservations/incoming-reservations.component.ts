@@ -278,13 +278,16 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
     .incoming-reservations {
-      padding: 24px;
+      padding: 32px;
       position: relative;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .header-section {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
 
     .filters {
@@ -295,15 +298,55 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     }
 
     .days-filter {
-      width: 150px;
+      width: 160px;
+    }
+
+    ::ng-deep .days-filter .mat-mdc-text-field-wrapper {
+      background: rgba(30, 35, 75, 0.6) !important;
+      border-radius: 10px !important;
+    }
+
+    ::ng-deep .days-filter .mat-mdc-form-field-flex {
+      background: transparent !important;
+    }
+
+    ::ng-deep .days-filter .mdc-notched-outline__leading,
+    ::ng-deep .days-filter .mdc-notched-outline__notch,
+    ::ng-deep .days-filter .mdc-notched-outline__trailing {
+      border-color: rgba(99, 102, 241, 0.25) !important;
+    }
+
+    ::ng-deep .days-filter .mat-mdc-select-value,
+    ::ng-deep .days-filter .mat-mdc-floating-label {
+      color: #94a3b8 !important;
     }
 
     mat-button-toggle-group {
-      border-radius: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      overflow: hidden;
+      background: rgba(30, 35, 75, 0.5);
+    }
+
+    ::ng-deep .mat-button-toggle {
+      background: transparent !important;
+    }
+
+    ::ng-deep .mat-button-toggle-checked {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    }
+
+    ::ng-deep .mat-button-toggle-label-content {
+      color: #94a3b8 !important;
+      font-weight: 500;
+    }
+
+    ::ng-deep .mat-button-toggle-checked .mat-button-toggle-label-content {
+      color: white !important;
     }
 
     mat-button-toggle mat-icon {
-      margin-right: 4px;
+      margin-right: 6px;
       font-size: 18px;
       width: 18px;
       height: 18px;
@@ -314,28 +357,53 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px;
-      color: #666;
+      padding: 80px;
+      color: #94a3b8;
     }
 
     .loading-state span {
-      margin-top: 16px;
+      margin-top: 20px;
+      font-weight: 500;
     }
 
     .table-card {
       overflow: hidden;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
     }
 
     .reservations-table {
       width: 100%;
+      background: transparent !important;
+    }
+
+    ::ng-deep .reservations-table th {
+      background: rgba(15, 20, 45, 0.6) !important;
+      color: #94a3b8 !important;
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15) !important;
+    }
+
+    ::ng-deep .reservations-table td {
+      color: #e2e8f0 !important;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.08) !important;
+    }
+
+    ::ng-deep .reservations-table tr:hover td {
+      background: rgba(99, 102, 241, 0.08) !important;
     }
 
     .ref-id {
-      font-family: monospace;
-      font-size: 12px;
-      background: #f5f5f5;
-      padding: 4px 8px;
-      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 6px 10px;
+      border-radius: 6px;
+      color: #a5b4fc;
     }
 
     .hotel-info, .guest-info, .dates-info, .room-info {
@@ -344,29 +412,31 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     }
 
     .hotel-name, .guest-name {
-      font-weight: 500;
+      font-weight: 600;
+      color: #f1f5f9;
     }
 
     .hotel-code, .guest-count, .nights, .rate-plan {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
     }
 
     .amount {
-      font-weight: 600;
-      color: #1976d2;
+      font-weight: 700;
+      color: #818cf8;
+      font-family: 'JetBrains Mono', monospace;
     }
 
-    tr.pending {
-      background: #fff8e1;
+    ::ng-deep tr.pending td {
+      background: rgba(245, 158, 11, 0.08) !important;
     }
 
-    tr.approved {
-      background: #e8f5e9;
+    ::ng-deep tr.approved td {
+      background: rgba(16, 185, 129, 0.08) !important;
     }
 
-    tr.cancelled {
-      background: #ffebee;
+    ::ng-deep tr.cancelled td {
+      background: rgba(239, 68, 68, 0.08) !important;
     }
 
     .actions {
@@ -375,37 +445,54 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
       gap: 8px;
     }
 
+    .actions button[mat-stroked-button] {
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+      border-radius: 8px;
+      font-weight: 500;
+    }
+
+    .actions button[mat-stroked-button]:hover {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: #6366f1;
+    }
+
     .empty-state {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 60px;
-      color: #999;
+      padding: 80px;
+      color: #475569;
     }
 
     .empty-state mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+      font-size: 72px;
+      width: 72px;
+      height: 72px;
+      margin-bottom: 20px;
+      color: #334155;
     }
 
     .empty-state h3 {
       margin: 0 0 8px 0;
+      color: #94a3b8;
+      font-weight: 600;
     }
 
     .empty-state p {
       margin: 0;
+      color: #64748b;
     }
 
-    /* Match Panel Styles */
+    /* Match Panel Styles - Premium Dark Theme */
     .panel-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
       z-index: 999;
     }
 
@@ -414,9 +501,10 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
       top: 0;
       right: 0;
       bottom: 0;
-      width: 500px;
-      background: white;
-      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      width: 520px;
+      background: linear-gradient(180deg, #0f1629 0%, #131842 100%);
+      border-left: 1px solid rgba(99, 102, 241, 0.2);
+      box-shadow: -10px 0 50px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       display: flex;
       flex-direction: column;
@@ -426,39 +514,53 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 24px;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(15, 20, 45, 0.5);
     }
 
     .panel-header h3 {
       margin: 0;
-      font-weight: 500;
+      font-weight: 600;
+      color: #f1f5f9;
+      font-size: 18px;
+    }
+
+    .panel-header button {
+      color: #64748b;
+    }
+
+    .panel-header button:hover {
+      color: #f1f5f9;
     }
 
     .panel-content {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 28px;
     }
 
     .reservation-summary {
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 28px;
     }
 
     .reservation-summary h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 500;
-      color: #666;
+      margin: 0 0 16px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 16px;
     }
 
     .summary-item {
@@ -467,69 +569,88 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     }
 
     .summary-item .label {
-      font-size: 11px;
-      color: #999;
+      font-size: 10px;
+      color: #64748b;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
 
     .summary-item .value {
-      font-weight: 500;
+      font-weight: 600;
+      color: #e2e8f0;
     }
 
     .summary-item .value.highlight {
-      color: #1976d2;
-      font-size: 18px;
+      color: #818cf8;
+      font-size: 20px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .available-rooms h4 {
-      margin: 0 0 16px 0;
+      margin: 0 0 20px 0;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
+      color: #e2e8f0;
     }
 
     .loading-rooms {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 24px;
-      color: #666;
+      gap: 16px;
+      padding: 32px;
+      color: #94a3b8;
     }
 
     .no-rooms {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
       padding: 24px;
-      background: #fff3e0;
-      border-radius: 8px;
-      color: #f57c00;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      color: #fbbf24;
     }
 
     .rooms-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
     }
 
     .room-option {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
+      gap: 16px;
+      padding: 18px;
+      border: 2px solid rgba(99, 102, 241, 0.15);
+      border-radius: 14px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: rgba(15, 20, 45, 0.4);
     }
 
     .room-option:hover {
-      border-color: #1976d2;
-      background: #e3f2fd;
+      border-color: rgba(99, 102, 241, 0.4);
+      background: rgba(99, 102, 241, 0.08);
+      transform: translateX(4px);
     }
 
     .room-option.selected {
-      border-color: #1976d2;
-      background: #e3f2fd;
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.15);
+      box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+    }
+
+    ::ng-deep .room-option .mat-mdc-radio-button .mdc-radio__outer-circle {
+      border-color: #64748b !important;
+    }
+
+    ::ng-deep .room-option.selected .mat-mdc-radio-button .mdc-radio__outer-circle,
+    ::ng-deep .room-option.selected .mat-mdc-radio-button .mdc-radio__inner-circle {
+      border-color: #6366f1 !important;
+      background-color: #6366f1 !important;
     }
 
     .room-details {
@@ -539,17 +660,18 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     }
 
     .room-hotel {
-      font-weight: 500;
+      font-weight: 600;
+      color: #f1f5f9;
     }
 
     .room-type, .room-dates {
       font-size: 12px;
-      color: #666;
+      color: #64748b;
     }
 
     .room-prices {
       display: flex;
-      gap: 16px;
+      gap: 18px;
     }
 
     .room-prices > div {
@@ -559,29 +681,49 @@ import { ZenithService, IncomingReservation, ReservationCounts, AvailableRoom } 
     }
 
     .room-prices .label {
-      font-size: 10px;
-      color: #999;
+      font-size: 9px;
+      color: #475569;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .room-prices .value {
       font-weight: 600;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .margin.positive .value {
-      color: #4caf50;
+      color: #10b981;
     }
 
     .margin.negative .value {
-      color: #f44336;
+      color: #ef4444;
     }
 
     .panel-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 24px;
-      border-top: 1px solid #e0e0e0;
+      gap: 14px;
+      padding: 20px 28px;
+      border-top: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(15, 20, 45, 0.5);
+    }
+
+    .panel-actions button[mat-stroked-button] {
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #94a3b8;
+      border-radius: 10px;
+    }
+
+    .panel-actions button[mat-flat-button] {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .panel-actions button[mat-flat-button]:hover {
+      box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
     }
 
     .spin {

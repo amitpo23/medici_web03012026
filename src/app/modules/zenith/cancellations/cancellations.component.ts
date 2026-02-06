@@ -263,33 +263,64 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     </div>
   `,
   styles: [`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
     .cancellations {
-      padding: 24px;
+      padding: 32px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
     .stats-header {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .stat-card.total::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+    .stat-card.pending::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+    .stat-card.processed::before { background: linear-gradient(90deg, #10b981, #34d399); }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(99, 102, 241, 0.3);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
     }
 
     .stat-card mat-card-content {
       display: flex;
       align-items: center;
-      gap: 16px;
-      padding: 20px !important;
+      gap: 20px;
+      padding: 24px !important;
     }
 
     .stat-card mat-icon {
-      font-size: 36px;
-      width: 36px;
-      height: 36px;
+      font-size: 40px;
+      width: 40px;
+      height: 40px;
     }
 
-    .stat-card.total mat-icon { color: #1976d2; }
-    .stat-card.pending mat-icon { color: #ff9800; }
-    .stat-card.processed mat-icon { color: #4caf50; }
+    .stat-card.total mat-icon { color: #818cf8; }
+    .stat-card.pending mat-icon { color: #fbbf24; }
+    .stat-card.processed mat-icon { color: #34d399; }
 
     .stat-info {
       display: flex;
@@ -297,17 +328,25 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     }
 
     .stat-value {
-      font-size: 28px;
-      font-weight: 600;
+      font-size: 32px;
+      font-weight: 700;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .stat-label {
-      font-size: 13px;
-      color: #666;
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .filters-card {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
     }
 
     .filters {
@@ -316,11 +355,51 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       gap: 16px;
     }
 
+    mat-button-toggle-group {
+      border-radius: 12px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      overflow: hidden;
+      background: rgba(15, 20, 45, 0.5);
+    }
+
+    ::ng-deep .mat-button-toggle {
+      background: transparent !important;
+    }
+
+    ::ng-deep .mat-button-toggle-checked {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+    }
+
+    ::ng-deep .mat-button-toggle-label-content {
+      color: #94a3b8 !important;
+      font-weight: 500;
+    }
+
+    ::ng-deep .mat-button-toggle-checked .mat-button-toggle-label-content {
+      color: white !important;
+    }
+
     mat-button-toggle mat-icon {
-      margin-right: 4px;
+      margin-right: 6px;
       font-size: 18px;
       width: 18px;
       height: 18px;
+    }
+
+    ::ng-deep .filters .mat-mdc-text-field-wrapper {
+      background: rgba(15, 20, 45, 0.6) !important;
+      border-radius: 10px !important;
+    }
+
+    ::ng-deep .filters .mdc-notched-outline__leading,
+    ::ng-deep .filters .mdc-notched-outline__notch,
+    ::ng-deep .filters .mdc-notched-outline__trailing {
+      border-color: rgba(99, 102, 241, 0.2) !important;
+    }
+
+    ::ng-deep .filters .mat-mdc-select-value,
+    ::ng-deep .filters .mat-mdc-floating-label {
+      color: #94a3b8 !important;
     }
 
     .loading-state {
@@ -328,80 +407,105 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 60px;
-      color: #666;
+      padding: 80px;
+      color: #94a3b8;
     }
 
     .loading-state span {
-      margin-top: 16px;
+      margin-top: 20px;
+      font-weight: 500;
     }
 
     .cancellations-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 20px;
     }
 
     .cancellation-card {
-      border-left: 4px solid #ccc;
+      background: linear-gradient(145deg, rgba(30, 35, 75, 0.7) 0%, rgba(20, 25, 55, 0.85) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.12);
+      border-radius: 16px;
+      border-left: 4px solid rgba(99, 102, 241, 0.3);
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+
+    .cancellation-card:hover {
+      border-color: rgba(99, 102, 241, 0.25);
+      transform: translateX(4px);
     }
 
     .cancellation-card.pending {
-      border-left-color: #ff9800;
+      border-left-color: #f59e0b;
     }
 
     .cancellation-card.processed {
-      border-left-color: #4caf50;
+      border-left-color: #10b981;
+    }
+
+    ::ng-deep .cancellation-card mat-card-title {
+      color: #f1f5f9 !important;
+    }
+
+    ::ng-deep .cancellation-card mat-card-subtitle {
+      color: #94a3b8 !important;
     }
 
     mat-icon[mat-card-avatar] {
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 8px;
+      background: rgba(99, 102, 241, 0.15);
+      border-radius: 12px;
+      padding: 10px;
     }
 
     mat-icon[mat-card-avatar].pending {
-      background: #fff3e0;
-      color: #ff9800;
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
     }
 
     mat-icon[mat-card-avatar].processed {
-      background: #e8f5e9;
-      color: #4caf50;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
     }
 
     mat-card-subtitle {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
     }
 
     .unique-id {
-      font-family: monospace;
-      font-size: 12px;
-      background: #f5f5f5;
-      padding: 2px 8px;
-      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(99, 102, 241, 0.15);
+      padding: 4px 10px;
+      border-radius: 6px;
+      color: #a5b4fc;
+    }
+
+    ::ng-deep .cancellation-card .mat-mdc-chip {
+      font-size: 11px;
+      height: 24px;
     }
 
     .cancel-details {
-      padding: 16px 0;
+      padding: 20px 0;
     }
 
     .detail-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      grid-template-columns: repeat(4, 1fr);
       gap: 24px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .detail-item {
       display: flex;
-      gap: 12px;
+      gap: 14px;
     }
 
     .detail-item mat-icon {
-      color: #666;
+      color: #64748b;
     }
 
     .detail-item > div {
@@ -410,31 +514,36 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     }
 
     .detail-item .label {
-      font-size: 11px;
-      color: #999;
+      font-size: 10px;
+      color: #64748b;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
 
     .detail-item .value {
-      font-weight: 500;
+      font-weight: 600;
+      color: #e2e8f0;
     }
 
     .detail-item .value.highlight {
-      color: #1976d2;
-      font-size: 18px;
+      color: #818cf8;
+      font-size: 20px;
+      font-family: 'JetBrains Mono', monospace;
     }
 
     .cancel-reason {
       display: flex;
-      gap: 12px;
-      padding: 16px;
-      background: #fff3e0;
-      border-radius: 8px;
-      margin-bottom: 16px;
+      gap: 14px;
+      padding: 18px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 12px;
+      margin-bottom: 20px;
     }
 
     .cancel-reason mat-icon {
-      color: #f57c00;
+      color: #fbbf24;
     }
 
     .cancel-reason > div {
@@ -443,22 +552,29 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     }
 
     .cancel-reason .label {
-      font-size: 11px;
-      color: #999;
+      font-size: 10px;
+      color: #94a3b8;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .cancel-reason .value {
+      color: #fbbf24;
     }
 
     .process-info {
-      background: #e8f5e9;
-      border-radius: 8px;
-      padding: 16px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 12px;
+      padding: 18px;
     }
 
     .info-row {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+      gap: 10px;
+      margin-bottom: 10px;
+      color: #94a3b8;
     }
 
     .info-row:last-child {
@@ -469,29 +585,45 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #4caf50;
+      color: #34d399;
+    }
+
+    .info-row strong {
+      color: #34d399;
     }
 
     mat-card-actions {
-      padding: 16px !important;
+      padding: 20px !important;
       display: flex;
-      gap: 12px;
+      gap: 14px;
+    }
+
+    mat-card-actions button[mat-flat-button] {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    mat-card-actions button[mat-stroked-button] {
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #94a3b8;
+      border-radius: 10px;
     }
 
     .card-footer {
       display: flex;
       justify-content: space-between;
-      padding: 12px 16px;
-      background: #fafafa;
-      border-top: 1px solid #e0e0e0;
+      padding: 14px 20px;
+      background: rgba(15, 20, 45, 0.5);
+      border-top: 1px solid rgba(99, 102, 241, 0.1);
       font-size: 12px;
-      color: #666;
+      color: #64748b;
     }
 
     .card-footer span {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
     }
 
     .card-footer mat-icon {
@@ -504,25 +636,31 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 60px;
-      color: #999;
+      padding: 80px;
+      color: #475569;
     }
 
     .empty-state mat-icon {
-      font-size: 64px;
-      width: 64px;
-      height: 64px;
-      margin-bottom: 16px;
+      font-size: 72px;
+      width: 72px;
+      height: 72px;
+      margin-bottom: 20px;
+      color: #334155;
     }
 
-    /* Process Dialog */
+    .empty-state h3 {
+      color: #94a3b8;
+    }
+
+    /* Process Dialog - Premium Dark */
     .process-overlay {
       position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
       z-index: 999;
     }
 
@@ -531,12 +669,13 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 500px;
+      width: 520px;
       max-width: 90vw;
       max-height: 90vh;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      background: linear-gradient(180deg, #0f1629 0%, #131842 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 20px;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
       z-index: 1000;
       overflow: hidden;
       display: flex;
@@ -547,39 +686,49 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px 24px;
-      border-bottom: 1px solid #e0e0e0;
+      padding: 20px 28px;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(15, 20, 45, 0.5);
     }
 
     .dialog-header h3 {
       margin: 0;
-      font-weight: 500;
+      font-weight: 600;
+      color: #f1f5f9;
+      font-size: 18px;
+    }
+
+    .dialog-header button {
+      color: #64748b;
     }
 
     .dialog-content {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 28px;
     }
 
     .cancellation-summary {
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 24px;
+      background: linear-gradient(145deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.05) 100%);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 28px;
     }
 
     .cancellation-summary h4 {
-      margin: 0 0 12px 0;
-      font-size: 14px;
-      font-weight: 500;
-      color: #666;
+      margin: 0 0 16px 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #818cf8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 16px;
     }
 
     .summary-item {
@@ -588,37 +737,80 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     }
 
     .summary-item .label {
-      font-size: 11px;
-      color: #999;
+      font-size: 10px;
+      color: #64748b;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
     }
 
     .summary-item .value {
-      font-weight: 500;
+      font-weight: 600;
+      color: #e2e8f0;
     }
 
     .full-width {
       width: 100%;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    ::ng-deep .dialog-content .mat-mdc-text-field-wrapper {
+      background: rgba(15, 20, 45, 0.6) !important;
+      border-radius: 10px !important;
+    }
+
+    ::ng-deep .dialog-content .mdc-notched-outline__leading,
+    ::ng-deep .dialog-content .mdc-notched-outline__notch,
+    ::ng-deep .dialog-content .mdc-notched-outline__trailing {
+      border-color: rgba(99, 102, 241, 0.2) !important;
+    }
+
+    ::ng-deep .dialog-content input,
+    ::ng-deep .dialog-content textarea,
+    ::ng-deep .dialog-content .mat-mdc-floating-label {
+      color: #94a3b8 !important;
     }
 
     .quick-refund-options {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 24px;
     }
 
     .quick-refund-options button {
       flex: 1;
       font-size: 12px;
+      border-color: rgba(99, 102, 241, 0.25);
+      color: #94a3b8;
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+
+    .quick-refund-options button:hover {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.15);
+      color: #e2e8f0;
     }
 
     .dialog-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 12px;
-      padding: 16px 24px;
-      border-top: 1px solid #e0e0e0;
+      gap: 14px;
+      padding: 20px 28px;
+      border-top: 1px solid rgba(99, 102, 241, 0.15);
+      background: rgba(15, 20, 45, 0.5);
+    }
+
+    .dialog-actions button[mat-stroked-button] {
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #94a3b8;
+      border-radius: 10px;
+    }
+
+    .dialog-actions button[mat-flat-button] {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      border-radius: 10px;
+      font-weight: 600;
     }
 
     .spin {
@@ -628,6 +820,12 @@ import { ZenithService, CancellationRequest } from '../../../services/zenith.ser
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
+    }
+
+    @media (max-width: 1200px) {
+      .detail-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 768px) {
