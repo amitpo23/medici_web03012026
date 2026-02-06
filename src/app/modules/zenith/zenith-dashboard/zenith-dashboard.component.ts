@@ -123,6 +123,7 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
 
       <!-- Navigation Tabs -->
       <nav mat-tab-nav-bar [tabPanel]="tabPanel">
+        <!-- Push Management Section -->
         <a mat-tab-link routerLink="overview" routerLinkActive #rla1="routerLinkActive" [active]="rla1.isActive">
           <mat-icon>publish</mat-icon>
           Push Management
@@ -135,6 +136,27 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
         <a mat-tab-link routerLink="history" routerLinkActive #rla3="routerLinkActive" [active]="rla3.isActive">
           <mat-icon>history</mat-icon>
           Push History
+        </a>
+
+        <!-- Divider -->
+        <span class="tab-divider"></span>
+
+        <!-- Sales Office Section -->
+        <a mat-tab-link routerLink="sales-overview" routerLinkActive #rla4="routerLinkActive" [active]="rla4.isActive">
+          <mat-icon>dashboard</mat-icon>
+          Sales Overview
+        </a>
+        <a mat-tab-link routerLink="reservations" routerLinkActive #rla5="routerLinkActive" [active]="rla5.isActive">
+          <mat-icon>hotel</mat-icon>
+          Reservations
+        </a>
+        <a mat-tab-link routerLink="cancellations" routerLinkActive #rla6="routerLinkActive" [active]="rla6.isActive">
+          <mat-icon>cancel</mat-icon>
+          Cancellations
+        </a>
+        <a mat-tab-link routerLink="activity-log" routerLinkActive #rla7="routerLinkActive" [active]="rla7.isActive">
+          <mat-icon>list_alt</mat-icon>
+          Activity Log
         </a>
       </nav>
 
@@ -345,6 +367,14 @@ import { ZenithService, QueueStatus, PushStats } from '../../../services/zenith.
 
     a[mat-tab-link] mat-icon {
       margin-right: 8px;
+    }
+
+    .tab-divider {
+      width: 1px;
+      height: 24px;
+      background: #e0e0e0;
+      margin: 0 8px;
+      align-self: center;
     }
 
     .spin {

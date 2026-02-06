@@ -6,6 +6,7 @@ import { RouterModule, Routes } from '@angular/router';
 // Material imports
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatChipsModule } from '@angular/material/chips';
@@ -20,6 +21,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -28,12 +30,18 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-// Components
+// Components - Push Management
 import { ZenithDashboardComponent } from './zenith-dashboard/zenith-dashboard.component';
 import { PushManagementComponent } from './push-management/push-management.component';
 import { QueueManagementComponent } from './queue-management/queue-management.component';
 import { PushHistoryComponent } from './push-history/push-history.component';
 import { PushConfirmDialogComponent } from './push-confirm-dialog/push-confirm-dialog.component';
+
+// Components - Sales Office
+import { SalesOverviewComponent } from './sales-overview/sales-overview.component';
+import { IncomingReservationsComponent } from './incoming-reservations/incoming-reservations.component';
+import { ActivityLogComponent } from './activity-log/activity-log.component';
+import { CancellationsComponent } from './cancellations/cancellations.component';
 
 const routes: Routes = [
   {
@@ -41,20 +49,32 @@ const routes: Routes = [
     component: ZenithDashboardComponent,
     children: [
       { path: '', redirectTo: 'overview', pathMatch: 'full' },
+      // Push Management
       { path: 'overview', component: PushManagementComponent },
       { path: 'queue', component: QueueManagementComponent },
-      { path: 'history', component: PushHistoryComponent }
+      { path: 'history', component: PushHistoryComponent },
+      // Sales Office
+      { path: 'sales-overview', component: SalesOverviewComponent },
+      { path: 'reservations', component: IncomingReservationsComponent },
+      { path: 'activity-log', component: ActivityLogComponent },
+      { path: 'cancellations', component: CancellationsComponent }
     ]
   }
 ];
 
 @NgModule({
   declarations: [
+    // Push Management
     ZenithDashboardComponent,
     PushManagementComponent,
     QueueManagementComponent,
     PushHistoryComponent,
-    PushConfirmDialogComponent
+    PushConfirmDialogComponent,
+    // Sales Office
+    SalesOverviewComponent,
+    IncomingReservationsComponent,
+    ActivityLogComponent,
+    CancellationsComponent
   ],
   imports: [
     CommonModule,
@@ -65,6 +85,7 @@ const routes: Routes = [
     // Material modules
     MatCardModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatIconModule,
     MatFormFieldModule,
     MatInputModule,
@@ -85,7 +106,8 @@ const routes: Routes = [
     MatCheckboxModule,
     MatSlideToggleModule,
     MatDividerModule,
-    MatMenuModule
+    MatMenuModule,
+    MatRadioModule
   ]
 })
 export class ZenithModule { }
