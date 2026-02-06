@@ -138,6 +138,31 @@
                 <span class="nav-text">Reports</span>
             </a>
 
+            <!-- Trading & Distribution Section - NEW -->
+            <mat-expansion-panel class="nav-panel trading-panel" hideToggle>
+                <mat-expansion-panel-header>
+                    <mat-panel-title class="nav-item">
+                        <mat-icon class="nav-icon">swap_horiz</mat-icon>
+                        <span class="nav-text">Trading & Distribution</span>
+                        <span class="new-badge" style="margin-right: 8px;">NEW</span>
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+                <mat-nav-list class="sub-nav">
+                    <a mat-list-item [routerLink]="['/trading']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">shopping_cart</mat-icon>
+                        Search & Buy
+                    </a>
+                    <a mat-list-item [routerLink]="['/exchange']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">currency_exchange</mat-icon>
+                        Trading Exchange
+                    </a>
+                    <a mat-list-item [routerLink]="['/zenith']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">cloud_upload</mat-icon>
+                        Zenith Channel
+                    </a>
+                </mat-nav-list>
+            </mat-expansion-panel>
+
             <!-- System Monitoring Section - NEW -->
             <mat-expansion-panel class="nav-panel monitoring-panel" hideToggle>
                 <mat-expansion-panel-header>

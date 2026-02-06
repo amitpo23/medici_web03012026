@@ -455,4 +455,77 @@ router.post('/HotelSearch', async (req, res) => {
   }
 });
 
+/**
+ * GET /ForPush - Get opportunities ready for Zenith push
+ * Returns opportunities with Zenith mapping data
+ */
+router.get('/ForPush', async (req, res) => {
+  try {
+    const {
+      dateFrom,
+      dateTo,
+      onlyUnpushed,
+      limit = 100
+    } = req.query;
+
+    const pool = await getPool();
+    const request = pool.request();
+
+    let where = 'WHERE o.IsActive = 1';
+
+    if (dateFrom) {
+      where += ' AND o.DateForm >= @dateFrom';
+      request.input('dateFrom', dateFrom);
+    }
+    if (dateTo) {
+      where += ' AND o.DateTo <= @dateTo';
+      request.input('dateTo', dateTo);
+    }
+    if (onlyUnpushed === 'true') {
+      where += ' AND (o.IsPush = 0 OR o.IsPush IS NULL)';
+    }
+
+    request.input('limit', parseInt(limit, 10) || 100);
+
+    const result = await request.query(`
+      SELECT TOP (@limit)
+        o.OpportunityId,
+        h.Name as HotelName,
+        o.DateForm as DateFrom,
+        o.DateTo,
+        o.PushPrice,
+        o.Price as BuyPrice,
+        ISNULL(o.IsPush, 0) as IsPush,
+        h.Innstant_ZenithId as ZenithHotelCode,
+        h.RatePlanCode,
+        h.InvTypeCode,
+        b.BoardCode as MealPlan,
+        CASE WHEN h.Innstant_ZenithId IS NOT NULL THEN 1 ELSE 0 END as HasZenithMapping
+      FROM [MED_ֹOֹֹpportunities] o
+      LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+      LEFT JOIN MED_Board b ON o.BoardId = b.BoardId
+      ${where}
+      ORDER BY o.DateForm ASC
+    `);
+
+    // Get total count for pagination
+    const countResult = await pool.request()
+      .query(`
+        SELECT COUNT(*) as Total
+        FROM [MED_ֹOֹֹpportunities] o
+        LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+        ${where}
+      `);
+
+    res.json({
+      success: true,
+      opportunities: result.recordset,
+      total: countResult.recordset[0]?.Total || 0
+    });
+  } catch (err) {
+    logger.error('Error fetching opportunities for push', { error: err.message });
+    res.status(500).json({ error: 'Database error', message: err.message });
+  }
+});
+
 module.exports = router;

@@ -35,7 +35,10 @@ const routes: Routes = [
   { path: 'trading', loadChildren: () => import('./modules/trading/trading.module').then(m => m.TradingModule), canActivate: [AuthGuard] },
 
   // 🆕 Smart Room Trading Exchange - Professional Trading Platform
-  { path: 'exchange', loadChildren: () => import('./modules/trading-exchange/trading-exchange.module').then(m => m.TradingExchangeModule), canActivate: [AuthGuard] }
+  { path: 'exchange', loadChildren: () => import('./modules/trading-exchange/trading-exchange.module').then(m => m.TradingExchangeModule), canActivate: [AuthGuard] },
+
+  // 🆕 Zenith Distribution Channel - Push Availability & Rates to OTAs
+  { path: 'zenith', loadChildren: () => import('./modules/zenith/zenith.module').then(m => m.ZenithModule), canActivate: [AuthGuard] }
 ];
 
 @NgModule({

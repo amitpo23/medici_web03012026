@@ -736,4 +736,167 @@ router.get('/push-stats', async (req, res) => {
   }
 });
 
-module.exports = router;module.exports = router;
+/**
+ * GET /zenith/push-history
+ * Get push log history with filters
+ */
+router.get('/push-history', async (req, res) => {
+  try {
+    const {
+      limit = 50,
+      offset = 0,
+      pushType,
+      success,
+      days = 7
+    } = req.query;
+
+    const pool = await getPool();
+    const request = pool.request()
+      .input('limit', parseInt(limit, 10) || 50)
+      .input('offset', parseInt(offset, 10) || 0)
+      .input('days', parseInt(days, 10) || 7);
+
+    let where = 'WHERE pl.PushDate >= DATEADD(DAY, -@days, GETDATE())';
+
+    if (pushType) {
+      where += ' AND pl.PushType = @pushType';
+      request.input('pushType', pushType);
+    }
+
+    if (success !== undefined && success !== null && success !== '') {
+      where += ' AND pl.Success = @success';
+      request.input('success', success === 'true' ? 1 : 0);
+    }
+
+    const result = await request.query(`
+      SELECT
+        pl.Id,
+        pl.OpportunityId,
+        pl.BookId,
+        pl.PushType,
+        pl.PushDate,
+        pl.Success,
+        pl.ErrorMessage,
+        pl.RetryCount,
+        pl.ProcessingTimeMs,
+        h.Name as HotelName
+      FROM MED_PushLog pl
+      LEFT JOIN [MED_ֹOֹֹpportunities] o ON pl.OpportunityId = o.OpportunityId
+      LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+      ${where}
+      ORDER BY pl.PushDate DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    `);
+
+    // Get total count
+    const countRequest = pool.request()
+      .input('days', parseInt(days, 10) || 7);
+
+    let countWhere = 'WHERE PushDate >= DATEADD(DAY, -@days, GETDATE())';
+    if (pushType) {
+      countWhere += ' AND PushType = @pushType';
+      countRequest.input('pushType', pushType);
+    }
+    if (success !== undefined && success !== null && success !== '') {
+      countWhere += ' AND Success = @success';
+      countRequest.input('success', success === 'true' ? 1 : 0);
+    }
+
+    const countResult = await countRequest.query(`
+      SELECT COUNT(*) as Total FROM MED_PushLog ${countWhere}
+    `);
+
+    res.json({
+      success: true,
+      history: result.recordset,
+      pagination: {
+        total: countResult.recordset[0]?.Total || 0,
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Push history error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get push history',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/push-availability
+ * Push single availability update
+ */
+router.post('/push-availability', async (req, res) => {
+  try {
+    const { hotelCode, invTypeCode, startDate, endDate, available } = req.body;
+
+    if (!hotelCode || !invTypeCode || !startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: hotelCode, invTypeCode, startDate, endDate'
+      });
+    }
+
+    const result = await zenithPushService.pushAvailability({
+      hotelCode,
+      invTypeCode,
+      startDate,
+      endDate,
+      available: available ?? 1
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    logger.error('[Zenith] Push availability error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to push availability',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/push-rate
+ * Push single rate update
+ */
+router.post('/push-rate', async (req, res) => {
+  try {
+    const { hotelCode, invTypeCode, ratePlanCode, startDate, endDate, price, currency, mealPlan } = req.body;
+
+    if (!hotelCode || !invTypeCode || !startDate || !endDate || !price) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: hotelCode, invTypeCode, startDate, endDate, price'
+      });
+    }
+
+    const result = await zenithPushService.pushRate({
+      hotelCode,
+      invTypeCode,
+      ratePlanCode: ratePlanCode || 'STD',
+      startDate,
+      endDate,
+      price,
+      currency: currency || 'EUR',
+      mealPlan
+    });
+
+    res.json(result);
+
+  } catch (error) {
+    logger.error('[Zenith] Push rate error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to push rate',
+      message: error.message
+    });
+  }
+});
+
+module.exports = router;
