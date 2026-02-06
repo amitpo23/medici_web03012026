@@ -235,3 +235,70 @@ body {
 .mat-drawer-container {
     height: 100%;
 }
+
+/* ============================================
+   Global Search & Shortcuts Dialog Styles
+   ============================================ */
+
+// Global Search Dialog
+.global-search-dialog {
+    .mat-mdc-dialog-container {
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .mat-mdc-dialog-surface {
+        background: transparent;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        border-radius: 16px;
+        overflow: hidden;
+    }
+}
+
+.global-search-backdrop {
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+// Shortcuts Dialog
+.shortcuts-dialog {
+    .mat-mdc-dialog-container {
+        padding: 0;
+    }
+
+    .mat-mdc-dialog-surface {
+        background: transparent;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        border-radius: 16px;
+    }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+// Numeric values font
+.font-mono {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+// Glass morphism effect
+.glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+// Glow effect
+.glow {
+    box-shadow: 0 0 20px var(--glow-color, rgba(99, 102, 241, 0.15));
+}
+
+// Gradient text
+.gradient-text {
+    background: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

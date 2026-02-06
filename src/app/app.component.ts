@@ -1,9 +1,13 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { DashboardService } from './services/dashboard.service';
 import { ThemeService } from './services/theme.service';
+import { KeyboardShortcutsService } from './services/keyboard-shortcuts.service';
+import { KeyboardShortcutsDialogComponent } from './components/shared/keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
+import { GlobalSearchComponent } from './components/shared/global-search/global-search.component';
 
 interface QuickStats {
   todayProfit: number;
@@ -27,9 +31,44 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     public router: Router,
     private dashboardService: DashboardService,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private keyboardService: KeyboardShortcutsService,
+    private dialog: MatDialog
   ) {
     this.isDarkMode = this.themeService.isDarkMode();
+    this.setupKeyboardShortcuts();
+  }
+
+  private setupKeyboardShortcuts(): void {
+    // Global search (Ctrl+K)
+    this.keyboardService.globalSearch$
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(() => {
+        this.dialog.open(GlobalSearchComponent, {
+          panelClass: 'global-search-dialog',
+          backdropClass: 'global-search-backdrop',
+          width: '600px',
+          maxWidth: '90vw'
+        });
+      });
+
+    // Show shortcuts help (?)
+    this.keyboardService.showHelp$
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(() => {
+        this.dialog.open(KeyboardShortcutsDialogComponent, {
+          panelClass: 'shortcuts-dialog',
+          width: '550px'
+        });
+      });
+
+    // Refresh data (Ctrl+Shift+R)
+    this.keyboardService.refreshData$
+      .pipe(takeUntil(this._destroy$))
+      .subscribe(() => {
+        this.loadQuickStats();
+        this.loadActiveAlertsCount();
+      });
   }
 
   ngOnInit(): void {
