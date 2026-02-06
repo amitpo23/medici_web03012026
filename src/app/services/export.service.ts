@@ -9,6 +9,13 @@ interface ExportOptions {
   dateRange?: { start: Date; end: Date };
 }
 
+export interface ExportColumn {
+  key: string;
+  header: string;
+  width?: number;
+  format?: 'text' | 'number' | 'currency' | 'date' | 'percentage';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -218,5 +225,209 @@ export class ExportService {
 
   private getTimestamp(): string {
     return new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  }
+
+  /**
+   * Export to Excel locally (no backend needed)
+   * Uses XML Spreadsheet format that Excel can open
+   */
+  exportToExcelLocal(data: Record<string, unknown>[], columns: ExportColumn[], filename: string): void {
+    const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#6366F1" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Center"/>
+    </Style>
+    <Style ss:ID="Number">
+      <NumberFormat ss:Format="#,##0.00"/>
+      <Alignment ss:Horizontal="Right"/>
+    </Style>
+    <Style ss:ID="Currency">
+      <NumberFormat ss:Format="€#,##0.00"/>
+      <Alignment ss:Horizontal="Right"/>
+    </Style>
+    <Style ss:ID="Date">
+      <NumberFormat ss:Format="yyyy-mm-dd"/>
+      <Alignment ss:Horizontal="Center"/>
+    </Style>
+    <Style ss:ID="Percentage">
+      <NumberFormat ss:Format="0.00%"/>
+      <Alignment ss:Horizontal="Right"/>
+    </Style>
+    <Style ss:ID="AlternateRow">
+      <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="Report">
+    <Table>`;
+
+    // Column widths
+    const columnDefs = columns.map(col =>
+      `<Column ss:Width="${col.width ?? 100}"/>`
+    ).join('\n      ');
+
+    // Header row
+    const headerRow = `
+      <Row>
+        ${columns.map(col =>
+          `<Cell ss:StyleID="Header"><Data ss:Type="String">${this.escapeXML(col.header)}</Data></Cell>`
+        ).join('\n        ')}
+      </Row>`;
+
+    // Data rows
+    const dataRows = data.map((row, index) => {
+      const styleId = index % 2 === 1 ? ' ss:StyleID="AlternateRow"' : '';
+      const cells = columns.map(col => {
+        const value = row[col.key];
+        const cellStyle = this.getExcelStyle(col.format);
+        const dataType = this.getExcelDataType(value, col.format);
+        const formattedValue = this.formatExcelValue(value, col.format);
+
+        return `<Cell${cellStyle}><Data ss:Type="${dataType}">${this.escapeXML(String(formattedValue))}</Data></Cell>`;
+      }).join('\n        ');
+
+      return `
+      <Row${styleId}>
+        ${cells}
+      </Row>`;
+    }).join('');
+
+    const xmlFooter = `
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+    const fullXml = xmlHeader + '\n      ' + columnDefs + headerRow + dataRows + xmlFooter;
+
+    this.downloadFile(fullXml, filename, 'application/vnd.ms-excel');
+  }
+
+  /**
+   * Export multiple sheets to Excel locally
+   */
+  exportToExcelMultiSheet(
+    sheets: Array<{ name: string; data: Record<string, unknown>[]; columns: ExportColumn[] }>,
+    filename: string
+  ): void {
+    const xmlHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+      <Interior ss:Color="#6366F1" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Center"/>
+    </Style>
+    <Style ss:ID="Number">
+      <NumberFormat ss:Format="#,##0.00"/>
+    </Style>
+    <Style ss:ID="Currency">
+      <NumberFormat ss:Format="€#,##0.00"/>
+    </Style>
+  </Styles>`;
+
+    const worksheets = sheets.map(sheet => {
+      const columnDefs = sheet.columns.map(col =>
+        `<Column ss:Width="${col.width ?? 100}"/>`
+      ).join('\n      ');
+
+      const headerRow = `
+      <Row>
+        ${sheet.columns.map(col =>
+          `<Cell ss:StyleID="Header"><Data ss:Type="String">${this.escapeXML(col.header)}</Data></Cell>`
+        ).join('\n        ')}
+      </Row>`;
+
+      const dataRows = sheet.data.map(row => {
+        const cells = sheet.columns.map(col => {
+          const value = row[col.key];
+          const cellStyle = this.getExcelStyle(col.format);
+          const dataType = this.getExcelDataType(value, col.format);
+          const formattedValue = this.formatExcelValue(value, col.format);
+
+          return `<Cell${cellStyle}><Data ss:Type="${dataType}">${this.escapeXML(String(formattedValue))}</Data></Cell>`;
+        }).join('\n        ');
+
+        return `
+      <Row>
+        ${cells}
+      </Row>`;
+      }).join('');
+
+      return `
+  <Worksheet ss:Name="${this.escapeXML(sheet.name)}">
+    <Table>
+      ${columnDefs}${headerRow}${dataRows}
+    </Table>
+  </Worksheet>`;
+    }).join('');
+
+    const xmlFooter = `
+</Workbook>`;
+
+    const fullXml = xmlHeader + worksheets + xmlFooter;
+
+    this.downloadFile(fullXml, filename, 'application/vnd.ms-excel');
+  }
+
+  private formatExcelValue(value: unknown, format?: string): string | number {
+    if (value === null || value === undefined) return '';
+
+    if (format === 'percentage' && typeof value === 'number') {
+      return value;
+    }
+
+    if ((format === 'number' || format === 'currency') && typeof value === 'number') {
+      return value;
+    }
+
+    if (format === 'date') {
+      if (value instanceof Date) {
+        return value.toISOString().split('T')[0];
+      }
+      if (typeof value === 'string' && value.includes('T')) {
+        return value.split('T')[0];
+      }
+    }
+
+    return String(value);
+  }
+
+  private getExcelStyle(format?: string): string {
+    switch (format) {
+      case 'number': return ' ss:StyleID="Number"';
+      case 'currency': return ' ss:StyleID="Currency"';
+      case 'date': return ' ss:StyleID="Date"';
+      case 'percentage': return ' ss:StyleID="Percentage"';
+      default: return '';
+    }
+  }
+
+  private getExcelDataType(value: unknown, format?: string): string {
+    if (format === 'number' || format === 'currency' || format === 'percentage') {
+      return 'Number';
+    }
+    if (typeof value === 'number') {
+      return 'Number';
+    }
+    return 'String';
+  }
+
+  private escapeXML(value: string): string {
+    return value
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
   }
 }
