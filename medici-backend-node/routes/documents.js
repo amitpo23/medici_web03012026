@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const { getPool } = require('../db');
+const { getPool } = require('../config/database');
 const pdfGenerator = require('../services/pdf-generator');
 const { asyncHandler } = require('../utils/response');
 const { NotFoundError } = require('../utils/errors');

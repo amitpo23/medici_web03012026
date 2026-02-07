@@ -24,9 +24,9 @@ describe('UserService', () => {
   });
 
   it('should set and emit user via user$ observable', (done) => {
-    const testUser = { id: 1, name: 'Test User', email: 'test@test.com' } as any;
+    const testUser = { id: '1', name: 'Test User', email: 'test@test.com' };
 
-    service.user$ .subscribe(user => {
+    service.user$.subscribe(user => {
       expect(user).toEqual(testUser);
       done();
     });
@@ -35,7 +35,7 @@ describe('UserService', () => {
   });
 
   it('should store signedUser', () => {
-    const user = { id: 1, name: 'Signed User' };
+    const user = { id: '1', name: 'Signed User', email: 'signed@test.com' };
     service.signedUser = user;
     expect(service.signedUser).toEqual(user);
   });
