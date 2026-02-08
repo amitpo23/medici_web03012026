@@ -38,7 +38,10 @@ const routes: Routes = [
   { path: 'exchange', loadChildren: () => import('./modules/trading-exchange/trading-exchange.module').then(m => m.TradingExchangeModule), canActivate: [AuthGuard] },
 
   // 🆕 Zenith Distribution Channel - Push Availability & Rates to OTAs
-  { path: 'zenith', loadChildren: () => import('./modules/zenith/zenith.module').then(m => m.ZenithModule), canActivate: [AuthGuard] }
+  { path: 'zenith', loadChildren: () => import('./modules/zenith/zenith.module').then(m => m.ZenithModule), canActivate: [AuthGuard] },
+
+  // Catch-all route - redirect unknown routes to dashboard
+  { path: '**', redirectTo: 'dashboard' }
 ];
 
 @NgModule({
