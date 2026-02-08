@@ -7,6 +7,7 @@
 
 const express = require('express');
 const router = express.Router();
+const sql = require('mssql');
 const logger = require('../config/logger');
 const { getPool } = require('../config/database');
 const slackService = require('../services/slack-service');
