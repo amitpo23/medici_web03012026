@@ -8,6 +8,74 @@ const logger = require('../config/logger');
 const { getPredictionEngine } = require('../services/prediction-engine');
 
 /**
+ * Map raw opportunity data to AIOpportunity format expected by frontend
+ */
+function mapOpportunityToFrontend(opp) {
+    const lowPrice = parseFloat(opp.lowPrice) || parseFloat(opp.buyPrice) || 0;
+    const highPrice = parseFloat(opp.highPrice) || parseFloat(opp.estimatedSellPrice) || 0;
+    const potentialProfit = parseFloat(opp.potentialProfit) || (highPrice - lowPrice);
+    const margin = highPrice > 0 ? ((highPrice - lowPrice) / highPrice) * 100 : 0;
+
+    // Normalize finalScore to 0-100 confidence
+    const rawScore = parseFloat(opp.finalScore) || parseFloat(opp.score) || parseFloat(opp.confidence) || 0;
+    const confidence = rawScore > 0 && rawScore <= 100 ? Math.round(rawScore) : Math.min(100, Math.max(0, Math.round(
+        rawScore > 1000 ? 95 :
+        rawScore > 500 ? 85 :
+        rawScore > 200 ? 75 :
+        rawScore > 100 ? 65 :
+        rawScore > 50 ? 55 :
+        rawScore > 0 ? 45 : 30
+    )));
+
+    // Determine type
+    let type = opp.type || 'BUY';
+    if (type === 'ARBITRAGE' || type === 'arbitrage') type = 'BUY';
+    else if (type === 'SELL' || opp.category === 'sell') type = 'SELL';
+    else if (type === 'HOLD' || opp.category === 'hold') type = 'HOLD';
+    else if (type !== 'BUY' && type !== 'SELL' && type !== 'HOLD') type = 'BUY';
+
+    // Determine risk level
+    const riskLevel = opp.riskLevel || (margin > 30 ? 'LOW' : margin > 15 ? 'MEDIUM' : 'HIGH');
+
+    // Build action text
+    const action = opp.action || (type === 'BUY'
+        ? `קנה ${opp.hotelName || ''} ב-$${Math.round(lowPrice)} ומכור ב-$${Math.round(highPrice)}`
+        : type === 'SELL'
+        ? `מכור ${opp.hotelName || ''} ב-$${Math.round(highPrice)}`
+        : `המתן - ${opp.reason || ''}`);
+
+    return {
+        ...opp,
+        type,
+        priority: (opp.priority || 'MEDIUM').toUpperCase(),
+        action,
+        reason: opp.reason || '',
+        confidence,
+        riskLevel,
+        buyPrice: lowPrice,
+        estimatedSellPrice: highPrice,
+        expectedProfit: Math.round(potentialProfit),
+        currentPrice: lowPrice,
+        targetPrice: highPrice,
+        checkIn: opp.date || opp.checkIn || null,
+        checkOut: opp.checkOut || null,
+        hotelName: opp.hotelName || '',
+        hotelId: opp.hotelId || null,
+        cityName: opp.cityName || opp.city || null,
+        margin: Math.round(margin * 10) / 10,
+        buyFrom: opp.buyFrom || '',
+        sellTo: opp.sellTo || ''
+    };
+}
+
+function mapOpportunitiesResult(result) {
+    if (result.opportunities && Array.isArray(result.opportunities)) {
+        result.opportunities = result.opportunities.map(mapOpportunityToFrontend);
+    }
+    return result;
+}
+
+/**
  * GET /ai/status
  * Get status of all AI agents
  */
@@ -117,8 +185,8 @@ router.get('/opportunities', async (req, res) => {
             userInstructions: instructions,
             limit: limit ? parseInt(limit) : 50
         });
-        
-        res.json(result);
+
+        res.json(mapOpportunitiesResult(result));
     } catch (error) {
         logger.error('Error fetching opportunities', { error: error.message });
         res.status(500).json({
@@ -146,13 +214,13 @@ router.post('/opportunities', async (req, res) => {
             limit: limit || 50
         });
 
-        res.json(result);
+        res.json(mapOpportunitiesResult(result));
     } catch (error) {
         logger.error('Error fetching opportunities', { error: error.message });
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
             error: 'Failed to fetch opportunities',
-            message: error.message 
+            message: error.message
         });
     }
 });
@@ -224,11 +292,12 @@ router.post('/opportunities/filter', async (req, res) => {
             filters,
             limit: limit || 100
         });
-        
+
         // Add filter summary to response
-        result.appliedFilters = filters;
-        
-        res.json(result);
+        const mapped = mapOpportunitiesResult(result);
+        mapped.appliedFilters = filters;
+
+        res.json(mapped);
     } catch (error) {
         logger.error('Error filtering opportunities', { error: error.message });
         res.status(500).json({ 
