@@ -135,6 +135,8 @@ const tradingExchangeRoutes = require('./routes/trading-exchange');
 const dataSyncRoutes = require('./routes/data-sync');
 const dotnetProxyRoutes = require('./routes/dotnet-proxy');
 const documentsRoutes = require('./routes/documents');
+const mlPredictionsRoutes = require('./routes/ml-predictions');
+const opportunityFinderRoutes = require('./routes/opportunity-finder');
 
 // Enhanced error handling (Following nodejs-backend-patterns skill)
 const { errorHandler, notFoundHandler, setupUncaughtHandlers } = require('./middleware/error-handler');
@@ -196,6 +198,8 @@ app.use('/data-explorer', verifyToken, dataExplorerRoutes);
 app.use('/data-sync', verifyToken, dataSyncRoutes);
 app.use('/dotnet', verifyToken, dotnetProxyRoutes);
 app.use('/Documents', verifyToken, documentsRoutes);
+app.use('/ml', verifyToken, mlPredictionsRoutes);
+app.use('/opportunity-finder', verifyToken, opportunityFinderRoutes);
 
 // Admin-only routes (keeping RAG protected for now)
 app.use('/ai/rag', verifyToken, requireAdmin, aiRagRoutes);
