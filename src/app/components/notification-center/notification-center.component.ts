@@ -87,7 +87,7 @@ interface Notification {
 
       <mat-divider *ngIf="notifications.length > 0"></mat-divider>
 
-      <button mat-menu-item class="view-all" routerLink="/system/alerts">
+      <button mat-menu-item class="view-all" routerLink="/alerts">
         <mat-icon>arrow_forward</mat-icon>
         View all alerts
       </button>

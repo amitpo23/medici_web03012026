@@ -14,12 +14,13 @@ const config = {
     enableArithAbort: true
   },
   pool: {
-    max: 10,
-    min: 0,
-    idleTimeoutMillis: 30000
+    max: 20,
+    min: 2,
+    idleTimeoutMillis: 60000,
+    acquireTimeoutMillis: 30000
   },
-  connectionTimeout: 10000,
-  requestTimeout: 30000
+  connectionTimeout: 30000,
+  requestTimeout: 60000
 };
 
 let pool = null;
