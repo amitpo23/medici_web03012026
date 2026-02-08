@@ -61,14 +61,15 @@ class MLPredictionService {
             AND DateCreate >= DATEADD(month, -6, GETDATE())
         `);
 
-      // 4. MED_CancelBook - Cancellation rate
+      // 4. MED_CancelBook - Cancellation rate (join through MED_Book)
       const cancelStats = await pool.request()
         .input('hotelId', sql.Int, hotelId)
         .query(`
           SELECT COUNT(*) as totalCancellations
-          FROM MED_CancelBook
-          WHERE HotelId = @hotelId
-            AND DateInsert >= DATEADD(month, -6, GETDATE())
+          FROM MED_CancelBook c
+          JOIN MED_Book b ON c.contentBookingID = b.contentBookingID
+          WHERE b.HotelId = @hotelId
+            AND c.DateInsert >= DATEADD(month, -6, GETDATE())
         `);
 
       // 5. Timing statistics
@@ -184,14 +185,15 @@ class MLPredictionService {
             AND DateInsert >= DATEADD(month, -3, GETDATE())
         `);
 
-      // 2. MED_CancelBook - Cancellation analysis
+      // 2. MED_CancelBook - Cancellation analysis (join through MED_Book)
       const cancelDetails = await pool.request()
         .input('hotelId', sql.Int, hotelId)
         .query(`
           SELECT COUNT(*) as totalCancellations
-          FROM MED_CancelBook
-          WHERE HotelId = @hotelId
-            AND DateInsert >= DATEADD(month, -6, GETDATE())
+          FROM MED_CancelBook c
+          JOIN MED_Book b ON c.contentBookingID = b.contentBookingID
+          WHERE b.HotelId = @hotelId
+            AND c.DateInsert >= DATEADD(month, -6, GETDATE())
         `);
 
       // 3. MED_Opportunities - Failure rate
@@ -523,14 +525,15 @@ class MLPredictionService {
             AND DateCreate >= DATEADD(month, -6, GETDATE())
         `);
 
-      // 3. MED_CancelBook - Cancellation stats
+      // 3. MED_CancelBook - Cancellation stats (join through MED_Book)
       const cancelStats = await pool.request()
         .input('hotelId', sql.Int, hotelId)
         .query(`
           SELECT COUNT(*) as totalCancellations
-          FROM MED_CancelBook
-          WHERE HotelId = @hotelId
-            AND DateInsert >= DATEADD(month, -6, GETDATE())
+          FROM MED_CancelBook c
+          JOIN MED_Book b ON c.contentBookingID = b.contentBookingID
+          WHERE b.HotelId = @hotelId
+            AND c.DateInsert >= DATEADD(month, -6, GETDATE())
         `);
 
       // 4. Monthly performance trend
