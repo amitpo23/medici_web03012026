@@ -28,6 +28,7 @@ export class PriceChartComponent implements OnInit, AfterViewInit, OnDestroy {
   private chart: IChartApi | null = null;
   private candlestickSeries: ISeriesApi<'Candlestick'> | null = null;
   private volumeSeries: ISeriesApi<'Histogram'> | null = null;
+  private resizeObserver: ResizeObserver | null = null;
 
   selectedTimeframe = '1D';
   timeframes = ['1H', '4H', '1D', '1W'];
@@ -58,8 +59,13 @@ export class PriceChartComponent implements OnInit, AfterViewInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
     if (this.chart) {
       this.chart.remove();
+      this.chart = null;
     }
   }
 
@@ -106,7 +112,11 @@ export class PriceChartComponent implements OnInit, AfterViewInit, OnDestroy {
       priceFormat: {
         type: 'volume'
       },
-      priceScaleId: '',
+      priceScaleId: 'volume'
+    });
+
+    // Configure volume scale margins
+    this.chart.priceScale('volume').applyOptions({
       scaleMargins: {
         top: 0.8,
         bottom: 0
@@ -114,12 +124,12 @@ export class PriceChartComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Resize handler
-    const resizeObserver = new ResizeObserver(entries => {
+    this.resizeObserver = new ResizeObserver(entries => {
       if (entries.length === 0 || !this.chart) return;
       const { width } = entries[0].contentRect;
       this.chart.applyOptions({ width });
     });
-    resizeObserver.observe(this.chartContainer.nativeElement);
+    this.resizeObserver.observe(this.chartContainer.nativeElement);
   }
 
   loadPriceData(): void {
