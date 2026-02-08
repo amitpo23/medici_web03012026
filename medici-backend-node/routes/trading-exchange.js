@@ -866,4 +866,126 @@ function generateSignalReasons(opportunity, performance) {
   return reasons;
 }
 
+// ========================================
+// Hot Deals - Best Trading Opportunities
+// ========================================
+
+/**
+ * GET /api/trading-exchange/HotDeals
+ * Returns top hotel deals for the hot sale sidebar
+ */
+router.get('/HotDeals', async (req, res) => {
+  const { limit = 6 } = req.query;
+
+  try {
+    const pool = await sql.connect(dbConfig);
+
+    const result = await pool.request()
+      .input('limit', sql.Int, parseInt(limit))
+      .query(`
+        SELECT TOP (@limit)
+          o.OpportunityId as id,
+          h.Name as hotelName,
+          'TLV' as city,
+          o.Price as price,
+          o.PushPrice as originalPrice,
+          CAST(((o.PushPrice - o.Price) / NULLIF(o.PushPrice, 0) * 100) as INT) as discount,
+          o.DateForm as checkIn,
+          o.DateTo as checkOut
+        FROM [MED_ֹOֹֹpportunities] o
+        JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+        WHERE o.IsActive = 1
+          AND o.DateForm >= GETDATE()
+          AND (o.PushPrice - o.Price) > 0
+        ORDER BY ((o.PushPrice - o.Price) / NULLIF(o.PushPrice, 0)) DESC
+      `);
+
+    res.json({
+      success: true,
+      data: result.recordset
+    });
+
+    logger.info(`Hot deals fetched: ${result.recordset.length} deals`);
+  } catch (error) {
+    logger.error('Error fetching hot deals:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch hot deals',
+      details: error.message
+    });
+  }
+});
+
+// ========================================
+// Orders - User's Trading Orders
+// ========================================
+
+/**
+ * GET /api/trading-exchange/Orders
+ * Returns user's orders with status
+ */
+router.get('/Orders', async (req, res) => {
+  const { limit = 20, status } = req.query;
+
+  try {
+    const pool = await sql.connect(dbConfig);
+
+    let statusFilter = '';
+    if (status) {
+      const statusMap = {
+        'pending_buy': "Status = 'PendingBuy'",
+        'bought': "Status = 'Bought'",
+        'pending_sell': "Status = 'PendingSell'",
+        'sold': "IsSold = 1",
+        'cancel': "IsCancelled = 1"
+      };
+      statusFilter = statusMap[status] ? `AND ${statusMap[status]}` : '';
+    }
+
+    const result = await pool.request()
+      .input('limit', sql.Int, parseInt(limit))
+      .query(`
+        SELECT TOP (@limit)
+          b.id as id,
+          CONCAT('MED-', b.id) as orderId,
+          h.Name as hotelName,
+          'TLV' as city,
+          b.startDate as checkIn,
+          b.endDate as checkOut,
+          rc.Name as roomType,
+          b.price as price,
+          CASE
+            WHEN b.IsCancelled = 1 THEN 'cancel'
+            WHEN b.IsSold = 1 THEN 'sold'
+            WHEN b.IsPush = 1 THEN 'pending_sell'
+            WHEN b.Available = 1 THEN 'bought'
+            ELSE 'pending_buy'
+          END as status,
+          b.price as orderRate,
+          b.lastPrice as currentRate,
+          b.dateInsert as createdAt,
+          DATEADD(day, 7, b.dateInsert) as expiresAt
+        FROM MED_Book b
+        JOIN Med_Hotels h ON b.HotelId = h.HotelId
+        LEFT JOIN MED_RoomCategory rc ON b.CategoryId = rc.CategoryId
+        WHERE 1=1 ${statusFilter}
+        ORDER BY b.DateInsert DESC
+      `);
+
+    res.json({
+      success: true,
+      data: result.recordset
+    });
+
+    logger.info(`Orders fetched: ${result.recordset.length} orders`);
+  } catch (error) {
+    logger.error('Error fetching orders:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch orders',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

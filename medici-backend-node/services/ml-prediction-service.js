@@ -52,9 +52,9 @@ class MLPredictionService {
           SELECT
             COUNT(*) as totalDeals,
             SUM(CASE WHEN IsSold = 1 THEN 1 ELSE 0 END) as successfulSales,
-            AVG(CASE WHEN IsSold = 1 THEN (PushPrice - BuyPrice) ELSE 0 END) as avgProfit,
-            AVG(CASE WHEN IsSold = 1 THEN ((PushPrice - BuyPrice) / NULLIF(BuyPrice, 0) * 100) ELSE 0 END) as avgMargin,
-            STDEV(BuyPrice) as priceVolatility
+            AVG(CASE WHEN IsSold = 1 THEN (lastPrice - price) ELSE 0 END) as avgProfit,
+            AVG(CASE WHEN IsSold = 1 THEN ((lastPrice - price) / NULLIF(price, 0) * 100) ELSE 0 END) as avgMargin,
+            STDEV(price) as priceVolatility
           FROM MED_Book
           WHERE HotelId = @hotelId
             AND DateInsert >= DATEADD(month, -6, GETDATE())
@@ -67,7 +67,7 @@ class MLPredictionService {
           SELECT
             COUNT(*) as totalDeals,
             SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as successfulSales,
-            AVG(CASE WHEN b.IsSold = 1 THEN ((b.PushPrice - b.BuyPrice) / NULLIF(b.BuyPrice, 0) * 100) ELSE 0 END) as avgMargin
+            AVG(CASE WHEN b.IsSold = 1 THEN ((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) ELSE 0 END) as avgMargin
           FROM MED_Book b
           JOIN Med_Hotels h ON b.HotelId = h.HotelId
           WHERE h.City = @city
@@ -81,7 +81,7 @@ class MLPredictionService {
           SELECT
             COUNT(*) as totalOpportunities,
             SUM(CASE WHEN Status = 'BOOKED' OR Status = 'SOLD' THEN 1 ELSE 0 END) as converted,
-            AVG(BuyPrice) as avgOppPrice
+            AVG(price) as avgOppPrice
           FROM MED_Opportunities
           WHERE HotelId = @hotelId
             AND DateInsert >= DATEADD(month, -6, GETDATE())
@@ -279,10 +279,10 @@ class MLPredictionService {
         .input('hotelId', sql.Int, hotelId)
         .query(`
           SELECT
-            STDEV(BuyPrice) / NULLIF(AVG(BuyPrice), 0) * 100 as priceVolatilityPct,
-            AVG(BuyPrice) as avgPrice,
-            MIN(BuyPrice) as minPrice,
-            MAX(BuyPrice) as maxPrice,
+            STDEV(price) / NULLIF(AVG(price), 0) * 100 as priceVolatilityPct,
+            AVG(price) as avgPrice,
+            MIN(price) as minPrice,
+            MAX(price) as maxPrice,
             CAST(COUNT(CASE WHEN IsCancelled = 1 THEN 1 END) as FLOAT) /
             NULLIF(COUNT(*), 0) * 100 as bookCancellationRate
           FROM MED_Book
@@ -347,7 +347,7 @@ class MLPredictionService {
           SELECT
             CAST(SUM(CASE WHEN b.IsCancelled = 1 THEN 1 ELSE 0 END) as FLOAT) /
             NULLIF(COUNT(*), 0) * 100 as cityCancellationRate,
-            STDEV(b.BuyPrice) / NULLIF(AVG(b.BuyPrice), 0) * 100 as cityPriceVolatility
+            STDEV(b.price) / NULLIF(AVG(b.price), 0) * 100 as cityPriceVolatility
           FROM MED_Book b
           JOIN Med_Hotels h ON b.HotelId = h.HotelId
           WHERE h.City = @city
@@ -476,9 +476,9 @@ class MLPredictionService {
         .query(`
           SELECT
             DATEDIFF(day, DateInsert, startDate) as daysBeforeArrival,
-            AVG(BuyPrice) as avgPrice,
-            MIN(BuyPrice) as minPrice,
-            MAX(BuyPrice) as maxPrice,
+            AVG(price) as avgPrice,
+            MIN(price) as minPrice,
+            MAX(price) as maxPrice,
             COUNT(*) as dataPoints
           FROM MED_Book
           WHERE (HotelId = @hotelId OR HotelId IN (
@@ -590,10 +590,10 @@ class MLPredictionService {
             COUNT(b.BookID) as totalBookings,
             SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as soldCount,
             SUM(CASE WHEN b.IsCancelled = 1 THEN 1 ELSE 0 END) as cancelledCount,
-            AVG(b.BuyPrice) as avgBuyPrice,
-            AVG(b.PushPrice) as avgSellPrice,
-            AVG(CASE WHEN b.IsSold = 1 THEN b.PushPrice - b.BuyPrice ELSE 0 END) as avgProfit,
-            AVG(CASE WHEN b.IsSold = 1 THEN ((b.PushPrice - b.BuyPrice) / NULLIF(b.BuyPrice, 0) * 100) ELSE 0 END) as avgMargin,
+            AVG(b.price) as avgprice,
+            AVG(b.lastPrice) as avgSellPrice,
+            AVG(CASE WHEN b.IsSold = 1 THEN b.lastPrice - b.price ELSE 0 END) as avgProfit,
+            AVG(CASE WHEN b.IsSold = 1 THEN ((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) ELSE 0 END) as avgMargin,
             AVG(h.Stars) as avgStars
           FROM Med_Hotels h
           LEFT JOIN MED_Book b ON h.HotelId = b.HotelId
@@ -609,8 +609,8 @@ class MLPredictionService {
           SELECT
             COUNT(*) as totalOpportunities,
             SUM(CASE WHEN Status IN ('BOOKED', 'SOLD') THEN 1 ELSE 0 END) as convertedOpportunities,
-            AVG(BuyPrice) as avgOppBuyPrice,
-            AVG(PushPrice) as avgOppSellPrice
+            AVG(price) as avgOppprice,
+            AVG(lastPrice) as avgOppSellPrice
           FROM MED_Opportunities o
           JOIN Med_Hotels h ON o.HotelId = h.HotelId
           WHERE h.City = @city
@@ -666,7 +666,7 @@ class MLPredictionService {
             h.Stars,
             COUNT(b.BookID) as bookings,
             SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as sales,
-            AVG(CASE WHEN b.IsSold = 1 THEN ((b.PushPrice - b.BuyPrice) / NULLIF(b.BuyPrice, 0) * 100) ELSE 0 END) as avgMargin,
+            AVG(CASE WHEN b.IsSold = 1 THEN ((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) ELSE 0 END) as avgMargin,
             CAST(SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as FLOAT) / NULLIF(COUNT(b.BookID), 0) * 100 as successRate
           FROM Med_Hotels h
           LEFT JOIN MED_Book b ON h.HotelId = b.HotelId
@@ -706,7 +706,7 @@ class MLPredictionService {
         totalOpportunities: oppData.totalOpportunities || 0,
         successRate: Math.round(successRate),
         oppConversionRate: Math.round(oppConversionRate),
-        avgBuyPrice: Math.round(cityData.avgBuyPrice || 0),
+        avgprice: Math.round(cityData.avgprice || 0),
         avgSellPrice: Math.round(cityData.avgSellPrice || 0),
         avgProfit: Math.round(cityData.avgProfit || 0),
         avgMargin: Math.round(cityData.avgMargin || 0),
@@ -786,13 +786,13 @@ class MLPredictionService {
             COUNT(b.BookID) as totalBookings,
             SUM(CASE WHEN b.IsSold = 1 THEN 1 ELSE 0 END) as soldCount,
             SUM(CASE WHEN b.IsCancelled = 1 THEN 1 ELSE 0 END) as cancelledCount,
-            AVG(b.BuyPrice) as avgBuyPrice,
-            AVG(b.PushPrice) as avgSellPrice,
-            AVG(CASE WHEN b.IsSold = 1 THEN b.PushPrice - b.BuyPrice ELSE 0 END) as avgProfit,
-            AVG(CASE WHEN b.IsSold = 1 THEN ((b.PushPrice - b.BuyPrice) / NULLIF(b.BuyPrice, 0) * 100) ELSE 0 END) as avgMargin,
-            MIN(b.BuyPrice) as minPrice,
-            MAX(b.BuyPrice) as maxPrice,
-            STDEV(b.BuyPrice) as priceStdDev
+            AVG(b.price) as avgprice,
+            AVG(b.lastPrice) as avgSellPrice,
+            AVG(CASE WHEN b.IsSold = 1 THEN b.lastPrice - b.price ELSE 0 END) as avgProfit,
+            AVG(CASE WHEN b.IsSold = 1 THEN ((b.lastPrice - b.price) / NULLIF(b.price, 0) * 100) ELSE 0 END) as avgMargin,
+            MIN(b.price) as minPrice,
+            MAX(b.price) as maxPrice,
+            STDEV(b.price) as priceStdDev
           FROM Med_Hotels h
           LEFT JOIN MED_Book b ON h.HotelId = b.HotelId
           WHERE h.HotelId = @hotelId
@@ -808,8 +808,8 @@ class MLPredictionService {
             COUNT(*) as totalOpportunities,
             SUM(CASE WHEN Status IN ('BOOKED', 'SOLD') THEN 1 ELSE 0 END) as convertedOpportunities,
             SUM(CASE WHEN Status IN ('EXPIRED', 'FAILED') THEN 1 ELSE 0 END) as failedOpportunities,
-            AVG(BuyPrice) as avgOppBuyPrice,
-            AVG(PushPrice) as avgOppSellPrice
+            AVG(price) as avgOppprice,
+            AVG(lastPrice) as avgOppSellPrice
           FROM MED_Opportunities
           WHERE HotelId = @hotelId
             AND DateInsert >= DATEADD(month, -6, GETDATE())
@@ -882,8 +882,8 @@ class MLPredictionService {
             DATENAME(month, DateInsert) as monthName,
             COUNT(*) as bookings,
             SUM(CASE WHEN IsSold = 1 THEN 1 ELSE 0 END) as sales,
-            AVG(BuyPrice) as avgPrice,
-            AVG(CASE WHEN IsSold = 1 THEN ((PushPrice - BuyPrice) / NULLIF(BuyPrice, 0) * 100) ELSE 0 END) as avgMargin
+            AVG(price) as avgPrice,
+            AVG(CASE WHEN IsSold = 1 THEN ((lastPrice - price) / NULLIF(price, 0) * 100) ELSE 0 END) as avgMargin
           FROM MED_Book
           WHERE HotelId = @hotelId
             AND DateInsert >= DATEADD(month, -6, GETDATE())
@@ -942,7 +942,7 @@ class MLPredictionService {
         // Booking Performance
         totalBookings: hotelData.totalBookings || 0,
         successRate: Math.round(successRate),
-        avgBuyPrice: Math.round(hotelData.avgBuyPrice || 0),
+        avgprice: Math.round(hotelData.avgprice || 0),
         avgSellPrice: Math.round(hotelData.avgSellPrice || 0),
         avgProfit: Math.round(hotelData.avgProfit || 0),
         avgMargin: Math.round(hotelData.avgMargin || 0),
