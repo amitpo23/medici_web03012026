@@ -514,8 +514,11 @@ router.get('/ForPush', async (req, res) => {
     `);
 
     // Get total count for pagination
-    const countResult = await pool.request()
-      .query(`
+    const countRequest = pool.request();
+    if (dateFrom) countRequest.input('dateFrom', dateFrom);
+    if (dateTo) countRequest.input('dateTo', dateTo);
+
+    const countResult = await countRequest.query(`
         SELECT COUNT(*) as Total
         FROM [MED_ֹOֹֹpportunities] o
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId

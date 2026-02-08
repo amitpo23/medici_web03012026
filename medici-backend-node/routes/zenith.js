@@ -689,10 +689,11 @@ router.get('/queue-status', async (req, res) => {
 router.get('/push-stats', async (req, res) => {
   try {
     const { days = 7 } = req.query;
+    const daysInt = parseInt(days, 10) || 7;
     const pool = await getPool();
-    
+
     const result = await pool.request()
-      .input('Days', days)
+      .input('Days', sql.Int, daysInt)
       .query(`
         SELECT 
           PushType,
@@ -708,7 +709,7 @@ router.get('/push-stats', async (req, res) => {
       `);
     
     const totalResult = await pool.request()
-      .input('Days', days)
+      .input('Days', sql.Int, daysInt)
       .query(`
         SELECT 
           COUNT(*) as TotalPushes,
@@ -894,6 +895,569 @@ router.post('/push-rate', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to push rate',
+      message: error.message
+    });
+  }
+});
+
+// ==================== SALES OFFICE FEATURES ====================
+
+/**
+ * GET /zenith/incoming-reservations
+ * View reservations received from Zenith (OTA_HotelResNotifRQ)
+ */
+router.get('/incoming-reservations', async (req, res) => {
+  try {
+    const { status, days = 30, limit = 100, offset = 0 } = req.query;
+    const pool = await getPool();
+
+    let where = 'WHERE r.DateInsert >= DATEADD(DAY, -@days, GETDATE())';
+    const request = pool.request()
+      .input('days', parseInt(days, 10))
+      .input('limit', parseInt(limit, 10))
+      .input('offset', parseInt(offset, 10));
+
+    if (status === 'pending') {
+      where += ' AND r.IsApproved = 0 AND r.IsCanceled = 0';
+    } else if (status === 'approved') {
+      where += ' AND r.IsApproved = 1';
+    } else if (status === 'cancelled') {
+      where += ' AND r.IsCanceled = 1';
+    }
+
+    const result = await request.query(`
+      SELECT
+        r.Id,
+        r.uniqueID,
+        r.HotelCode,
+        h.Name as HotelName,
+        r.DateFrom,
+        r.DateTo,
+        r.AmountAfterTax,
+        r.CurrencyCode,
+        r.GuestName,
+        r.RatePlanCode,
+        r.RoomTypeCode,
+        r.AdultCount,
+        r.ChildrenCount,
+        r.Comments,
+        r.IsApproved,
+        r.IsCanceled,
+        r.ApprovedDate,
+        r.CancelDate,
+        r.DateInsert,
+        b.id as MatchedBookId,
+        b.price as BookBuyPrice,
+        b.lastPrice as BookPushPrice
+      FROM Med_Reservation r
+      LEFT JOIN Med_Hotels h ON r.HotelCode = h.Innstant_ZenithId
+      LEFT JOIN MED_Book b ON r.MatchedBookId = b.id
+      ${where}
+      ORDER BY r.DateInsert DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    `);
+
+    // Get counts
+    const countsResult = await pool.request()
+      .input('days', parseInt(days, 10))
+      .query(`
+        SELECT
+          COUNT(*) as Total,
+          SUM(CASE WHEN IsApproved = 0 AND IsCanceled = 0 THEN 1 ELSE 0 END) as Pending,
+          SUM(CASE WHEN IsApproved = 1 THEN 1 ELSE 0 END) as Approved,
+          SUM(CASE WHEN IsCanceled = 1 THEN 1 ELSE 0 END) as Cancelled
+        FROM Med_Reservation
+        WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())
+      `);
+
+    res.json({
+      success: true,
+      reservations: result.recordset,
+      counts: countsResult.recordset[0],
+      pagination: {
+        total: countsResult.recordset[0]?.Total || 0,
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Incoming reservations error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get incoming reservations',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/available-rooms
+ * Get available rooms that can be matched with reservations
+ */
+router.get('/available-rooms', async (req, res) => {
+  try {
+    const { hotelCode, dateFrom, dateTo } = req.query;
+    const pool = await getPool();
+
+    const request = pool.request();
+    let where = 'WHERE b.IsActive = 1 AND b.IsSold = 0';
+
+    if (hotelCode) {
+      where += ' AND h.Innstant_ZenithId = @hotelCode';
+      request.input('hotelCode', hotelCode);
+    }
+    if (dateFrom) {
+      where += ' AND b.startDate >= @dateFrom';
+      request.input('dateFrom', dateFrom);
+    }
+    if (dateTo) {
+      where += ' AND b.endDate <= @dateTo';
+      request.input('dateTo', dateTo);
+    }
+
+    const result = await request.query(`
+      SELECT TOP 100
+        b.id as BookId,
+        b.HotelId,
+        h.Name as HotelName,
+        h.Innstant_ZenithId as HotelCode,
+        b.startDate,
+        b.endDate,
+        b.price as BuyPrice,
+        b.lastPrice as PushPrice,
+        b.BoardId,
+        bd.BoardCode as MealPlan,
+        b.CategoryId,
+        rc.Name as RoomCategory,
+        b.CancellationType,
+        b.CancellationTo
+      FROM MED_Book b
+      LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
+      LEFT JOIN MED_Board bd ON b.BoardId = bd.BoardId
+      LEFT JOIN MED_RoomCategory rc ON b.CategoryId = rc.CategoryId
+      ${where}
+      ORDER BY b.startDate ASC
+    `);
+
+    res.json({
+      success: true,
+      rooms: result.recordset
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Available rooms error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get available rooms',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/approve-reservation
+ * Match and approve reservation to a booking
+ */
+router.post('/approve-reservation', async (req, res) => {
+  try {
+    const { reservationId, bookId } = req.body;
+
+    if (!reservationId || !bookId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields: reservationId, bookId'
+      });
+    }
+
+    const pool = await getPool();
+
+    // Update reservation
+    await pool.request()
+      .input('reservationId', reservationId)
+      .input('bookId', bookId)
+      .query(`
+        UPDATE Med_Reservation
+        SET IsApproved = 1,
+            ApprovedDate = GETDATE(),
+            MatchedBookId = @bookId
+        WHERE Id = @reservationId
+      `);
+
+    // Update booking as sold
+    await pool.request()
+      .input('bookId', bookId)
+      .query(`
+        UPDATE MED_Book
+        SET IsSold = 1,
+            SoldDate = GETDATE()
+        WHERE id = @bookId
+      `);
+
+    // Log the activity
+    await pool.request()
+      .input('reservationId', reservationId)
+      .input('bookId', bookId)
+      .query(`
+        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, BookId, DateInsert, Details)
+        VALUES ('APPROVE_RESERVATION', @reservationId, @bookId, GETDATE(), 'Reservation matched and approved')
+      `);
+
+    logger.info('[Zenith] Reservation approved', { reservationId, bookId });
+
+    res.json({
+      success: true,
+      message: 'Reservation approved and matched to booking'
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Approve reservation error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to approve reservation',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/sales-overview
+ * Dashboard with available, sold, pending stats
+ */
+router.get('/sales-overview', async (req, res) => {
+  try {
+    const { days = 30 } = req.query;
+    const pool = await getPool();
+
+    // Get booking stats
+    const bookingStats = await pool.request()
+      .input('days', parseInt(days, 10))
+      .query(`
+        SELECT
+          COUNT(*) as TotalBookings,
+          SUM(CASE WHEN IsActive = 1 AND IsSold = 0 THEN 1 ELSE 0 END) as AvailableRooms,
+          SUM(CASE WHEN IsSold = 1 THEN 1 ELSE 0 END) as SoldRooms,
+          SUM(CASE WHEN IsActive = 0 THEN 1 ELSE 0 END) as CancelledRooms,
+          SUM(CASE WHEN IsSold = 1 THEN ISNULL(lastPrice, 0) - ISNULL(price, 0) ELSE 0 END) as TotalProfit,
+          SUM(CASE WHEN IsSold = 1 THEN ISNULL(lastPrice, 0) ELSE 0 END) as TotalRevenue
+        FROM MED_Book
+        WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())
+      `);
+
+    // Get reservation stats
+    const reservationStats = await pool.request()
+      .input('days', parseInt(days, 10))
+      .query(`
+        SELECT
+          COUNT(*) as TotalReservations,
+          SUM(CASE WHEN IsApproved = 0 AND IsCanceled = 0 THEN 1 ELSE 0 END) as PendingReservations,
+          SUM(CASE WHEN IsApproved = 1 THEN 1 ELSE 0 END) as ApprovedReservations,
+          SUM(CASE WHEN IsCanceled = 1 THEN 1 ELSE 0 END) as CancelledReservations,
+          SUM(ISNULL(AmountAfterTax, 0)) as TotalReservationValue
+        FROM Med_Reservation
+        WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())
+      `);
+
+    // Get push stats
+    const pushStats = await pool.request()
+      .input('days', parseInt(days, 10))
+      .query(`
+        SELECT
+          COUNT(*) as TotalPushes,
+          SUM(CASE WHEN Success = 1 THEN 1 ELSE 0 END) as SuccessfulPushes,
+          SUM(CASE WHEN Success = 0 THEN 1 ELSE 0 END) as FailedPushes
+        FROM MED_PushLog
+        WHERE PushDate >= DATEADD(DAY, -@days, GETDATE())
+      `);
+
+    // Get recent activity
+    const recentActivity = await pool.request()
+      .query(`
+        SELECT TOP 10
+          'reservation' as Type,
+          r.Id,
+          r.uniqueID as Reference,
+          h.Name as HotelName,
+          r.AmountAfterTax as Amount,
+          r.DateInsert as Date,
+          CASE
+            WHEN r.IsCanceled = 1 THEN 'cancelled'
+            WHEN r.IsApproved = 1 THEN 'approved'
+            ELSE 'pending'
+          END as Status
+        FROM Med_Reservation r
+        LEFT JOIN Med_Hotels h ON r.HotelCode = h.Innstant_ZenithId
+        ORDER BY r.DateInsert DESC
+      `);
+
+    res.json({
+      success: true,
+      period: `Last ${days} days`,
+      bookings: bookingStats.recordset[0],
+      reservations: reservationStats.recordset[0],
+      pushes: pushStats.recordset[0],
+      recentActivity: recentActivity.recordset
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Sales overview error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get sales overview',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/activity-log
+ * View SalesOffice.Log with sales activity records
+ */
+router.get('/activity-log', async (req, res) => {
+  try {
+    const { action, days = 7, limit = 100, offset = 0 } = req.query;
+    const pool = await getPool();
+
+    const request = pool.request()
+      .input('days', parseInt(days, 10))
+      .input('limit', parseInt(limit, 10))
+      .input('offset', parseInt(offset, 10));
+
+    let where = 'WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())';
+
+    if (action) {
+      where += ' AND Action = @action';
+      request.input('action', action);
+    }
+
+    const result = await request.query(`
+      SELECT
+        Id,
+        Action,
+        ReservationId,
+        BookId,
+        OpportunityId,
+        HotelId,
+        Details,
+        UserName,
+        DateInsert
+      FROM [SalesOffice].[Log]
+      ${where}
+      ORDER BY DateInsert DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    `);
+
+    // Get total count
+    const countRequest = pool.request()
+      .input('days', parseInt(days, 10));
+
+    let countWhere = 'WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())';
+    if (action) {
+      countWhere += ' AND Action = @action';
+      countRequest.input('action', action);
+    }
+
+    const countResult = await countRequest.query(`
+      SELECT COUNT(*) as Total FROM [SalesOffice].[Log] ${countWhere}
+    `);
+
+    // Get action types for filter
+    const actionsResult = await pool.request().query(`
+      SELECT DISTINCT Action FROM [SalesOffice].[Log]
+      WHERE DateInsert >= DATEADD(DAY, -30, GETDATE())
+    `);
+
+    res.json({
+      success: true,
+      logs: result.recordset,
+      actions: actionsResult.recordset.map(a => a.Action),
+      pagination: {
+        total: countResult.recordset[0]?.Total || 0,
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Activity log error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get activity log',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * GET /zenith/cancellations
+ * View cancellation requests (OTA_CancelRQ)
+ */
+router.get('/cancellations', async (req, res) => {
+  try {
+    const { status, days = 30, limit = 100, offset = 0 } = req.query;
+    const pool = await getPool();
+
+    const request = pool.request()
+      .input('days', parseInt(days, 10))
+      .input('limit', parseInt(limit, 10))
+      .input('offset', parseInt(offset, 10));
+
+    let where = 'WHERE rc.DateInsert >= DATEADD(DAY, -@days, GETDATE())';
+
+    if (status === 'pending') {
+      where += ' AND rc.IsProcessed = 0';
+    } else if (status === 'processed') {
+      where += ' AND rc.IsProcessed = 1';
+    }
+
+    const result = await request.query(`
+      SELECT
+        rc.Id,
+        rc.uniqueID,
+        rc.ReservationId,
+        r.HotelCode,
+        h.Name as HotelName,
+        r.DateFrom,
+        r.DateTo,
+        r.AmountAfterTax,
+        r.GuestName,
+        rc.CancelReason,
+        rc.IsProcessed,
+        rc.ProcessedDate,
+        rc.RefundAmount,
+        rc.DateInsert
+      FROM Med_ReservationCancel rc
+      LEFT JOIN Med_Reservation r ON rc.ReservationId = r.Id OR rc.uniqueID = r.uniqueID
+      LEFT JOIN Med_Hotels h ON r.HotelCode = h.Innstant_ZenithId
+      ${where}
+      ORDER BY rc.DateInsert DESC
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
+    `);
+
+    // Get counts
+    const countsResult = await pool.request()
+      .input('days', parseInt(days, 10))
+      .query(`
+        SELECT
+          COUNT(*) as Total,
+          SUM(CASE WHEN IsProcessed = 0 THEN 1 ELSE 0 END) as Pending,
+          SUM(CASE WHEN IsProcessed = 1 THEN 1 ELSE 0 END) as Processed
+        FROM Med_ReservationCancel
+        WHERE DateInsert >= DATEADD(DAY, -@days, GETDATE())
+      `);
+
+    res.json({
+      success: true,
+      cancellations: result.recordset,
+      counts: countsResult.recordset[0],
+      pagination: {
+        total: countsResult.recordset[0]?.Total || 0,
+        limit: parseInt(limit, 10),
+        offset: parseInt(offset, 10)
+      }
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Cancellations error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get cancellations',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/process-cancellation
+ * Process a cancellation request
+ */
+router.post('/process-cancellation', async (req, res) => {
+  try {
+    const { cancellationId, refundAmount, notes } = req.body;
+
+    if (!cancellationId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required field: cancellationId'
+      });
+    }
+
+    const pool = await getPool();
+
+    // Get cancellation details
+    const cancelResult = await pool.request()
+      .input('cancellationId', cancellationId)
+      .query(`
+        SELECT uniqueID, ReservationId FROM Med_ReservationCancel WHERE Id = @cancellationId
+      `);
+
+    if (!cancelResult.recordset[0]) {
+      return res.status(404).json({
+        success: false,
+        error: 'Cancellation not found'
+      });
+    }
+
+    const { uniqueID, ReservationId } = cancelResult.recordset[0];
+
+    // Update cancellation as processed
+    await pool.request()
+      .input('cancellationId', cancellationId)
+      .input('refundAmount', refundAmount || 0)
+      .input('notes', notes || '')
+      .query(`
+        UPDATE Med_ReservationCancel
+        SET IsProcessed = 1,
+            ProcessedDate = GETDATE(),
+            RefundAmount = @refundAmount,
+            ProcessNotes = @notes
+        WHERE Id = @cancellationId
+      `);
+
+    // Update reservation as cancelled
+    if (ReservationId) {
+      await pool.request()
+        .input('reservationId', ReservationId)
+        .query(`
+          UPDATE Med_Reservation
+          SET IsCanceled = 1,
+              CancelDate = GETDATE()
+          WHERE Id = @reservationId
+        `);
+    } else if (uniqueID) {
+      await pool.request()
+        .input('uniqueID', uniqueID)
+        .query(`
+          UPDATE Med_Reservation
+          SET IsCanceled = 1,
+              CancelDate = GETDATE()
+          WHERE uniqueID = @uniqueID
+        `);
+    }
+
+    // Log the activity
+    await pool.request()
+      .input('cancellationId', cancellationId)
+      .input('reservationId', ReservationId)
+      .input('refundAmount', refundAmount || 0)
+      .query(`
+        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, Details, DateInsert)
+        VALUES ('PROCESS_CANCELLATION', @reservationId,
+                'Cancellation processed. Refund: ' + CAST(@refundAmount as VARCHAR), GETDATE())
+      `);
+
+    logger.info('[Zenith] Cancellation processed', { cancellationId, refundAmount });
+
+    res.json({
+      success: true,
+      message: 'Cancellation processed successfully'
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Process cancellation error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process cancellation',
       message: error.message
     });
   }
