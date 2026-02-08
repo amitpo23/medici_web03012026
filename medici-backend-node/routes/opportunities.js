@@ -5,7 +5,7 @@ const zenithPushService = require('../services/zenith-push-service');
 const logger = require('../config/logger');
 const socketService = require('../services/socket-service');
 
-// Get all opportunities (paginated)
+// Get all opportunities (paginated) - includes hotel name and city via JOIN
 router.get('/Opportunities', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
@@ -17,13 +17,18 @@ router.get('/Opportunities', async (req, res) => {
       .input('offset', offset)
       .input('limit', limit)
       .query(`
-        SELECT *
-        FROM [MED_ֹOֹֹpportunities]
-        ORDER BY DateCreate DESC
+        SELECT
+          o.*,
+          h.name AS HotelName,
+          rc.Name AS RoomType
+        FROM [MED_ֹOֹֹpportunities] o
+        LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+        LEFT JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
+        ORDER BY o.DateCreate DESC
         OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
       `);
 
-    res.json(result.recordset);
+    res.json({ data: result.recordset });
   } catch (err) {
     logger.error('Error fetching opportunities', { error: err.message });
     res.status(500).json({ error: 'Database error' });
