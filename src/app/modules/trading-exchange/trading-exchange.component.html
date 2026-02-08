@@ -2,8 +2,16 @@
   <!-- Top Bar -->
   <div class="exchange-header">
     <div class="header-left">
+      <div class="medici-logo-badge">
+        <span class="logo-text">MEDICI</span>
+        <div class="stars">
+          <span>★</span><span>★</span><span>★</span><span>★</span>
+        </div>
+      </div>
+      <span class="tagline">World Trade Market</span>
+    </div>
+    <div class="header-center">
       <h1>Smart Room Trading Exchange</h1>
-      <span class="subtitle">Professional Hotel Room Trading Platform</span>
     </div>
     <div class="header-right">
       <div class="auto-refresh">
@@ -14,13 +22,13 @@
           Auto Refresh
         </mat-slide-toggle>
       </div>
-      <button mat-icon-button (click)="refreshAll()" matTooltip="Refresh All">
+      <button mat-icon-button (click)="refreshAll()" matTooltip="Refresh All" class="refresh-btn">
         <mat-icon>refresh</mat-icon>
       </button>
     </div>
   </div>
 
-  <!-- Main Layout -->
+  <!-- Main Layout with Hot Sale Sidebar -->
   <div class="exchange-layout">
     <!-- Left Panel - Market Analysis & Signals -->
     <div class="left-panel">
@@ -31,13 +39,73 @@
 
     <!-- Center Panel - Charts & Order Book -->
     <div class="center-panel">
-      <!-- Price Chart -->
-      <div class="chart-container">
+      <!-- Trade Table Header -->
+      <div class="trade-table-section">
+        <table class="trade-table">
+          <thead>
+            <tr>
+              <th>Hotel</th>
+              <th>Location</th>
+              <th>Check-in</th>
+              <th>Check-out</th>
+              <th>Room</th>
+              <th>Buy</th>
+              <th>
+                <div class="pagination-dots">
+                  <span class="dot active"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                  <span class="dot"></span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of opportunities; let i = index"
+                [class.selected]="selectedIndex === i"
+                (click)="selectOpportunity(i, item)">
+              <td>{{ item.hotelName }}</td>
+              <td>{{ item.city }}</td>
+              <td>{{ item.checkIn | date:'dd/MM/yyyy' }}</td>
+              <td>{{ item.checkOut | date:'dd/MM/yyyy' }}</td>
+              <td>{{ item.roomType }}</td>
+              <td>{{ item.price }}$</td>
+              <td>
+                <button class="btn-gold" (click)="onBuyOpportunity(item); $event.stopPropagation()">
+                  <mat-icon>shopping_cart</mat-icon>
+                  Buy
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Insights Section with Charts -->
+      <div class="insights-section">
+        <!-- ML Insights Chart - Price vs DaysBeforeArrival -->
+        <app-insights-chart
+          [hotelId]="selectedHotelId"
+          [city]="selectedHotelName ? '' : 'TLV'"
+          [height]="220"
+        ></app-insights-chart>
+
+        <!-- Original Price Chart -->
         <app-price-chart
           #priceChart
           [hotelId]="selectedHotelId"
-          [height]="350"
+          [height]="250"
         ></app-price-chart>
+      </div>
+
+      <!-- ML Analysis Panel -->
+      <div class="ml-analysis-section">
+        <app-ml-analysis-panel
+          [initialHotelId]="selectedHotelId"
+          (hotelSelected)="onHotelSelected($event)"
+        ></app-ml-analysis-panel>
       </div>
 
       <!-- Order Book -->
@@ -50,26 +118,24 @@
       </div>
     </div>
 
-    <!-- Right Panel - Trading Signals -->
-    <div class="right-panel">
-      <app-trading-signals
-        (signalSelected)="onSignalSelected($event)"
-        (buyClicked)="onBuyClicked($event)"
-      ></app-trading-signals>
-    </div>
+    <!-- Right Panel - Hot Sale Sidebar -->
+    <app-hot-sale-sidebar
+      (hotelSelected)="onHotSaleHotelSelected($event)"
+      (searchRequested)="onSearchRequested($event)"
+    ></app-hot-sale-sidebar>
   </div>
 
   <!-- Bottom Panel - Portfolio Dashboard Link -->
   <div class="bottom-actions">
-    <a mat-stroked-button routerLink="portfolio" color="primary">
+    <a mat-stroked-button routerLink="portfolio" class="action-btn portfolio-btn">
       <mat-icon>account_balance_wallet</mat-icon>
       View Full Portfolio
     </a>
-    <a mat-stroked-button routerLink="/trading/search-and-buy" color="accent">
+    <a mat-stroked-button routerLink="/trading/search" class="action-btn search-btn">
       <mat-icon>search</mat-icon>
       Search & Buy
     </a>
-    <a mat-stroked-button routerLink="/trading/inventory-management" color="warn">
+    <a mat-stroked-button routerLink="/trading/inventory" class="action-btn inventory-btn">
       <mat-icon>inventory_2</mat-icon>
       Manage Inventory
     </a>

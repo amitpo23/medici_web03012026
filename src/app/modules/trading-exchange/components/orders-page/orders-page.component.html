@@ -1,0 +1,195 @@
+<div class="orders-page">
+  <!-- Main Layout -->
+  <div class="orders-layout">
+    <!-- Left Sidebar - Navigation -->
+    <nav class="nav-sidebar">
+      <div class="nav-logo">
+        <div class="medici-logo-badge">
+          <span class="logo-text">MEDICI</span>
+          <div class="stars">
+            <span>★</span><span>★</span><span>★</span><span>★</span>
+          </div>
+        </div>
+        <span class="tagline">World Trade Market</span>
+      </div>
+
+      <div class="nav-items">
+        <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">HOME</a>
+        <a routerLink="/exchange" routerLinkActive="active" class="nav-item">TRADE</a>
+        <a routerLink="/exchange/orders" routerLinkActive="active" class="nav-item active">ORDERS</a>
+        <a routerLink="/exchange/portfolio" routerLinkActive="active" class="nav-item">PORTFOLIO</a>
+      </div>
+
+      <div class="nav-user">
+        <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="User" class="avatar">
+        <div class="name">Israel</div>
+        <div class="links">
+          <a href="#">Account</a>
+          <a href="#">Log out</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Center Content - Orders Table -->
+    <main class="orders-content">
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>Hotel</th>
+            <th>Location</th>
+            <th>Check-in\out</th>
+            <th>Room</th>
+            <th>Buy</th>
+            <th>Status</th>
+            <th>
+              <div class="pagination-dots">
+                <span class="dot" *ngFor="let page of [0,1,2,3,4,5,6]"
+                      [class.active]="page === currentPage"
+                      (click)="goToPage(page)"></span>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let order of orders">
+            <!-- Order Row -->
+            <tr [class.expanded]="order.expanded" [class.status-row]="true" [class]="'status-' + order.status">
+              <td>{{ order.hotelName }}</td>
+              <td>{{ order.city }}</td>
+              <td>{{ order.checkIn | date:'dd-MM/yyyy' }}-{{ order.checkOut | date:'dd/MM/yyyy' }}</td>
+              <td>{{ order.roomType }}</td>
+              <td>{{ order.price }}$</td>
+              <td>
+                <span class="status-badge" [class]="order.status">
+                  <mat-icon *ngIf="order.status === 'sold'">check_circle</mat-icon>
+                  <mat-icon *ngIf="order.status === 'bought'">receipt</mat-icon>
+                  <mat-icon *ngIf="order.status === 'pending_buy' || order.status === 'pending_sell'">schedule</mat-icon>
+                  <mat-icon *ngIf="order.status === 'cancel'">cancel</mat-icon>
+                  {{ getStatusLabel(order.status) }}
+                </span>
+              </td>
+              <td class="actions-cell">
+                <button class="btn-cancel" (click)="cancelOrder(order); $event.stopPropagation()">
+                  <mat-icon>close</mat-icon>
+                  Cancel
+                </button>
+                <button class="expand-btn" (click)="toggleExpand(order)">
+                  <mat-icon>{{ order.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Expanded Details Row -->
+            <tr class="details-row" *ngIf="order.expanded">
+              <td colspan="7">
+                <div class="order-details">
+                  <div class="info-section">
+                    <h4>info</h4>
+                    <p>{{ order.notes || 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.' }}</p>
+                  </div>
+
+                  <div class="rates-section">
+                    <div class="rate-row">
+                      <span class="label">Order ID:</span>
+                      <span class="value">{{ order.orderId }}</span>
+                    </div>
+                    <div class="rate-row" *ngIf="order.orderRate">
+                      <span class="label">Order Rate:</span>
+                      <span class="value">{{ order.orderRate }}</span>
+                    </div>
+                    <div class="rate-row" *ngIf="order.currentRate">
+                      <span class="label">Current Rate:</span>
+                      <span class="value">{{ order.currentRate }}</span>
+                    </div>
+                    <div class="rate-row" *ngIf="order.createdAt">
+                      <span class="label">Creation:</span>
+                      <span class="value">{{ order.createdAt | date:'dd/MM/yyyy h:mma' }}</span>
+                    </div>
+                    <div class="rate-row" *ngIf="order.expiresAt">
+                      <span class="label">Until:</span>
+                      <span class="value">{{ order.expiresAt | date:'dd/MM/yyyy h:mma' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="status-legend">
+                    <div class="legend-item">
+                      <span class="dot pending_buy"></span>
+                      Pending Buy
+                    </div>
+                    <div class="legend-item">
+                      <span class="dot bought"></span>
+                      Bought
+                    </div>
+                    <div class="legend-item">
+                      <span class="dot pending_sell"></span>
+                      Pending Sell
+                    </div>
+                    <div class="legend-item highlight">
+                      <span class="dot sold"></span>
+                      Sold
+                    </div>
+                    <div class="legend-item">
+                      <span class="dot cancel"></span>
+                      Cancel
+                    </div>
+                  </div>
+
+                  <button class="btn-gold edit-btn" (click)="editOrder(order)">
+                    <mat-icon>edit</mat-icon>
+                    Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- Right Sidebar - Search & Hot Sale -->
+    <aside class="right-sidebar">
+      <div class="search-panel">
+        <h3>Search</h3>
+        <input type="text" class="search-input" placeholder="Hotel" [(ngModel)]="filters.hotel">
+        <input type="text" class="search-input" placeholder="City" [(ngModel)]="filters.city">
+
+        <div class="price-range">
+          <div class="price-labels">
+            <span>{{ filters.minPrice }}$</span>
+            <span>{{ filters.maxPrice }}$</span>
+          </div>
+          <mat-slider
+            [min]="1"
+            [max]="200"
+            [step]="5"
+            discrete
+            class="price-slider"
+          >
+            <input matSliderStartThumb [(ngModel)]="filters.minPrice">
+            <input matSliderEndThumb [(ngModel)]="filters.maxPrice">
+          </mat-slider>
+        </div>
+
+        <button class="search-btn" (click)="onSearch()">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+
+      <div class="hot-sale-section">
+        <h3>
+          <mat-icon class="fire-icon">local_fire_department</mat-icon>
+          HOT SALE
+        </h3>
+
+        <div class="hotel-cards">
+          <div class="hot-sale-card" *ngFor="let hotel of hotSaleHotels">
+            <img [src]="hotel.imageUrl" [alt]="'Hotel in ' + hotel.city" loading="lazy">
+            <div class="price-tag">
+              {{ hotel.city }} {{ hotel.price }}$
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
