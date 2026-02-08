@@ -5,30 +5,56 @@ const zenithPushService = require('../services/zenith-push-service');
 const logger = require('../config/logger');
 const socketService = require('../services/socket-service');
 
-// Get all opportunities (paginated) - includes hotel name and city via JOIN
+// Get all opportunities - includes hotel name, board, category via JOIN
+// Returns flat array with camelCase fields for AG Grid frontend
 router.get('/Opportunities', async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
-    const offset = (page - 1) * limit;
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
 
     const pool = await getPool();
     const result = await pool.request()
-      .input('offset', offset)
       .input('limit', limit)
       .query(`
-        SELECT
-          o.*,
+        SELECT TOP (@limit)
+          o.OpportunityId,
+          o.DateCreate,
           h.name AS HotelName,
-          rc.Name AS RoomType
+          o.ReservationFirstName,
+          o.DateForm,
+          o.DateTo,
+          b.Description AS BoardName,
+          rc.Name AS CategoryName,
+          o.Price,
+          o.PushPrice,
+          o.PushBookingLimit,
+          o.IsActive,
+          o.IsSale
         FROM [MED_ֹOֹֹpportunities] o
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+        LEFT JOIN MED_Board b ON o.BoardId = b.BoardId
         LEFT JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
         ORDER BY o.DateCreate DESC
-        OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
       `);
 
-    res.json({ data: result.recordset });
+    // Map to camelCase fields expected by AG Grid frontend
+    const mapped = result.recordset.map(row => ({
+      id: row.OpportunityId,
+      dateInsert: row.DateCreate,
+      hotelName: row.HotelName || '',
+      reservationFullName: row.ReservationFirstName || '',
+      startDate: row.DateForm,
+      endDate: row.DateTo,
+      board: row.BoardName || '',
+      category: row.CategoryName || '',
+      buyPrice: row.Price,
+      pushPrice: row.PushPrice,
+      maxRooms: row.PushBookingLimit || 1,
+      roomToPurchase: row.PushBookingLimit || 1,
+      roomsBought: row.IsSale ? 1 : 0,
+      status: row.IsActive === true || row.IsActive === 1
+    }));
+
+    res.json(mapped);
   } catch (err) {
     logger.error('Error fetching opportunities', { error: err.message });
     res.status(500).json({ error: 'Database error' });
@@ -183,7 +209,12 @@ router.post('/InsertOpp', async (req, res) => {
 
     res.json({
       success: true,
-      opportunityId: opportunityId
+      opportunityId: opportunityId,
+      id: opportunityId,
+      dateInsert: new Date().toISOString(),
+      startDate: startDateStr,
+      endDate: endDateStr,
+      roomToPurchase: maxRooms || 1
     });
 
   } catch (err) {
@@ -213,7 +244,7 @@ function setCache(key, data) {
   cache[key] = { data, timestamp: Date.now() };
 }
 
-// Get hotels (cached for 1 hour)
+// Get hotels (cached for 1 hour) - camelCase for frontend MedHotel interface
 router.get('/Hotels', async (req, res) => {
   try {
     const cached = getCached('hotels');
@@ -225,15 +256,29 @@ router.get('/Hotels', async (req, res) => {
     const result = await pool.request()
       .query('SELECT * FROM Med_Hotels WHERE isActive = 1');
 
-    setCache('hotels', result.recordset);
-    res.json(result.recordset);
+    const mapped = result.recordset.map(h => ({
+      hotelId: h.HotelId,
+      name: h.name,
+      innstantId: h.InnstantId,
+      innstantZenithId: h.Innstant_ZenithId,
+      goglobalid: h.Goglobalid,
+      countryId: h.countryId,
+      boardId: h.BoardId,
+      categoryId: h.CategoryId,
+      isActive: h.isActive,
+      ratePlanCode: h.RatePlanCode || '',
+      invTypeCode: h.InvTypeCode || ''
+    }));
+
+    setCache('hotels', mapped);
+    res.json(mapped);
   } catch (err) {
     logger.error('Error fetching hotels', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Get boards (cached for 1 hour)
+// Get boards (cached for 1 hour) - camelCase for frontend Board interface
 router.get('/Boards', async (req, res) => {
   try {
     const cached = getCached('boards');
@@ -245,15 +290,21 @@ router.get('/Boards', async (req, res) => {
     const result = await pool.request()
       .query('SELECT * FROM MED_Board');
 
-    setCache('boards', result.recordset);
-    res.json(result.recordset);
+    const mapped = result.recordset.map(b => ({
+      boardId: b.BoardId,
+      boardCode: b.BoardCode,
+      description: b.Description
+    }));
+
+    setCache('boards', mapped);
+    res.json(mapped);
   } catch (err) {
     logger.error('Error fetching boards', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
 
-// Get categories (cached for 1 hour)
+// Get categories (cached for 1 hour) - camelCase for frontend MedRoomCategory interface
 router.get('/Categories', async (req, res) => {
   try {
     const cached = getCached('categories');
@@ -265,8 +316,15 @@ router.get('/Categories', async (req, res) => {
     const result = await pool.request()
       .query('SELECT * FROM MED_RoomCategory');
 
-    setCache('categories', result.recordset);
-    res.json(result.recordset);
+    const mapped = result.recordset.map(c => ({
+      categoryId: c.CategoryId,
+      name: c.Name,
+      description: c.Description,
+      pmsCode: c.PMS_Code || ''
+    }));
+
+    setCache('categories', mapped);
+    res.json(mapped);
   } catch (err) {
     logger.error('Error fetching categories', { error: err.message });
     res.status(500).json({ error: 'Database error' });

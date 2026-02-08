@@ -142,20 +142,26 @@ router.post('/InnstantPrice', async (req, res) => {
     }
     
     // Case 3: Search by city and/or stars
+    // Med_Hotels has no City/Stars columns - JOIN Med_Hotels_instant for stars,
+    // Destinations/DestinationsHotels for city
     else if (city || stars) {
       let query = `
-        SELECT TOP ${limit} HotelId, InnstantId, Name, City, Stars
-        FROM Med_Hotels 
-        WHERE InnstantId IS NOT NULL
+        SELECT TOP ${limit} h.HotelId, h.InnstantId, h.name AS Name,
+          hi.stars AS Stars, d.Name AS City
+        FROM Med_Hotels h
+        LEFT JOIN Med_Hotels_instant hi ON h.HotelId = hi.HotelId
+        LEFT JOIN DestinationsHotels dh ON h.HotelId = dh.HotelId
+        LEFT JOIN Destinations d ON dh.DestinationId = d.Id AND d.Type = 'city'
+        WHERE h.InnstantId IS NOT NULL
       `;
       const request = pool.request();
 
       if (city) {
-        query += ' AND City = @city';
-        request.input('city', city);
+        query += ' AND d.Name LIKE @city';
+        request.input('city', `%${city}%`);
       }
       if (stars) {
-        query += ' AND Stars = @stars';
+        query += ' AND hi.stars = @stars';
         request.input('stars', stars);
       }
 
