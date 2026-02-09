@@ -224,7 +224,7 @@ export class ZenithService {
     if (filters?.limit) params = params.set('limit', filters.limit.toString());
     if (filters?.offset) params = params.set('offset', filters.offset.toString());
     if (filters?.pushType) params = params.set('pushType', filters.pushType);
-    if (filters?.success !== undefined) params = params.set('success', filters.success.toString());
+    if (filters?.success != null) params = params.set('success', filters.success.toString());
     if (filters?.days) params = params.set('days', filters.days.toString());
 
     return this.http.get<PushHistory>(`${this.apiUrl}/push-history`, { params });
@@ -274,4 +274,306 @@ export class ZenithService {
   formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
   }
+
+  // ==================== SALES OFFICE FEATURES ====================
+
+  /**
+   * Get incoming reservations from Zenith
+   */
+  getIncomingReservations(filters?: {
+    status?: 'pending' | 'approved' | 'cancelled';
+    days?: number;
+    limit?: number;
+    offset?: number;
+  }): Observable<{
+    success: boolean;
+    reservations: IncomingReservation[];
+    counts: ReservationCounts;
+    pagination: { total: number; limit: number; offset: number };
+  }> {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.days) params = params.set('days', filters.days.toString());
+    if (filters?.limit) params = params.set('limit', filters.limit.toString());
+    if (filters?.offset) params = params.set('offset', filters.offset.toString());
+
+    return this.http.get<{
+      success: boolean;
+      reservations: IncomingReservation[];
+      counts: ReservationCounts;
+      pagination: { total: number; limit: number; offset: number };
+    }>(`${this.apiUrl}/incoming-reservations`, { params });
+  }
+
+  /**
+   * Get available rooms for matching
+   */
+  getAvailableRooms(filters?: {
+    hotelCode?: string;
+    dateFrom?: string;
+    dateTo?: string;
+  }): Observable<{ success: boolean; rooms: AvailableRoom[] }> {
+    let params = new HttpParams();
+    if (filters?.hotelCode) params = params.set('hotelCode', filters.hotelCode);
+    if (filters?.dateFrom) params = params.set('dateFrom', filters.dateFrom);
+    if (filters?.dateTo) params = params.set('dateTo', filters.dateTo);
+
+    return this.http.get<{ success: boolean; rooms: AvailableRoom[] }>(
+      `${this.apiUrl}/available-rooms`, { params }
+    );
+  }
+
+  /**
+   * Approve and match reservation to booking
+   */
+  approveReservation(reservationId: number, bookId: number): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.apiUrl}/approve-reservation`,
+      { reservationId, bookId }
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+
+  /**
+   * Get sales overview dashboard data
+   */
+  getSalesOverview(days: number = 30): Observable<SalesOverview> {
+    const params = new HttpParams().set('days', days.toString());
+    return this.http.get<SalesOverview>(`${this.apiUrl}/sales-overview`, { params });
+  }
+
+  /**
+   * Get activity log
+   */
+  getActivityLog(filters?: {
+    action?: string;
+    days?: number;
+    limit?: number;
+    offset?: number;
+  }): Observable<{
+    success: boolean;
+    logs: ActivityLogEntry[];
+    actions: string[];
+    pagination: { total: number; limit: number; offset: number };
+  }> {
+    let params = new HttpParams();
+    if (filters?.action) params = params.set('action', filters.action);
+    if (filters?.days) params = params.set('days', filters.days.toString());
+    if (filters?.limit) params = params.set('limit', filters.limit.toString());
+    if (filters?.offset) params = params.set('offset', filters.offset.toString());
+
+    return this.http.get<{
+      success: boolean;
+      logs: ActivityLogEntry[];
+      actions: string[];
+      pagination: { total: number; limit: number; offset: number };
+    }>(`${this.apiUrl}/activity-log`, { params });
+  }
+
+  /**
+   * Get cancellations
+   */
+  getCancellations(filters?: {
+    status?: 'pending' | 'processed';
+    days?: number;
+    limit?: number;
+    offset?: number;
+  }): Observable<{
+    success: boolean;
+    cancellations: CancellationRequest[];
+    counts: { Total: number; Pending: number; Processed: number };
+    pagination: { total: number; limit: number; offset: number };
+  }> {
+    let params = new HttpParams();
+    if (filters?.status) params = params.set('status', filters.status);
+    if (filters?.days) params = params.set('days', filters.days.toString());
+    if (filters?.limit) params = params.set('limit', filters.limit.toString());
+    if (filters?.offset) params = params.set('offset', filters.offset.toString());
+
+    return this.http.get<{
+      success: boolean;
+      cancellations: CancellationRequest[];
+      counts: { Total: number; Pending: number; Processed: number };
+      pagination: { total: number; limit: number; offset: number };
+    }>(`${this.apiUrl}/cancellations`, { params });
+  }
+
+  /**
+   * Process a cancellation
+   */
+  processCancellation(cancellationId: number, refundAmount?: number, notes?: string): Observable<{ success: boolean; message: string }> {
+    return this.http.post<{ success: boolean; message: string }>(
+      `${this.apiUrl}/process-cancellation`,
+      { cancellationId, refundAmount, notes }
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+
+  // ==================== DIRECT PRICE PUSH ====================
+
+  /**
+   * Search hotels that have Zenith mapping
+   */
+  searchHotelsWithMapping(search: string, limit: number = 50): Observable<{ success: boolean; hotels: ZenithMappedHotel[]; count: number }> {
+    const params = new HttpParams()
+      .set('search', search)
+      .set('limit', limit.toString());
+    return this.http.get<{ success: boolean; hotels: ZenithMappedHotel[]; count: number }>(
+      `${this.apiUrl}/hotels-with-mapping`, { params }
+    );
+  }
+
+  /**
+   * Direct push prices to Zenith
+   */
+  directPush(request: { items: DirectPushItem[] }): Observable<DirectPushResult> {
+    return this.http.post<DirectPushResult>(
+      `${this.apiUrl}/direct-push`, request
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+}
+
+// ==================== INTERFACES ====================
+
+export interface IncomingReservation {
+  Id: number;
+  uniqueID: string;
+  HotelCode: string;
+  HotelName: string;
+  DateFrom: string;
+  DateTo: string;
+  AmountAfterTax: number;
+  CurrencyCode: string;
+  GuestName: string;
+  RatePlanCode: string;
+  RoomTypeCode: string;
+  AdultCount: number;
+  ChildrenCount: number;
+  Comments: string;
+  IsApproved: boolean;
+  IsCanceled: boolean;
+  ApprovedDate: string | null;
+  CancelDate: string | null;
+  DateInsert: string;
+  MatchedBookId: number | null;
+  BookBuyPrice: number | null;
+  BookPushPrice: number | null;
+}
+
+export interface ReservationCounts {
+  Total: number;
+  Pending: number;
+  Approved: number;
+  Cancelled: number;
+}
+
+export interface AvailableRoom {
+  BookId: number;
+  HotelId: number;
+  HotelName: string;
+  HotelCode: string;
+  startDate: string;
+  endDate: string;
+  BuyPrice: number;
+  PushPrice: number;
+  BoardId: number;
+  MealPlan: string;
+  CategoryId: number;
+  RoomCategory: string;
+  CancellationType: string;
+  CancellationTo: string;
+}
+
+export interface SalesOverview {
+  success: boolean;
+  period: string;
+  bookings: {
+    TotalBookings: number;
+    AvailableRooms: number;
+    SoldRooms: number;
+    CancelledRooms: number;
+    TotalProfit: number;
+    TotalRevenue: number;
+  };
+  reservations: {
+    TotalReservations: number;
+    PendingReservations: number;
+    ApprovedReservations: number;
+    CancelledReservations: number;
+    TotalReservationValue: number;
+  };
+  pushes: {
+    TotalPushes: number;
+    SuccessfulPushes: number;
+    FailedPushes: number;
+  };
+  recentActivity: Array<{
+    Type: string;
+    Id: number;
+    Reference: string;
+    HotelName: string;
+    Amount: number;
+    Date: string;
+    Status: string;
+  }>;
+}
+
+export interface ActivityLogEntry {
+  Id: number;
+  Action: string;
+  ReservationId: number | null;
+  BookId: number | null;
+  OpportunityId: number | null;
+  HotelId: number | null;
+  Details: string;
+  UserName: string;
+  DateInsert: string;
+}
+
+// ==================== DIRECT PRICE PUSH ====================
+
+export interface ZenithMappedHotel {
+  HotelId: number;
+  Name: string;
+  City: string;
+  Stars: number;
+  ZenithHotelCode: string;
+  InvTypeCode: string;
+  RatePlanCode: string;
+}
+
+export interface DirectPushItem {
+  hotelId: number;
+  zenithHotelCode: string;
+  invTypeCode: string;
+  ratePlanCode: string;
+  startDate: string;
+  endDate: string;
+  pushPrice: number;
+  boardId: number;
+  categoryId: number;
+  mealPlan: string;
+  pricingMode: 'static' | 'dynamic';
+}
+
+export interface DirectPushResult {
+  success: boolean;
+  summary: { total: number; successful: number; failed: number };
+  results: Array<{ hotelId: number; hotelName: string; status: string; opportunityId?: number; pricingMode?: string }>;
+  errors?: Array<{ hotelId: number; hotelName?: string; error: string }>;
+}
+
+export interface CancellationRequest {
+  Id: number;
+  uniqueID: string;
+  ReservationId: number;
+  HotelCode: string;
+  HotelName: string;
+  DateFrom: string;
+  DateTo: string;
+  AmountAfterTax: number;
+  GuestName: string;
+  CancelReason: string;
+  IsProcessed: boolean;
+  ProcessedDate: string | null;
+  RefundAmount: number;
+  DateInsert: string;
 }

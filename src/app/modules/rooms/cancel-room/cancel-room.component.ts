@@ -169,7 +169,7 @@ export class CancelRoomComponent implements OnInit {
       minWidth: 250,
       hide: true,
       cellRenderer: (params: any) => {
-        if (params.value) {
+        if (params.value && params.data.dateLastPrice) {
           const dateAsString = params.data.dateLastPrice;
           const dateOnly = dateAsString.split('T');
           const dateParts = dateOnly[0].split('-');

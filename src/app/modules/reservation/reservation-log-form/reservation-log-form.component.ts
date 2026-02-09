@@ -19,11 +19,13 @@ export class ReservationLogFormComponent implements OnInit {
    }
 
   ngOnInit(): void {
-    this.xml = xmlFormat(this.item.requestContent, {
-      indentation: '  ',
-      collapseContent: true, 
-      lineSeparator: '\n'
-    });
+    this.xml = this.item?.requestContent
+      ? xmlFormat(this.item.requestContent, {
+          indentation: '  ',
+          collapseContent: true,
+          lineSeparator: '\n'
+        })
+      : '';
   }
 
   discard(): void

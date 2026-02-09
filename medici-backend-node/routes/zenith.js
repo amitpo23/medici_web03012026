@@ -901,6 +901,290 @@ router.post('/push-rate', async (req, res) => {
   }
 });
 
+// ==================== DIRECT PRICE PUSH FEATURES ====================
+
+/**
+ * GET /ZenithApi/hotels-with-mapping
+ * Search hotels that have Zenith mapping (for Direct Price Push autocomplete)
+ * Query params: search (string), limit (number, default 50)
+ */
+router.get('/hotels-with-mapping', async (req, res) => {
+  try {
+    const { search = '', limit = 50 } = req.query;
+    const pool = await getPool();
+
+    const request = pool.request()
+      .input('search', sql.NVarChar, `%${search}%`)
+      .input('limit', sql.Int, parseInt(limit, 10) || 50);
+
+    const result = await request.query(`
+      SELECT TOP (@limit)
+        h.HotelId,
+        h.Name,
+        h.City,
+        h.Stars,
+        h.Innstant_ZenithId AS ZenithHotelCode,
+        h.InvTypeCode,
+        h.RatePlanCode
+      FROM Med_Hotels h
+      WHERE h.Innstant_ZenithId IS NOT NULL
+        AND h.isActive = 1
+        AND (h.Name LIKE @search OR h.City LIKE @search
+             OR CAST(h.HotelId AS VARCHAR) LIKE @search)
+      ORDER BY h.Name ASC
+    `);
+
+    res.json({
+      success: true,
+      hotels: result.recordset,
+      count: result.recordset.length
+    });
+  } catch (error) {
+    logger.error('[Zenith] Hotels with mapping error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to search hotels',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /ZenithApi/direct-push
+ * Push prices directly to Zenith for selected hotels.
+ * Creates opportunity records for audit trail, then pushes availability + rates.
+ * Body: {
+ *   items: [{
+ *     hotelId: number,
+ *     zenithHotelCode: string,
+ *     invTypeCode: string,
+ *     ratePlanCode: string,
+ *     startDate: string (YYYY-MM-DD),
+ *     endDate: string (YYYY-MM-DD),
+ *     pushPrice: number,
+ *     boardId: number,
+ *     categoryId: number,
+ *     mealPlan: string ('BB','HB','FB','AI','RO'),
+ *     pricingMode: 'static' | 'dynamic'
+ *   }]
+ * }
+ */
+router.post('/direct-push', async (req, res) => {
+  try {
+    const { items } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'items array is required'
+      });
+    }
+
+    logger.info('[Zenith Direct Push] Processing items', { count: items.length });
+
+    const pool = await getPool();
+    const results = [];
+    const errors = [];
+
+    for (const item of items) {
+      try {
+        const {
+          hotelId, zenithHotelCode, invTypeCode, ratePlanCode,
+          startDate, endDate, pushPrice,
+          boardId = 1, categoryId = 1, mealPlan = 'RO',
+          pricingMode = 'static'
+        } = item;
+
+        if (!hotelId || !zenithHotelCode || !startDate || !endDate || !pushPrice) {
+          errors.push({
+            hotelId: hotelId || 0,
+            error: 'Missing required fields (hotelId, zenithHotelCode, startDate, endDate, pushPrice)'
+          });
+          continue;
+        }
+
+        // Calculate nights
+        const nightsCount = Math.max(1, Math.round(
+          (new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)
+        ));
+
+        // 1. Create opportunity record for audit trail
+        let opportunityId = null;
+        try {
+          const oppResult = await pool.request()
+            .input('OpportunityMlId', sql.Int, null)
+            .input('DateCreate', sql.DateTime, new Date())
+            .input('DestinationsType', sql.NVarChar, 'hotel')
+            .input('DestinationsId', sql.Int, hotelId)
+            .input('DateForm', sql.Date, startDate)
+            .input('DateTo', sql.Date, endDate)
+            .input('NumberOfNights', sql.Int, nightsCount)
+            .input('BoardId', sql.Int, boardId)
+            .input('CategoryId', sql.Int, categoryId)
+            .input('Price', sql.Float, pushPrice)
+            .input('Operator', sql.NVarChar, 'DirectPush')
+            .input('Currency', sql.NVarChar, 'EUR')
+            .input('FreeCancelation', sql.Bit, false)
+            .input('CountryCode', sql.NVarChar, '')
+            .input('PaxAdultsCount', sql.Int, 2)
+            .input('PaxChildrenCount', sql.Int, 0)
+            .input('PushHotelCode', sql.Int, parseInt(zenithHotelCode, 10) || 0)
+            .input('PushBookingLimit', sql.Int, 1)
+            .input('PushInvTypeCode', sql.NVarChar, invTypeCode || '')
+            .input('PushRatePlanCode', sql.NVarChar, ratePlanCode || '')
+            .input('PushPrice', sql.Float, pushPrice)
+            .input('PushCurrency', sql.NVarChar, 'EUR')
+            .input('ReservationFirstName', sql.NVarChar, 'DirectPush')
+            .execute('MED_InsertOpportunity');
+
+          opportunityId = oppResult.recordset?.[0]?.OpportunityId
+            || oppResult.returnValue
+            || null;
+
+          // Fallback: query for latest
+          if (!opportunityId) {
+            const idResult = await pool.request()
+              .input('hid', sql.Int, hotelId)
+              .input('df', sql.NVarChar, startDate)
+              .input('dt', sql.NVarChar, endDate)
+              .query(`SELECT TOP 1 OpportunityId FROM [MED_ֹOֹֹpportunities]
+                      WHERE DestinationsId = @hid AND DateForm = @df AND DateTo = @dt
+                      ORDER BY DateCreate DESC`);
+            opportunityId = idResult.recordset[0]?.OpportunityId;
+          }
+        } catch (oppError) {
+          logger.warn('[Zenith Direct Push] Opportunity creation failed, continuing with push', { error: oppError.message });
+        }
+
+        // 2. Push availability to Zenith
+        const availResult = await zenithPushService.pushAvailability({
+          hotelCode: zenithHotelCode,
+          invTypeCode: invTypeCode || 'STD',
+          startDate,
+          endDate,
+          available: 1
+        });
+
+        // 3. Push rate to Zenith
+        const rateResult = await zenithPushService.pushRate({
+          hotelCode: zenithHotelCode,
+          invTypeCode: invTypeCode || 'STD',
+          ratePlanCode: ratePlanCode || 'STD',
+          startDate,
+          endDate,
+          price: pushPrice,
+          currency: 'EUR',
+          mealPlan
+        });
+
+        const pushSuccess = (availResult.success || rateResult.success);
+
+        // 4. Update opportunity status
+        if (opportunityId) {
+          if (pricingMode === 'static' && pushSuccess) {
+            await pool.request()
+              .input('oppId', sql.Int, opportunityId)
+              .query(`
+                UPDATE [MED_ֹOֹֹpportunities]
+                SET IsPush = 1, Lastupdate = GETDATE()
+                WHERE OpportunityId = @oppId
+              `);
+          }
+
+          // 5. For dynamic mode, insert into push queue for Sales Order scanner
+          if (pricingMode === 'dynamic') {
+            await pool.request()
+              .input('oppId', sql.Int, opportunityId)
+              .input('action', sql.NVarChar, 'publish')
+              .query(`
+                INSERT INTO Med_HotelsToPush (OpportunityId, DateInsert, IsActive, Action)
+                VALUES (@oppId, GETDATE(), 1, @action)
+              `);
+          }
+        }
+
+        // 6. Log to MED_PushLog
+        try {
+          await pool.request()
+            .input('oppId', sql.Int, opportunityId || 0)
+            .input('pushType', sql.NVarChar, 'RATE')
+            .input('success', sql.Bit, pushSuccess ? 1 : 0)
+            .input('errorMsg', sql.NVarChar, pushSuccess ? null : (rateResult.error || availResult.error || 'Unknown'))
+            .input('processingTime', sql.Int, (rateResult.processingTime || 0) + (availResult.processingTime || 0))
+            .query(`
+              INSERT INTO MED_PushLog (OpportunityId, PushType, PushDate, Success, ErrorMessage, RetryCount, ProcessingTimeMs)
+              VALUES (@oppId, @pushType, GETDATE(), @success, @errorMsg, 0, @processingTime)
+            `);
+        } catch { /* best effort logging */ }
+
+        // Lookup hotel name
+        let hotelName = '';
+        try {
+          const nameResult = await pool.request()
+            .input('hid', sql.Int, hotelId)
+            .query('SELECT TOP 1 Name FROM Med_Hotels WHERE HotelId = @hid');
+          hotelName = nameResult.recordset[0]?.Name || '';
+        } catch { /* best effort */ }
+
+        if (pushSuccess) {
+          results.push({
+            hotelId,
+            hotelName,
+            status: 'success',
+            opportunityId,
+            pricingMode
+          });
+        } else {
+          errors.push({
+            hotelId,
+            hotelName,
+            error: rateResult.error || availResult.error || 'Zenith push failed'
+          });
+        }
+
+        // Rate limiting: 500ms delay between pushes
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+      } catch (itemError) {
+        logger.error('[Zenith Direct Push] Error processing item', { hotelId: item.hotelId, error: itemError.message });
+        errors.push({
+          hotelId: item.hotelId || 0,
+          error: itemError.message
+        });
+      }
+    }
+
+    // Slack notification
+    if (results.length > 0) {
+      try {
+        await slackService.sendNotification(
+          'Zenith Direct Push Completed',
+          `Successfully pushed ${results.length} price entries\nFailed: ${errors.length}`
+        );
+      } catch { /* best effort */ }
+    }
+
+    res.json({
+      success: true,
+      summary: {
+        total: items.length,
+        successful: results.length,
+        failed: errors.length
+      },
+      results,
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    logger.error('[Zenith Direct Push] Fatal error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process direct push',
+      message: error.message
+    });
+  }
+});
+
 // ==================== SALES OFFICE FEATURES ====================
 
 /**

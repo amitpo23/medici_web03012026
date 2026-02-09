@@ -47,7 +47,7 @@ interface QueueItem {
             </div>
             <div class="status-item">
               <span class="label">Auto-Refresh</span>
-              <mat-slide-toggle [(ngModel)]="autoRefresh" (change)="toggleAutoRefresh()" color="primary">
+              <mat-slide-toggle [checked]="autoRefresh" (change)="autoRefresh = $event.checked; toggleAutoRefresh()" color="primary">
               </mat-slide-toggle>
             </div>
           </div>

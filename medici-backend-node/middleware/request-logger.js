@@ -3,11 +3,10 @@ const logger = require('../config/logger');
 // Request logging middleware
 const requestLogger = (req, res, next) => {
   const startTime = Date.now();
-
+  
   res.on('finish', () => {
     const responseTime = Date.now() - startTime;
     logger.info('HTTP Request', {
-      requestId: req.requestId,
       method: req.method,
       url: req.url,
       status: res.statusCode,
@@ -15,21 +14,20 @@ const requestLogger = (req, res, next) => {
       ip: req.ip || req.connection.remoteAddress
     });
   });
-
+  
   next();
 };
 
 // Error logging middleware
 const errorLogger = (err, req, res, next) => {
   logger.error('HTTP Error', {
-    requestId: req.requestId,
     method: req.method,
     url: req.url,
     error: err.message,
     stack: err.stack,
     ip: req.ip || req.connection.remoteAddress
   });
-
+  
   next(err);
 };
 

@@ -254,22 +254,25 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
       'new-booking': 'New Booking!',
       'booking-cancelled': 'Booking Cancelled',
       'new-opportunity': 'New Opportunity',
-      'alert-triggered': 'Alert',
+      'alert-triggered': String(notification.data['rule'] || notification.data['ruleName'] || 'Alert'),
       'log-entry': notification.data['level'] === 'error' ? 'Error Log' : 'Warning Log'
     };
 
     const type = typeMap[notification.event] || 'system';
     const title = titleMap[notification.event] || notification.event;
     const message = String(
-      notification.data['hotelName'] ||
       notification.data['message'] ||
+      notification.data['description'] ||
+      notification.data['hotelName'] ||
       'New event received'
     );
 
-    // Determine severity based on event type
+    // Determine severity from event data or type
     let severity: 'critical' | 'high' | 'medium' | 'low' = 'medium';
     if (notification.event === 'alert-triggered') {
-      severity = 'high';
+      const eventSeverity = notification.data['severity'];
+      severity = (eventSeverity === 'critical' || eventSeverity === 'high' || eventSeverity === 'medium' || eventSeverity === 'low')
+        ? eventSeverity : 'high';
     } else if (notification.event === 'log-entry') {
       severity = notification.data['level'] === 'error' ? 'critical' : 'high';
     }
@@ -308,9 +311,9 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
         if (response.success && response.alerts) {
           this.notifications = response.alerts.map((alert: any) => ({
             id: alert.id,
-            type: this.mapAlertType(alert.rule),
-            title: alert.rule || 'Alert',
-            message: alert.message,
+            type: this.mapAlertType(alert.ruleName || alert.rule),
+            title: alert.ruleName || alert.rule || 'Alert',
+            message: alert.description || alert.message || '',
             severity: alert.severity || 'medium',
             timestamp: new Date(alert.timestamp),
             read: alert.status === 'resolved'
