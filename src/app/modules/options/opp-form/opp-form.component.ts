@@ -199,7 +199,16 @@ export class OppFormComponent implements OnInit {
   }
 
   priceValidatorError(): boolean {
-    const error = Number.parseInt(this.buyPrice!.value) > Number.parseInt(this.pushPrice!.value);
+    // Use parseFloat instead of parseInt to handle decimal prices properly
+    const buyPriceValue = parseFloat(this.buyPrice!.value);
+    const pushPriceValue = parseFloat(this.pushPrice!.value);
+    
+    // Check for valid numbers and ensure buy price is not greater than push price
+    if (isNaN(buyPriceValue) || isNaN(pushPriceValue)) {
+      return true; // Invalid if either price is not a valid number
+    }
+    
+    const error = buyPriceValue > pushPriceValue;
     return error;
   }
   dateValidatorError(): boolean {

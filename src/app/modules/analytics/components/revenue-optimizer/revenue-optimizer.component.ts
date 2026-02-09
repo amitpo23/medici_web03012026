@@ -6,6 +6,9 @@ import { environment } from 'src/app/environments/environment';
 
 Chart.register(...registerables);
 
+interface City { cityName: string; count?: number; }
+interface Hotel { hotelId: number; hotelName: string; cityName?: string; }
+
 interface RevenueScenario {
   strategy: string;
   price: number;
@@ -39,6 +42,16 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
   checkOut = '';
   buyPrice: number | null = null;
 
+  // Validation error messages
+  checkInError = '';
+  checkOutError = '';
+  buyPriceError = '';
+
+  cities: City[] = [];
+  hotels: Hotel[] = [];
+  filteredHotels: Hotel[] = [];
+  selectedCity: string | null = null;
+
   optimization: RevenueOptimization | null = null;
   scenarios: RevenueScenario[] = [];
   selectedStrategy = '';
@@ -52,6 +65,9 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    this.loadCities();
+    this.loadHotels();
+
     // Set default dates
     const checkIn = new Date();
     checkIn.setDate(checkIn.getDate() + 14);
@@ -60,6 +76,39 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
 
     this.checkIn = checkIn.toISOString().split('T')[0];
     this.checkOut = checkOut.toISOString().split('T')[0];
+  }
+
+  loadCities(): void {
+    this.http.get<any>(`${this.baseUrl}ai/cities`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => { this.cities = res.cities || []; },
+        error: () => { this.cities = []; }
+      });
+  }
+
+  loadHotels(): void {
+    this.http.get<any>(`${this.baseUrl}ai/hotels`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.hotels = res.hotels || [];
+          this.filteredHotels = this.hotels;
+        },
+        error: () => { this.hotels = []; this.filteredHotels = []; }
+      });
+  }
+
+  onCityChange(city: string | null): void {
+    this.selectedCity = city;
+    this.filteredHotels = city
+      ? this.hotels.filter(h => h.cityName === city)
+      : this.hotels;
+    this.hotelId = null;
+  }
+
+  onHotelChange(hotelId: number): void {
+    this.hotelId = hotelId;
   }
 
   ngAfterViewInit(): void {
@@ -75,7 +124,21 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   maximizeRevenue(): void {
-    if (!this.hotelId || !this.buyPrice) return;
+    // Comprehensive validation
+    if (!this.hotelId || !this.buyPrice || !this.checkIn || !this.checkOut) {
+      this.error = 'Please fill in all required fields';
+      return;
+    }
+
+    if (!this.isValidDateRange()) {
+      this.error = 'Please select valid dates';
+      return;
+    }
+
+    if (this.buyPrice <= 0 || this.buyPrice > 10000) {
+      this.error = 'Please enter a valid buy price (1-10,000 €)';
+      return;
+    }
 
     this.loading = true;
     this.error = null;
@@ -113,21 +176,33 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
   }
 
   initChart(): void {
-    if (!this.scenariosChartCanvas?.nativeElement || this.scenarios.length === 0) return;
-
-    const ctx = this.scenariosChartCanvas.nativeElement.getContext('2d');
-    if (!ctx) return;
-
-    if (this.scenariosChart) {
-      this.scenariosChart.destroy();
+    if (!this.scenariosChartCanvas?.nativeElement) {
+      console.warn('Chart canvas not available');
+      return;
+    }
+    
+    if (this.scenarios.length === 0) {
+      console.warn('No scenarios data available for chart');
+      return;
     }
 
-    const labels = this.scenarios.map(s => this.formatStrategyName(s.strategy));
-    const revenueData = this.scenarios.map(s => s.expectedRevenue);
-    const profitData = this.scenarios.map(s => s.expectedProfit);
-    const conversionData = this.scenarios.map(s => s.expectedConversionRate * 100);
+    const ctx = this.scenariosChartCanvas.nativeElement.getContext('2d');
+    if (!ctx) {
+      console.error('Failed to get chart context');
+      return;
+    }
 
-    this.scenariosChart = new Chart(ctx, {
+    try {
+      if (this.scenariosChart) {
+        this.scenariosChart.destroy();
+      }
+
+      const labels = this.scenarios.map(s => this.formatStrategyName(s.strategy));
+      const revenueData = this.scenarios.map(s => s.expectedRevenue || 0);
+      const profitData = this.scenarios.map(s => s.expectedProfit || 0);
+      const conversionData = this.scenarios.map(s => (s.expectedConversionRate || 0) * 100);
+
+      this.scenariosChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels,
@@ -230,6 +305,11 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
         }
       }
     });
+      
+    } catch (error) {
+      console.error('Failed to create chart:', error);
+      this.error = 'Failed to display chart visualization';
+    }
   }
 
   formatStrategyName(strategy: string): string {
@@ -250,12 +330,86 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
     }
   }
 
-  formatCurrency(value: number): string {
-    return '€' + value.toFixed(2);
+  formatCurrency(value: number | null | undefined): string {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '€0.00';
+    }
+    
+    // Use Intl.NumberFormat for proper currency formatting
+    const formatter = new Intl.NumberFormat('en-EU', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+    
+    return formatter.format(value);
   }
 
-  formatPercent(value: number): string {
+  formatPercent(value: number | null | undefined): string {
+    if (value === null || value === undefined || isNaN(value)) {
+      return '0.0%';
+    }
     return (value * 100).toFixed(1) + '%';
+  }
+
+  getTodayDate(): string {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  validateDates(): void {
+    this.checkInError = '';
+    this.checkOutError = '';
+
+    if (this.checkIn) {
+      const checkInDate = new Date(this.checkIn);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (checkInDate < today) {
+        this.checkInError = 'Check-in date cannot be in the past';
+      }
+    }
+
+    if (this.checkIn && this.checkOut) {
+      const checkInDate = new Date(this.checkIn);
+      const checkOutDate = new Date(this.checkOut);
+      
+      if (checkOutDate <= checkInDate) {
+        this.checkOutError = 'Check-out must be after check-in date';
+      }
+      
+      // Maximum stay validation (optional)
+      const daysDiff = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 3600 * 24);
+      if (daysDiff > 30) {
+        this.checkOutError = 'Maximum stay is 30 days';
+      }
+    }
+
+    this.validateBuyPrice();
+  }
+
+  validateBuyPrice(): void {
+    this.buyPriceError = '';
+    
+    if (this.buyPrice !== null) {
+      if (this.buyPrice <= 0) {
+        this.buyPriceError = 'Buy price must be greater than 0';
+      } else if (this.buyPrice > 10000) {
+        this.buyPriceError = 'Buy price cannot exceed €10,000';
+      }
+    }
+  }
+
+  isValidDateRange(): boolean {
+    if (!this.checkIn || !this.checkOut) return false;
+    
+    const checkInDate = new Date(this.checkIn);
+    const checkOutDate = new Date(this.checkOut);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return checkInDate >= today && checkOutDate > checkInDate;
   }
 
   reset(): void {
@@ -265,6 +419,11 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
     this.scenarios = [];
     this.selectedStrategy = '';
     this.error = null;
+    
+    // Clear validation errors
+    this.checkInError = '';
+    this.checkOutError = '';
+    this.buyPriceError = '';
 
     if (this.scenariosChart) {
       this.scenariosChart.destroy();

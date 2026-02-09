@@ -301,11 +301,11 @@ export class SearchPriceComponent implements OnInit {
 
 
     // update dateTo
-    const sdt = sd;
+    const sdt = new Date(sd);  // Create a new date object
     sdt.setDate(sd.getDate() + 1);
     // this.composeForm.controls['dateTo'].setValue(sdt);
-    this.selectedDateToInput = sd;
-    dtf = this.getStringFromDate(sd);
+    this.selectedDateToInput = sdt;  // Use the incremented date
+    dtf = this.getStringFromDate(sdt);  // Use the incremented date
     this.composeForm.controls['dateToStr'].setValue(dtf);
   }
 
