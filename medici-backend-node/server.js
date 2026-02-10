@@ -20,24 +20,9 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-// Middleware
-const allowedOrigins = [
-  'https://admin.medicihotels.com',
-  'https://medici-web.vercel.app',
-  'https://medici-frontend.vercel.app'
-];
+// Middleware - CORS: allow all origins (auth is handled separately)
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? (origin, callback) => {
-        // Allow requests with no origin (server-to-server, curl, etc.)
-        if (!origin) return callback(null, true);
-        // Allow exact matches
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        // Allow all Vercel preview/deployment URLs for this project
-        if (/^https:\/\/medici[-\w]*\.vercel\.app$/.test(origin)) return callback(null, true);
-        callback(null, false);
-      }
-    : '*',
+  origin: true,
   credentials: true,
   optionsSuccessStatus: 200
 };
