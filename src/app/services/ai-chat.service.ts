@@ -81,35 +81,35 @@ export class AIChatService {
    * Get quick database statistics
    */
   getQuickStats(): Observable<QuickStatsResponse> {
-    return this.http.get<QuickStatsResponse>(`${this.baseUrl}/ai-chat/quick-stats`);
+    return this.http.get<QuickStatsResponse>(`${this.baseUrl}ai-chat/quick-stats`);
   }
 
   /**
    * Ask a natural language question
    */
   askQuestion(request: AskQuestionRequest): Observable<AskQuestionResponse> {
-    return this.http.post<AskQuestionResponse>(`${this.baseUrl}/ai-chat/ask`, request);
+    return this.http.post<AskQuestionResponse>(`${this.baseUrl}ai-chat/ask`, request);
   }
 
   /**
    * Execute a custom SQL query
    */
   executeCustomQuery(request: CustomQueryRequest): Observable<CustomQueryResponse> {
-    return this.http.post<CustomQueryResponse>(`${this.baseUrl}/ai-chat/custom-query`, request);
+    return this.http.post<CustomQueryResponse>(`${this.baseUrl}ai-chat/custom-query`, request);
   }
 
   /**
    * Get database schema
    */
   getDatabaseSchema(): Observable<SchemaResponse> {
-    return this.http.get<SchemaResponse>(`${this.baseUrl}/ai-chat/schema`);
+    return this.http.get<SchemaResponse>(`${this.baseUrl}ai-chat/schema`);
   }
 
   /**
    * Get query suggestions
    */
   getQuerySuggestions(): Observable<SuggestionsResponse> {
-    return this.http.get<SuggestionsResponse>(`${this.baseUrl}/ai-chat/suggestions`);
+    return this.http.get<SuggestionsResponse>(`${this.baseUrl}ai-chat/suggestions`);
   }
 
   /**

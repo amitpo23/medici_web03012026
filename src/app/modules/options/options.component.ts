@@ -283,28 +283,33 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
           this.http.post(
             this.baseUrl + 'Opportunity/InsertOpp',
             toSave)
-            .subscribe((oppId: any) => {
-              const newData = {
-                id: oppId.id,
-                dateInsert: oppId.dateInsert,
-                hotelName: opp.hotel.name,
-                startDate: oppId.startDate,
-                endDate: oppId.endDate,
-                board: opp.board.description,
-                category: opp.category.name,
-                buyPrice: Number.parseFloat(opp.buyPrice),
-                pushPrice: Number.parseFloat(opp.pushPrice),
-                maxRooms: opp.maxRoomsPerNight,
-                roomToPurchase: oppId.roomToPurchase,
-                roomsBought: 0,
-                reservationFullName: opp.reservationFullName,
-                status: true
-              };
-              const res = this.gridApi.applyTransaction({
-                add: [newData],
-                addIndex: 0,
-              });
-              this.activeOpps = this.activeOpps + 1;
+            .subscribe({
+              next: (oppId: any) => {
+                const newData = {
+                  id: oppId.id,
+                  dateInsert: oppId.dateInsert,
+                  hotelName: opp.hotel.name,
+                  startDate: oppId.startDate,
+                  endDate: oppId.endDate,
+                  board: opp.board.description,
+                  category: opp.category.name,
+                  buyPrice: Number.parseFloat(opp.buyPrice),
+                  pushPrice: Number.parseFloat(opp.pushPrice),
+                  maxRooms: opp.maxRoomsPerNight,
+                  roomToPurchase: oppId.roomToPurchase,
+                  roomsBought: 0,
+                  reservationFullName: opp.reservationFullName,
+                  status: true
+                };
+                const res = this.gridApi.applyTransaction({
+                  add: [newData],
+                  addIndex: 0,
+                });
+                this.activeOpps = this.activeOpps + 1;
+              },
+              error: (err) => {
+                this.openSnackBar('Failed to insert opportunity: ' + (err.error?.error || err.message), false);
+              }
             });
         }
       });
@@ -361,18 +366,21 @@ export class OptionsComponent implements OnInit, AfterViewInit, OnDestroy {
    */
   ngOnInit(): void {
     this.http.get<MedHotel[]>(this.baseUrl + 'Opportunity/Hotels')
-      .subscribe((data: MedHotel[]) => {
-        this.options = data;
+      .subscribe({
+        next: (data: MedHotel[]) => { this.options = data; },
+        error: (err) => { this.openSnackBar('Failed to load hotels: ' + (err.error?.error || err.message), false); }
       });
 
     this.http.get<Board[]>(this.baseUrl + 'Opportunity/Boards')
-      .subscribe((data: Board[]) => {
-        this.allBoards = data;
+      .subscribe({
+        next: (data: Board[]) => { this.allBoards = data; },
+        error: (err) => { this.openSnackBar('Failed to load boards: ' + (err.error?.error || err.message), false); }
       });
 
     this.http.get<MedRoomCategory[]>(this.baseUrl + 'Opportunity/Categories')
-      .subscribe((data: MedRoomCategory[]) => {
-        this.allCategories = data;
+      .subscribe({
+        next: (data: MedRoomCategory[]) => { this.allCategories = data; },
+        error: (err) => { this.openSnackBar('Failed to load categories: ' + (err.error?.error || err.message), false); }
       });
 
     const isMobile = this.deviceService.isMobile();

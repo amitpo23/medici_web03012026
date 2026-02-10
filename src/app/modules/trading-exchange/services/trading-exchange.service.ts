@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 import {
   PriceHistoryResponse,
   OrderBook,
@@ -16,7 +16,7 @@ import {
   providedIn: 'root'
 })
 export class TradingExchangeService {
-  private baseUrl = environment.apiUrl || 'http://localhost:3000';
+  private baseUrl = environment.apiUrl || 'http://localhost:8080';
   private apiUrl = `${this.baseUrl}/api/trading-exchange`;
 
   // Observable for real-time updates
@@ -109,6 +109,17 @@ export class TradingExchangeService {
   // ========================================
   getMarketOverview(): Observable<MarketOverview> {
     return this.http.get<MarketOverview>(`${this.apiUrl}/market-overview`);
+  }
+
+  // ========================================
+  // Opportunities - Available Trading Opportunities
+  // ========================================
+  getOpportunities(limit: number = 20): Observable<{ data: Record<string, unknown>[] }> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<{ data: Record<string, unknown>[] }>(
+      `${this.baseUrl}/Opportunity/Opportunities`,
+      { params }
+    );
   }
 
   // ========================================

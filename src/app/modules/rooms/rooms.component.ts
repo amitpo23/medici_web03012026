@@ -45,6 +45,7 @@ export class RoomsComponent implements OnInit, OnDestroy {
   
   // Auto-refresh functionality
   private refreshInterval: any;
+  private countdownInterval: any;
   private readonly REFRESH_INTERVAL_MS = 30000; // 30 seconds
   public autoRefreshEnabled = true;
   public lastRefreshTime: Date = new Date();
@@ -91,9 +92,12 @@ export class RoomsComponent implements OnInit, OnDestroy {
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
 
     // Countdown timer (update every second)
-    setInterval(() => {
+    this.countdownInterval = setInterval(() => {
       if (this.autoRefreshEnabled && this.nextRefreshIn > 0) {
         this.nextRefreshIn--;
       }
@@ -641,11 +645,14 @@ export class RoomsComponent implements OnInit, OnDestroy {
    * On destroy
    */
   ngOnDestroy(): void {
-    // Clear auto-refresh interval
+    // Clear auto-refresh intervals
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
     }
-    
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+
     this._unsubscribeAll.next();
     this._unsubscribeAll.complete();
   }

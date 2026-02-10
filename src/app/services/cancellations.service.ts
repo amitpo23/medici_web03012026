@@ -51,7 +51,7 @@ export interface TrendData {
   providedIn: 'root'
 })
 export class CancellationsService {
-  private readonly apiUrl = `${environment.baseUrl}/cancellations`;
+  private readonly apiUrl = `${environment.baseUrl}cancellations`;
 
   constructor(private http: HttpClient) {}
 

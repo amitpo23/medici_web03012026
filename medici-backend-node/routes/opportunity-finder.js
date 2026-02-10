@@ -243,9 +243,9 @@ router.post('/analyze-hotel', async (req, res) => {
     const defaultDateTo = dateTo || new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
     // Get hotel info
+    const { getPool } = require('../config/database');
     const sql = require('mssql');
-    const dbConfig = require('../config/database');
-    const pool = await sql.connect(dbConfig);
+    const pool = await getPool();
 
     const hotelInfo = await pool.request()
       .input('hotelId', sql.Int, hotelId)

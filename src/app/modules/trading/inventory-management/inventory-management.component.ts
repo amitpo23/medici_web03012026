@@ -39,6 +39,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   summary: any = null;
   
   private destroy$ = new Subject<void>();
+  private autoRefreshInterval: any;
 
   constructor(
     private tradingService: TradingService,
@@ -63,6 +64,9 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.autoRefreshInterval) {
+      clearInterval(this.autoRefreshInterval);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -94,7 +98,7 @@ export class InventoryManagementComponent implements OnInit, OnDestroy {
 
   setupAutoRefresh(): void {
     // Auto-refresh every 5 minutes
-    setInterval(() => {
+    this.autoRefreshInterval = setInterval(() => {
       this.loadInventory(true);
     }, 5 * 60 * 1000);
   }

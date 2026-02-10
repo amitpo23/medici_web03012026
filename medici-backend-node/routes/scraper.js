@@ -1,9 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const logger = require('../config/logger');
 const competitorScraper = require('../services/competitor-scraper');
-const sql = require('mssql');
-const config = require('../config/database');
+const { getPool } = require('../config/database');
 
 /**
  * POST /scraper/competitor-prices
@@ -29,7 +27,7 @@ router.post('/competitor-prices', async (req, res) => {
       });
     }
     
-    logger.info('Scraping request', { hotelName, checkIn, checkOut });
+    console.log(`📊 Scraping request: ${hotelName} (${checkIn} → ${checkOut})`);
     
     let result;
     
@@ -49,7 +47,7 @@ router.post('/competitor-prices', async (req, res) => {
     res.json(result);
     
   } catch (error) {
-    logger.error('Scraper endpoint error', { error: error.message });
+    console.error('❌ Scraper endpoint error:', error);
     res.status(500).json({
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -83,7 +81,7 @@ router.post('/compare-prices', async (req, res) => {
     res.json(result);
     
   } catch (error) {
-    logger.error('Compare prices error', { error: error.message });
+    console.error('❌ Compare prices error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -107,7 +105,7 @@ router.get('/sessions', async (req, res) => {
  */
 router.post('/test', async (req, res) => {
   try {
-    logger.info('Testing scraper');
+    console.log('🧪 Testing scraper...');
     
     const result = await competitorScraper.scrapeBookingCom(
       'David Intercontinental Tel Aviv',
@@ -135,17 +133,17 @@ router.post('/test', async (req, res) => {
  */
 async function saveCompetitorPrice(priceData) {
   try {
-    const pool = await sql.connect(config);
-    
+    const pool = await getPool();
+
     await pool.request()
-      .input('hotelName', sql.NVarChar(200), priceData.hotel)
-      .input('source', sql.NVarChar(50), priceData.source)
-      .input('checkIn', sql.Date, priceData.checkIn)
-      .input('checkOut', sql.Date, priceData.checkOut)
-      .input('price', sql.Decimal(10, 2), priceData.price)
-      .input('currency', sql.NVarChar(10), priceData.currency)
-      .input('scrapedAt', sql.DateTime, priceData.scrapedAt)
-      .input('raw', sql.NVarChar(sql.MAX), priceData.raw)
+      .input('hotelName', priceData.hotel)
+      .input('source', priceData.source)
+      .input('checkIn', priceData.checkIn)
+      .input('checkOut', priceData.checkOut)
+      .input('price', priceData.price)
+      .input('currency', priceData.currency)
+      .input('scrapedAt', priceData.scrapedAt)
+      .input('raw', priceData.raw)
       .query(`
         INSERT INTO CompetitorPrices 
         (HotelName, Source, CheckIn, CheckOut, Price, Currency, ScrapedAt, RawData)
@@ -153,11 +151,11 @@ async function saveCompetitorPrice(priceData) {
         (@hotelName, @source, @checkIn, @checkOut, @price, @currency, @scrapedAt, @raw)
       `);
     
-    logger.info('Saved competitor price', { source: priceData.source, price: priceData.price, currency: priceData.currency });
+    console.log(`💾 Saved competitor price: ${priceData.source} - ${priceData.price} ${priceData.currency}`);
     
   } catch (error) {
     // Don't fail the request if DB save fails
-    logger.error('Failed to save competitor price to DB', { error: error.message });
+    console.error('⚠️ Failed to save to DB:', error.message);
   }
 }
 

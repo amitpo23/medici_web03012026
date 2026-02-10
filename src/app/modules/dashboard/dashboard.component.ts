@@ -5,7 +5,7 @@ import {
     DashboardAlert, DashboardService,
     DashboardStats, ForecastResponse, HotelPerformance, WorkerStatus
 } from '../../services/dashboard.service';
-import { environment } from '../../environments/environment.prod';
+import { environment } from '../../environments/environment';
 
 interface Activity {
   type: string;
@@ -25,6 +25,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loading = true;
   dateRange: 'today' | 'week' | 'month' | 'quarter' | 'year' | 'all' = 'year';
   private destroy$ = new Subject<void>();
+  private monitoringInterval: any;
 
   // KPI Data from backend
   kpiData = {
@@ -87,10 +88,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadSystemMonitoringData();
     
     // Refresh system monitoring data every 30 seconds
-    setInterval(() => this.loadSystemMonitoringData(), 30000);
+    this.monitoringInterval = setInterval(() => this.loadSystemMonitoringData(), 30000);
   }
 
   ngOnDestroy(): void {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+    }
     this.destroy$.next();
     this.destroy$.complete();
   }

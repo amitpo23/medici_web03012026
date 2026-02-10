@@ -88,17 +88,29 @@ router.get('/query/:tableName', async (req, res) => {
 
     const pool = await getPool();
 
-    // Get primary key or first column for ordering
-    const pkResult = await pool.request()
+    // Get all columns for ordering validation
+    const colsResult = await pool.request()
       .input('tableName', tableName.replace('SalesOffice.', ''))
       .query(`
-        SELECT TOP 1 COLUMN_NAME
+        SELECT COLUMN_NAME
         FROM INFORMATION_SCHEMA.COLUMNS
         WHERE TABLE_NAME = @tableName
         ORDER BY ORDINAL_POSITION
       `);
 
-    const orderColumn = orderBy || pkResult.recordset[0]?.COLUMN_NAME || 'id';
+    const validColumns = colsResult.recordset.map(r => r.COLUMN_NAME);
+    const defaultColumn = validColumns[0] || 'id';
+
+    // Validate orderBy against actual column names to prevent SQL injection
+    let orderColumn = defaultColumn;
+    if (orderBy) {
+      const match = validColumns.find(c => c.toLowerCase() === orderBy.toLowerCase());
+      if (match) {
+        orderColumn = match;
+      } else {
+        return res.status(400).json({ error: `Invalid orderBy column: ${orderBy}` });
+      }
+    }
     const direction = orderDir.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const result = await pool.request()

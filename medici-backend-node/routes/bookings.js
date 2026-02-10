@@ -11,7 +11,7 @@ const innstantClient = new InnstantClient();
 router.get('/Bookings', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
-    const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 200));
+    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit, 10) || 200));
     const offset = (page - 1) * limit;
 
     const pool = await getPool();
@@ -20,15 +20,32 @@ router.get('/Bookings', async (req, res) => {
       .input('limit', limit)
       .query(`
         SELECT
-          b.id, b.PreBookId, b.contentBookingID,
-          h.name as HotelName,
-          b.startDate, b.endDate,
-          b.price, b.lastPrice,
-          b.IsSold, b.IsActive, b.Status,
-          b.DateInsert,
-          b.providers, b.supplierReference
+          b.id,
+          b.PreBookId as preBookId,
+          b.contentBookingID as contentBookingId,
+          b.DateInsert as dateInsert,
+          h.name as name,
+          ISNULL(b.NameUpdate, '') as reservationFullName,
+          b.startDate,
+          b.endDate,
+          ISNULL(bd.Description, '') as board,
+          ISNULL(rc.name, '') as category,
+          b.price,
+          ISNULL(o.PushPrice, 0) as pushPrice,
+          b.lastPrice,
+          b.DateLastPrice as dateLastPrice,
+          b.IsActive as isActive,
+          b.IsSold as isSold,
+          b.CancellationTo as cancellationTo,
+          b.providers as provider,
+          b.supplierReference
         FROM MED_Book b
         LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
+        LEFT JOIN MED_PreBook pb ON b.PreBookId = pb.PreBookId
+        LEFT JOIN MED_Board bd ON pb.BoardId = bd.BoardId
+        LEFT JOIN MED_RoomCategory rc ON pb.CategoryId = rc.CategoryId
+        LEFT JOIN [MED_ֹOֹֹpportunities] o ON b.OpportunityId = o.OpportunityId
+        WHERE b.IsActive = 1
         ORDER BY b.DateInsert DESC
         OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
       `);
@@ -215,54 +232,6 @@ router.get('/Archive', async (req, res) => {
   }
 });
 
-// Pre-book a room via Innstant
-router.post('/PreBook', async (req, res) => {
-  try {
-    const { token, room, hotelId, checkIn, checkOut, adults, children } = req.body;
-
-    if (!token || !room || !hotelId || !checkIn || !checkOut) {
-      return res.status(400).json({
-        error: 'Required fields: token, room (with roomId/rateId), hotelId, checkIn, checkOut'
-      });
-    }
-
-    const result = await innstantClient.preBook({
-      token, room, hotelId, checkIn, checkOut,
-      adults: adults || 2,
-      children: children || []
-    });
-
-    if (!result.success) {
-      return res.status(502).json({ error: 'PreBook failed', details: result.error });
-    }
-
-    // Store pre-book in database
-    const pool = await getPool();
-    await pool.request()
-      .input('hotelId', hotelId)
-      .input('dateFrom', checkIn)
-      .input('dateTo', checkOut)
-      .input('price', result.price)
-      .input('token', result.token)
-      .input('cancellationType', result.cancellationType || null)
-      .input('cancellationTo', result.cancellationDeadline || null)
-      .execute('MED_InsertPreBook');
-
-    res.json({
-      success: true,
-      preBookId: result.preBookId,
-      price: result.price,
-      currency: result.currency,
-      cancellationType: result.cancellationType,
-      cancellationDeadline: result.cancellationDeadline,
-      token: result.token
-    });
-  } catch (err) {
-    logger.error('Error pre-booking', { error: err.message });
-    res.status(500).json({ error: 'PreBook error' });
-  }
-});
-
 // Confirm booking via Innstant
 router.post('/Confirm', async (req, res) => {
   try {
@@ -306,108 +275,6 @@ router.post('/Confirm', async (req, res) => {
   } catch (err) {
     logger.error('Error confirming booking', { error: err.message });
     res.status(500).json({ error: 'Booking error' });
-  }
-});
-
-// Manual booking (without Innstant)
-router.post('/ManualBook', async (req, res) => {
-  try {
-    const { opportunityId, code, hotelId, startDate, endDate, price, guestName } = req.body;
-
-    if (!code || !hotelId || !startDate || !endDate) {
-      return res.status(400).json({
-        error: 'Required fields: code, hotelId, startDate, endDate'
-      });
-    }
-
-    const pool = await getPool();
-    const result = await pool.request()
-      .input('opportunityId', opportunityId || null)
-      .input('code', code)
-      .input('hotelId', hotelId)
-      .input('startDate', startDate)
-      .input('endDate', endDate)
-      .input('price', price || 0)
-      .input('guestName', guestName || null)
-      .query(`
-        INSERT INTO MED_Book (
-          contentBookingID, HotelId, startDate, endDate,
-          price, IsActive, IsSold, DateInsert, OpportunityId, providers
-        )
-        VALUES (
-          @code, @hotelId, @startDate, @endDate,
-          @price, 1, 0, GETDATE(), @opportunityId, 'Manual'
-        );
-        SELECT SCOPE_IDENTITY() as BookId;
-      `);
-
-    const bookId = result.recordset[0]?.BookId;
-
-    res.json({
-      success: true,
-      bookId,
-      message: 'Manual booking created'
-    });
-  } catch (err) {
-    logger.error('Error creating manual booking', { error: err.message });
-    res.status(500).json({ error: 'Database error' });
-  }
-});
-
-// Cancel booking with direct JSON (via Innstant)
-router.delete('/CancelDirect', async (req, res) => {
-  try {
-    const { bookingId, contentBookingID } = req.query;
-
-    if (!bookingId && !contentBookingID) {
-      return res.status(400).json({ error: 'Provide bookingId or contentBookingID' });
-    }
-
-    const pool = await getPool();
-
-    // Get the booking details
-    const booking = await pool.request()
-      .input('bookingId', bookingId || null)
-      .input('contentBookingID', contentBookingID || null)
-      .query(`
-        SELECT id, contentBookingID, HotelId, price
-        FROM MED_Book
-        WHERE (@bookingId IS NOT NULL AND id = @bookingId)
-           OR (@contentBookingID IS NOT NULL AND contentBookingID = @contentBookingID)
-      `);
-
-    if (booking.recordset.length === 0) {
-      return res.status(404).json({ error: 'Booking not found' });
-    }
-
-    const book = booking.recordset[0];
-
-    // Try to cancel via Innstant if contentBookingID exists
-    if (book.contentBookingID) {
-      const cancelResult = await innstantClient.cancelBooking(book.contentBookingID);
-      if (!cancelResult.success) {
-        logger.error('Innstant cancel failed', { error: cancelResult.error, bookId: book.id });
-      }
-    }
-
-    // Update booking status in database
-    await pool.request()
-      .input('bookId', book.id)
-      .query('UPDATE MED_Book SET IsActive = 0 WHERE id = @bookId');
-
-    // Log cancellation
-    await pool.request()
-      .input('bookId', book.id)
-      .execute('MED_InsertCancelBook').catch(() => {});
-
-    res.json({
-      success: true,
-      message: 'Booking cancelled',
-      bookId: book.id
-    });
-  } catch (err) {
-    logger.error('Error cancelling booking directly', { error: err.message });
-    res.status(500).json({ error: 'Cancellation error' });
   }
 });
 

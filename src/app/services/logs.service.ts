@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { environment } from '../environments/environment.prod';
+import { environment } from '../environments/environment';
 
 export interface LogFile {
   name: string;
@@ -66,7 +66,7 @@ export interface ChartData {
   providedIn: 'root'
 })
 export class LogsService {
-  private readonly apiUrl = `${environment.baseUrl}/logs`;
+  private readonly apiUrl = `${environment.baseUrl}logs`;
 
   constructor(private http: HttpClient) {}
 
