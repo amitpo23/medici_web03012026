@@ -80,7 +80,7 @@
     <div *ngIf="marketOverview?.recentTrades?.length" class="recent-trades">
       <h4>Recent Activity</h4>
       <div class="trades-list">
-        <div *ngFor="let trade of marketOverview.recentTrades.slice(0, 5)" class="trade-row">
+        <div *ngFor="let trade of marketOverview!.recentTrades!.slice(0, 5)" class="trade-row">
           <div class="trade-info">
             <span class="hotel">{{ trade.hotelName }}</span>
             <span class="time">{{ trade.timestamp | date:'short' }}</span>

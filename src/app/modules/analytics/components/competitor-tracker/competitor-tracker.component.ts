@@ -3,6 +3,9 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { interval, Subject, takeUntil } from 'rxjs';
 import { environment } from 'src/app/environments/environment';
 
+interface City { cityName: string; count?: number; }
+interface Hotel { hotelId: number; hotelName: string; cityName?: string; }
+
 interface CompetitorChange {
   competitorName: string;
   oldPrice: number;
@@ -39,15 +42,20 @@ interface Alert {
 export class CompetitorTrackerComponent implements OnInit, OnDestroy {
   selectedHotelId: number | null = null;
   daysBack = 7;
-  
+
+  cities: City[] = [];
+  hotels: Hotel[] = [];
+  filteredHotels: Hotel[] = [];
+  selectedCity: string | null = null;
+
   changes: CompetitorChange[] = [];
   strategy: ResponseStrategy | null = null;
   alerts: Alert[] = [];
-  
+
   loading = false;
   error: string | null = null;
   autoRefresh = true;
-  
+
   private destroy$ = new Subject<void>();
   private baseUrl = environment.baseUrl;
 
@@ -63,6 +71,9 @@ export class CompetitorTrackerComponent implements OnInit, OnDestroy {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    this.loadCities();
+    this.loadHotels();
+
     // Auto-refresh every 2 minutes if enabled
     interval(120000)
       .pipe(takeUntil(this.destroy$))
@@ -71,6 +82,39 @@ export class CompetitorTrackerComponent implements OnInit, OnDestroy {
           this.trackChanges();
         }
       });
+  }
+
+  loadCities(): void {
+    this.http.get<any>(`${this.baseUrl}ai/cities`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => { this.cities = res.cities || []; },
+        error: () => { this.cities = []; }
+      });
+  }
+
+  loadHotels(): void {
+    this.http.get<any>(`${this.baseUrl}ai/hotels`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.hotels = res.hotels || [];
+          this.filteredHotels = this.hotels;
+        },
+        error: () => { this.hotels = []; this.filteredHotels = []; }
+      });
+  }
+
+  onCityChange(city: string | null): void {
+    this.selectedCity = city;
+    this.filteredHotels = city
+      ? this.hotels.filter(h => h.cityName === city)
+      : this.hotels;
+    this.selectedHotelId = null;
+  }
+
+  onHotelChange(hotelId: number): void {
+    this.selectedHotelId = hotelId;
   }
 
   ngOnDestroy(): void {
@@ -84,7 +128,7 @@ export class CompetitorTrackerComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
 
-    this.http.get<any>(`${this.baseUrl}/pricing/v2/competitor/${this.selectedHotelId}/changes?daysBack=${this.daysBack}`)
+    this.http.get<any>(`${this.baseUrl}advanced-pricing/v2/competitor/${this.selectedHotelId}/changes?daysBack=${this.daysBack}`)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
@@ -124,7 +168,7 @@ export class CompetitorTrackerComponent implements OnInit, OnDestroy {
       }
     };
 
-    this.http.post<any>(`${this.baseUrl}/pricing/v2/competitor/response-strategy`, payload)
+    this.http.post<any>(`${this.baseUrl}advanced-pricing/v2/competitor/response-strategy`, payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

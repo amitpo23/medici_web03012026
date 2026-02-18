@@ -1,0 +1,932 @@
+<div class="logs-diagnostics-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-indigo-600">bug_report</mat-icon>
+        Logs &amp; Diagnostics
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        View logs, search across files, monitor workers, and analyze system health
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <mat-slide-toggle
+        [checked]="autoRefreshEnabled"
+        (change)="toggleAutoRefresh()"
+        matTooltip="Auto-refresh data every {{ autoRefreshInterval }}s">
+        Auto-refresh
+      </mat-slide-toggle>
+      <button mat-stroked-button (click)="refreshAll()" matTooltip="Refresh all data" type="button">
+        <mat-icon>refresh</mat-icon>
+        <span class="hidden md:inline ml-1">Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group
+    [selectedIndex]="selectedTabIndex"
+    (selectedIndexChange)="onTabChange($event)"
+    animationDuration="0ms">
+
+    <!-- ============================================================ -->
+    <!-- Tab 1: Log Files -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">description</mat-icon>
+        Log Files
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <!-- Top Controls -->
+        <mat-card class="search-card">
+          <mat-card-content>
+            <div class="flex flex-col md:flex-row gap-3 items-end">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Search within file</mat-label>
+                <input matInput [(ngModel)]="logFileSearch" placeholder="Filter lines..." (keydown.enter)="searchWithinFile()">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-32">
+                <mat-label>Lines</mat-label>
+                <input matInput type="number" [(ngModel)]="logViewLines" min="10" max="5000">
+              </mat-form-field>
+
+              <button mat-flat-button color="primary" (click)="searchWithinFile()" type="button" class="action-btn">
+                <mat-icon>search</mat-icon>
+                Search
+              </button>
+
+              <mat-slide-toggle
+                [checked]="tailMode"
+                (change)="toggleTailMode()"
+                matTooltip="Show last {{ tailLines }} lines (tail mode)">
+                Tail
+              </mat-slide-toggle>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div class="flex flex-col md:flex-row gap-4">
+          <!-- Log File List -->
+          <mat-card class="log-file-list-card">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2 text-base">
+                <mat-icon>folder</mat-icon>
+                Log Files
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="mt-2">
+              <div *ngIf="isLoadingLogFiles" class="flex justify-center py-4">
+                <mat-spinner diameter="30"></mat-spinner>
+              </div>
+              <mat-nav-list *ngIf="!isLoadingLogFiles">
+                <mat-list-item
+                  *ngFor="let file of logFiles"
+                  (click)="selectLogFile(file.name)"
+                  [class.selected-file]="selectedLogFile === file.name"
+                  class="log-file-item">
+                  <mat-icon matListItemIcon>insert_drive_file</mat-icon>
+                  <div matListItemTitle class="log-file-name">{{ file.name }}</div>
+                  <div matListItemLine class="text-xs text-gray-500">
+                    {{ file.size }} - {{ file.type }}
+                  </div>
+                  <button mat-icon-button matListItemMeta
+                    (click)="deleteLogFile(file.name, $event)"
+                    matTooltip="Delete log file"
+                    type="button"
+                    class="delete-btn">
+                    <mat-icon class="text-sm">delete</mat-icon>
+                  </button>
+                </mat-list-item>
+              </mat-nav-list>
+              <div *ngIf="!isLoadingLogFiles && logFiles.length === 0" class="text-center text-gray-500 py-4">
+                No log files found
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Log Content Viewer -->
+          <mat-card class="log-viewer-card flex-1">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2 text-base">
+                <mat-icon>terminal</mat-icon>
+                {{ selectedLogFile || 'Select a log file' }}
+                <span *ngIf="tailMode" class="tail-badge">TAIL</span>
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div *ngIf="isLoadingLogContent" class="flex justify-center py-8">
+                <mat-spinner diameter="40"></mat-spinner>
+              </div>
+              <div *ngIf="!isLoadingLogContent && logLines.length === 0 && !selectedLogFile" class="log-placeholder">
+                <mat-icon class="text-6xl text-gray-300">description</mat-icon>
+                <p class="text-gray-400 mt-2">Select a log file from the list to view its contents</p>
+              </div>
+              <div *ngIf="!isLoadingLogContent && logLines.length > 0" class="log-content-viewer">
+                <div *ngFor="let line of logLines; let i = index" class="log-line">
+                  <span class="line-number">{{ i + 1 }}</span>
+                  <span *ngIf="line.level" class="log-level-badge" [ngClass]="getLevelClass(line.level)">
+                    {{ line.level | uppercase }}
+                  </span>
+                  <span class="line-text">{{ formatLogLine(line) }}</span>
+                </div>
+              </div>
+              <div *ngIf="!isLoadingLogContent && logLines.length === 0 && selectedLogFile" class="text-center text-gray-500 py-4">
+                No log entries found
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ============================================================ -->
+    <!-- Tab 2: Log Search -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">manage_search</mat-icon>
+        Log Search
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <!-- Search Form -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>search</mat-icon>
+              Search Across All Logs
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <mat-form-field appearance="outline">
+                <mat-label>Search Query</mat-label>
+                <input matInput [(ngModel)]="searchQuery" placeholder="Text to search for..." (keydown.enter)="executeSearch()">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Log Level</mat-label>
+                <mat-select [(ngModel)]="searchLevel">
+                  <mat-option value="">All Levels</mat-option>
+                  <mat-option *ngFor="let level of logLevels" [value]="level">
+                    {{ level | uppercase }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Source</mat-label>
+                <input matInput [(ngModel)]="searchSource" placeholder="e.g. zenith, scraper...">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel Name</mat-label>
+                <input matInput [(ngModel)]="searchHotelName" placeholder="Filter by hotel name...">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Booking ID</mat-label>
+                <input matInput [(ngModel)]="searchBookingId" placeholder="Filter by booking ID...">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Max Results</mat-label>
+                <input matInput type="number" [(ngModel)]="searchLimit" min="10" max="500">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Date From</mat-label>
+                <input matInput type="datetime-local" [(ngModel)]="searchDateFrom">
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Date To</mat-label>
+                <input matInput type="datetime-local" [(ngModel)]="searchDateTo">
+              </mat-form-field>
+            </div>
+
+            <div class="flex gap-3 mt-2">
+              <button mat-flat-button color="primary" (click)="executeSearch()" [disabled]="isSearching" type="button">
+                <mat-icon>search</mat-icon>
+                Search Logs
+              </button>
+              <button mat-stroked-button (click)="clearSearch()" type="button">
+                <mat-icon>clear</mat-icon>
+                Clear
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Search Results -->
+        <div *ngIf="isSearching" class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <mat-card *ngIf="!isSearching && searchResults.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>list</mat-icon>
+              Search Results ({{ searchResultCount }})
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="search-results-viewer">
+              <div *ngFor="let result of searchResults; let i = index" class="search-result-item">
+                <div class="result-header">
+                  <span class="result-index">#{{ i + 1 }}</span>
+                  <span class="result-file">{{ result.file }}</span>
+                  <span *ngIf="result.level" class="log-level-badge" [ngClass]="getLevelClass(result.level)">
+                    {{ result.level | uppercase }}
+                  </span>
+                  <span *ngIf="result.timestamp" class="result-timestamp">{{ result.timestamp }}</span>
+                </div>
+                <div class="result-message" *ngIf="result.message">{{ result.message }}</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <div *ngIf="!isSearching && searchResults.length === 0 && searchResultCount === 0 && searchQuery" class="text-center text-gray-500 py-6">
+          No results found. Try adjusting your search criteria.
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ============================================================ -->
+    <!-- Tab 3: Log Stats & Charts -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">bar_chart</mat-icon>
+        Log Stats
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Loading -->
+        <div *ngIf="isLoadingStats || isLoadingCharts" class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Stats Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" *ngIf="logStats">
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-indigo-600 text-3xl">folder_open</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ logStats.totalFiles }}
+              </div>
+              <div class="text-sm text-gray-500">Total Log Files</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-blue-600 text-3xl">storage</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ logStats.totalSize }}
+              </div>
+              <div class="text-sm text-gray-500">Total Size</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-red-600 text-3xl">error</mat-icon>
+              <div class="text-2xl font-bold text-red-600 mt-1">
+                {{ logStats.recentErrors?.length || 0 }}
+              </div>
+              <div class="text-sm text-gray-500">Recent Errors</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- By Type Breakdown -->
+        <mat-card *ngIf="logStats?.byType">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>category</mat-icon>
+              Logs by Type
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div *ngFor="let typeKey of getStatTypeKeys()" class="type-stat-item">
+                <div class="text-sm text-gray-500 uppercase font-semibold">{{ typeKey }}</div>
+                <div class="text-lg font-bold text-gray-900 dark:text-white">
+                  {{ logStats!.byType[typeKey].count }} files
+                </div>
+                <div class="text-xs text-gray-400">
+                  {{ (logStats!.byType[typeKey].size / 1024 / 1024).toFixed(2) }} MB
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Recent Errors -->
+        <mat-card *ngIf="logStats?.recentErrors && logStats!.recentErrors.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-red-600">error_outline</mat-icon>
+              Recent Errors
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngFor="let err of logStats!.recentErrors" class="recent-error-item">
+              <div class="flex items-start gap-3">
+                <mat-icon class="text-red-600 mt-1">error</mat-icon>
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900 dark:text-white">{{ err.message }}</div>
+                  <div class="text-xs text-gray-500 mt-1">
+                    {{ err.file }} - {{ err.timestamp }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Charts Section -->
+        <div *ngIf="chartsData">
+          <!-- Period Selector -->
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-sm text-gray-500">Chart period:</span>
+            <mat-button-toggle-group [(ngModel)]="chartHours" (change)="loadCharts()">
+              <mat-button-toggle [value]="6">6h</mat-button-toggle>
+              <mat-button-toggle [value]="12">12h</mat-button-toggle>
+              <mat-button-toggle [value]="24">24h</mat-button-toggle>
+              <mat-button-toggle [value]="48">48h</mat-button-toggle>
+              <mat-button-toggle [value]="72">72h</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          <!-- Request Timeline (Simple Bar Chart) -->
+          <mat-card *ngIf="chartsData.timeSeries && chartsData.timeSeries.length > 0">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2">
+                <mat-icon>timeline</mat-icon>
+                Request Timeline
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="mt-4">
+              <div class="timeline-chart">
+                <div *ngFor="let point of chartsData.timeSeries" class="timeline-bar-row">
+                  <span class="timeline-label">{{ formatHour(point.hour) }}</span>
+                  <div class="timeline-bar-container">
+                    <div class="timeline-bar" [style.width.%]="getBarWidth(point)">
+                      <span class="bar-value" *ngIf="point.requests > 0">{{ point.requests }}</span>
+                    </div>
+                    <div class="timeline-bar-errors" *ngIf="point.errors > 0"
+                         [style.width.%]="(point.errors / getMaxTimeSeries()) * 100"
+                         matTooltip="{{ point.errors }} errors">
+                    </div>
+                  </div>
+                  <span class="timeline-response" *ngIf="point.avgResponseTime > 0">
+                    {{ point.avgResponseTime }}ms
+                  </span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Distribution Charts -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <!-- Status Distribution -->
+            <mat-card *ngIf="chartsData.statusDistribution">
+              <mat-card-header>
+                <mat-card-title class="flex items-center gap-2 text-base">
+                  <mat-icon>donut_large</mat-icon>
+                  Status Distribution
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="mt-4">
+                <div *ngFor="let key of getDistributionKeys(chartsData.statusDistribution)" class="distribution-row">
+                  <span class="distribution-label">{{ key }}</span>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar" [ngClass]="'dist-bar-' + key"
+                         [style.width.%]="getDistributionPercent(chartsData.statusDistribution, key)">
+                    </div>
+                  </div>
+                  <span class="distribution-value">{{ chartsData.statusDistribution[key] }}</span>
+                  <span class="distribution-percent">({{ getDistributionPercent(chartsData.statusDistribution, key) }}%)</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Level Distribution -->
+            <mat-card *ngIf="chartsData.levelDistribution">
+              <mat-card-header>
+                <mat-card-title class="flex items-center gap-2 text-base">
+                  <mat-icon>layers</mat-icon>
+                  Level Distribution
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="mt-4">
+                <div *ngFor="let key of getDistributionKeys(chartsData.levelDistribution)" class="distribution-row">
+                  <span class="distribution-label">{{ key | uppercase }}</span>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar" [ngClass]="'dist-bar-' + key"
+                         [style.width.%]="getDistributionPercent(chartsData.levelDistribution, key)">
+                    </div>
+                  </div>
+                  <span class="distribution-value">{{ chartsData.levelDistribution[key] }}</span>
+                  <span class="distribution-percent">({{ getDistributionPercent(chartsData.levelDistribution, key) }}%)</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Method Distribution -->
+            <mat-card *ngIf="chartsData.methodDistribution">
+              <mat-card-header>
+                <mat-card-title class="flex items-center gap-2 text-base">
+                  <mat-icon>http</mat-icon>
+                  HTTP Method Distribution
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="mt-4">
+                <div *ngFor="let key of getDistributionKeys(chartsData.methodDistribution)" class="distribution-row">
+                  <span class="distribution-label">{{ key }}</span>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar dist-bar-method"
+                         [style.width.%]="getDistributionPercent(chartsData.methodDistribution, key)">
+                    </div>
+                  </div>
+                  <span class="distribution-value">{{ chartsData.methodDistribution[key] }}</span>
+                  <span class="distribution-percent">({{ getDistributionPercent(chartsData.methodDistribution, key) }}%)</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Response Time Distribution -->
+            <mat-card *ngIf="chartsData.responseTimeDistribution">
+              <mat-card-header>
+                <mat-card-title class="flex items-center gap-2 text-base">
+                  <mat-icon>speed</mat-icon>
+                  Response Time Distribution
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content class="mt-4">
+                <div *ngFor="let key of getDistributionKeys(chartsData.responseTimeDistribution)" class="distribution-row">
+                  <span class="distribution-label">{{ key }}</span>
+                  <div class="distribution-bar-container">
+                    <div class="distribution-bar dist-bar-response"
+                         [style.width.%]="getDistributionPercent(chartsData.responseTimeDistribution, key)">
+                    </div>
+                  </div>
+                  <span class="distribution-value">{{ chartsData.responseTimeDistribution[key] }}</span>
+                  <span class="distribution-percent">({{ getDistributionPercent(chartsData.responseTimeDistribution, key) }}%)</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ============================================================ -->
+    <!-- Tab 4: Cancellation Diagnostics -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">cancel</mat-icon>
+        Cancellation Diagnostics
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Loading -->
+        <div *ngIf="isLoadingCancellations" class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" *ngIf="cancellationSummary">
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-indigo-600 text-3xl">assignment</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ cancellationSummary.totalCancellationAttempts | number }}
+              </div>
+              <div class="text-sm text-gray-500">Total Attempts</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-green-600 text-3xl">check_circle</mat-icon>
+              <div class="text-2xl font-bold text-green-600 mt-1">
+                {{ cancellationSummary.successfulCancellations | number }}
+              </div>
+              <div class="text-sm text-gray-500">Successful ({{ cancellationSummary.successRate }}%)</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-red-600 text-3xl">error</mat-icon>
+              <div class="text-2xl font-bold text-red-600 mt-1">
+                {{ cancellationSummary.failedCancellations | number }}
+              </div>
+              <div class="text-sm text-gray-500">Failed ({{ cancellationSummary.failureRate }}%)</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-amber-600 text-3xl">trending_down</mat-icon>
+              <div class="text-2xl font-bold text-amber-600 mt-1">
+                {{ cancellationSummary.totalErrors | number }}
+              </div>
+              <div class="text-sm text-gray-500">Total Errors</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Success Rate Bar -->
+        <mat-card *ngIf="cancellationSummary">
+          <mat-card-content class="py-4">
+            <div class="flex items-center gap-4">
+              <span class="text-sm font-semibold text-gray-700 dark:text-gray-300 w-28">Success Rate</span>
+              <div class="flex-1 success-rate-bar-container">
+                <div class="success-rate-bar" [style.width.%]="cancellationSummary.successRate"></div>
+              </div>
+              <span class="text-sm font-bold" [ngClass]="cancellationSummary.successRate >= 80 ? 'text-green-600' : cancellationSummary.successRate >= 60 ? 'text-amber-600' : 'text-red-600'">
+                {{ cancellationSummary.successRate }}%
+              </span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Top Errors -->
+        <mat-card *ngIf="topCancellationErrors.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-red-600">report_problem</mat-icon>
+              Top Cancellation Errors
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngFor="let err of topCancellationErrors; let i = index" class="top-error-item"
+                 (click)="drillIntoCancellationError(err.ErrorMessage)">
+              <div class="flex items-start gap-3">
+                <span class="error-rank">#{{ i + 1 }}</span>
+                <div class="flex-1">
+                  <div class="font-medium text-gray-900 dark:text-white error-message-text">
+                    {{ err.ErrorMessage }}
+                  </div>
+                  <div class="flex gap-4 mt-1 text-xs text-gray-500">
+                    <span>Count: <strong>{{ err.ErrorCount }}</strong></span>
+                    <span>{{ err.Percentage }}% of errors</span>
+                    <span>First: {{ err.FirstOccurrence | date:'short' }}</span>
+                    <span>Last: {{ err.LastOccurrence | date:'short' }}</span>
+                  </div>
+                </div>
+                <mat-icon class="text-gray-400 cursor-pointer" matTooltip="View details">chevron_right</mat-icon>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Recommendations -->
+        <mat-card *ngIf="recommendations.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-blue-600">lightbulb</mat-icon>
+              Recommendations
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngFor="let rec of recommendations" class="recommendation-item" [ngClass]="getSeverityClass(rec.priority)">
+              <div class="flex items-start gap-3">
+                <mat-icon [ngClass]="{
+                  'text-red-600': rec.priority === 'high',
+                  'text-amber-600': rec.priority === 'medium',
+                  'text-blue-600': rec.priority === 'low'
+                }">
+                  {{ rec.priority === 'high' ? 'priority_high' : rec.priority === 'medium' ? 'warning' : 'info' }}
+                </mat-icon>
+                <div>
+                  <div class="font-semibold text-gray-900 dark:text-white">{{ rec.issue }}</div>
+                  <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">{{ rec.recommendation }}</div>
+                  <span class="priority-badge" [ngClass]="'priority-' + rec.priority">{{ rec.priority | uppercase }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Error Details Table -->
+        <mat-card *ngIf="showCancellationDetails">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>table_chart</mat-icon>
+              Error Details
+              <span *ngIf="cancellationErrorFilter" class="text-sm font-normal text-gray-500 ml-2">
+                Filtered: {{ cancellationErrorFilter | slice:0:50 }}...
+              </span>
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingCancellationDetails" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <div class="table-container" *ngIf="!isLoadingCancellationDetails">
+              <table mat-table [dataSource]="cancellationErrorDetails" class="w-full">
+                <ng-container matColumnDef="Id">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Id }}</td>
+                </ng-container>
+                <ng-container matColumnDef="DateInsert">
+                  <th mat-header-cell *matHeaderCellDef>Date</th>
+                  <td mat-cell *matCellDef="let row">{{ row.DateInsert | date:'short' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="PreBookId">
+                  <th mat-header-cell *matHeaderCellDef>PreBook ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.PreBookId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="contentBookingID">
+                  <th mat-header-cell *matHeaderCellDef>Booking ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.contentBookingID }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Error">
+                  <th mat-header-cell *matHeaderCellDef>Error</th>
+                  <td mat-cell *matCellDef="let row" class="error-cell">{{ row.Error }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="cancellationDetailsColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: cancellationDetailsColumns;"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ============================================================ -->
+    <!-- Tab 5: Worker Health -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">engineering</mat-icon>
+        Worker Health
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Loading -->
+        <div *ngIf="isLoadingWorkerHealth" class="flex justify-center py-6">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Overall Health Banner -->
+        <mat-card *ngIf="workerHealth" class="overall-health-card" [ngClass]="getStatusClass(workerHealth.overallHealth)">
+          <mat-card-content class="flex items-center gap-4 py-4">
+            <mat-icon class="text-4xl" [ngClass]="getStatusClass(workerHealth.overallHealth)">
+              {{ getStatusIcon(workerHealth.overallHealth) }}
+            </mat-icon>
+            <div>
+              <div class="text-lg font-bold text-gray-900 dark:text-white">Overall Worker Health</div>
+              <div class="text-xl font-semibold" [ngClass]="getStatusClass(workerHealth.overallHealth)">
+                {{ workerHealth.overallHealth | uppercase }}
+              </div>
+              <div class="text-xs text-gray-500">Last checked: {{ workerHealth.timestamp | date:'medium' }}</div>
+            </div>
+            <div class="ml-auto">
+              <button mat-stroked-button (click)="loadWorkerHealth()" type="button">
+                <mat-icon>refresh</mat-icon>
+                Refresh
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Worker Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6" *ngIf="workerHealth">
+          <mat-card *ngFor="let workerKey of getWorkerNames()" class="worker-card">
+            <mat-card-content class="py-6">
+              <div class="text-center">
+                <div class="worker-icon-container" [ngClass]="getStatusClass(getWorkerData(workerKey)?.status || 'unknown')">
+                  <mat-icon class="worker-icon">{{ getWorkerIcon(workerKey) }}</mat-icon>
+                </div>
+                <div class="text-lg font-bold mt-3 text-gray-900 dark:text-white">
+                  {{ getWorkerDisplayName(workerKey) }}
+                </div>
+                <div class="mt-2">
+                  <span class="worker-status-badge" [ngClass]="getStatusClass(getWorkerData(workerKey)?.status || 'unknown')">
+                    {{ (getWorkerData(workerKey)?.status || 'unknown') | uppercase }}
+                  </span>
+                </div>
+                <div class="text-sm text-gray-500 mt-3">
+                  {{ getWorkerData(workerKey)?.healthMessage || 'No data available' }}
+                </div>
+                <div class="text-xs text-gray-400 mt-2" *ngIf="getWorkerData(workerKey)?.lastActivity">
+                  Last activity: {{ getWorkerData(workerKey)!.lastActivity | date:'medium' }}
+                </div>
+                <div class="text-xs text-gray-400 mt-1" *ngIf="getWorkerData(workerKey)?.lastActivity === null">
+                  No recent activity recorded
+                </div>
+                <div class="mt-3" *ngIf="getWorkerData(workerKey)?.pendingReservations !== undefined">
+                  <span class="text-sm text-gray-600 dark:text-gray-400">Pending Reservations: </span>
+                  <span class="font-bold" [ngClass]="(getWorkerData(workerKey)?.pendingReservations || 0) > 0 ? 'text-amber-600' : 'text-green-600'">
+                    {{ getWorkerData(workerKey)?.pendingReservations }}
+                  </span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ============================================================ -->
+    <!-- Tab 6: System Health -->
+    <!-- ============================================================ -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">health_and_safety</mat-icon>
+        System Health
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Database Health -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>storage</mat-icon>
+              Database Health
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingDatabaseHealth" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <div *ngIf="!isLoadingDatabaseHealth && databaseHealth" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div class="text-center">
+                <mat-icon class="text-5xl" [ngClass]="getStatusClass(databaseHealth.status)">
+                  {{ getStatusIcon(databaseHealth.status) }}
+                </mat-icon>
+                <div class="text-lg font-bold mt-2">Connection Status</div>
+                <div class="text-xl font-semibold" [ngClass]="getStatusClass(databaseHealth.status)">
+                  {{ databaseHealth.status | uppercase }}
+                </div>
+              </div>
+              <div class="text-center">
+                <mat-icon class="text-5xl text-blue-600">speed</mat-icon>
+                <div class="text-lg font-bold mt-2">Response Time</div>
+                <div class="text-xl font-semibold" [ngClass]="{
+                  'text-green-600': databaseHealth.responseTime >= 0 && databaseHealth.responseTime < 100,
+                  'text-amber-600': databaseHealth.responseTime >= 100 && databaseHealth.responseTime < 1000,
+                  'text-red-600': databaseHealth.responseTime >= 1000 || databaseHealth.responseTime < 0
+                }">
+                  {{ formatResponseTime(databaseHealth.responseTime) }}
+                </div>
+              </div>
+              <div class="text-center">
+                <mat-icon class="text-5xl" [ngClass]="databaseHealth.connectionTest ? 'text-green-600' : 'text-red-600'">
+                  {{ databaseHealth.connectionTest ? 'link' : 'link_off' }}
+                </mat-icon>
+                <div class="text-lg font-bold mt-2">Connection Test</div>
+                <div class="text-xl font-semibold" [ngClass]="databaseHealth.connectionTest ? 'text-green-600' : 'text-red-600'">
+                  {{ databaseHealth.connectionTest ? 'PASS' : 'FAIL' }}
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!isLoadingDatabaseHealth && !databaseHealth" class="text-center text-gray-500 py-4">
+              Unable to retrieve database health
+            </div>
+            <div class="flex justify-end mt-4">
+              <button mat-stroked-button (click)="loadDatabaseHealth()" type="button">
+                <mat-icon>refresh</mat-icon>
+                Test Connection
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Inventory Analysis -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>inventory_2</mat-icon>
+              Inventory Analysis
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingInventory" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+
+            <!-- Inventory Summary Cards -->
+            <div *ngIf="!isLoadingInventory && inventoryOverall" class="space-y-4">
+              <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Active Inventory</div>
+                  <div class="text-xl font-bold text-gray-900 dark:text-white">
+                    {{ inventoryOverall.TotalActiveInventory | number }}
+                  </div>
+                </div>
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Unsold Rooms</div>
+                  <div class="text-xl font-bold text-amber-600">
+                    {{ inventoryOverall.UnsoldRooms | number }}
+                  </div>
+                </div>
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Sold Rooms</div>
+                  <div class="text-xl font-bold text-green-600">
+                    {{ inventoryOverall.SoldRooms | number }}
+                  </div>
+                </div>
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Nearing Deadline</div>
+                  <div class="text-xl font-bold text-red-600">
+                    {{ inventoryOverall.NearingDeadline | number }}
+                  </div>
+                </div>
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Value at Risk</div>
+                  <div class="text-xl font-bold text-red-600">
+                    {{ formatCurrency(inventoryOverall.TotalValueAtRisk) }}
+                  </div>
+                </div>
+                <div class="inventory-stat-item">
+                  <div class="text-sm text-gray-500">Potential Profit</div>
+                  <div class="text-xl font-bold text-green-600">
+                    {{ formatCurrency(inventoryOverall.PotentialProfit) }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Inventory Alerts -->
+              <div *ngIf="inventoryAlerts.length > 0" class="space-y-2 mt-4">
+                <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Alerts</div>
+                <div *ngFor="let alert of inventoryAlerts" class="inventory-alert" [ngClass]="getAlertSeverityClass(alert.severity)">
+                  <div class="flex items-start gap-3">
+                    <mat-icon [ngClass]="{
+                      'text-red-600': alert.severity === 'critical',
+                      'text-amber-600': alert.severity === 'warning',
+                      'text-blue-600': alert.severity === 'info'
+                    }">
+                      {{ alert.severity === 'critical' ? 'error' : alert.severity === 'warning' ? 'warning' : 'info' }}
+                    </mat-icon>
+                    <div class="flex-1">
+                      <div class="font-medium text-gray-900 dark:text-white">{{ alert.message }}</div>
+                      <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        {{ alert.actionRequired }}
+                      </div>
+                      <div class="text-xs text-gray-500 mt-1">
+                        Affected rooms: {{ alert.affectedRooms }}
+                      </div>
+                    </div>
+                    <span class="alert-severity-badge" [ngClass]="getAlertSeverityClass(alert.severity)">
+                      {{ alert.severity | uppercase }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Top Hotels by Inventory -->
+              <div class="table-container mt-4" *ngIf="inventoryByHotel.length > 0">
+                <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Top Hotels by Active Inventory</div>
+                <table mat-table [dataSource]="inventoryByHotel" class="w-full">
+                  <ng-container matColumnDef="HotelName">
+                    <th mat-header-cell *matHeaderCellDef>Hotel</th>
+                    <td mat-cell *matCellDef="let row">{{ row.HotelName }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="ActiveRooms">
+                    <th mat-header-cell *matHeaderCellDef>Active Rooms</th>
+                    <td mat-cell *matCellDef="let row">{{ row.ActiveRooms | number }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="TotalValue">
+                    <th mat-header-cell *matHeaderCellDef>Total Value</th>
+                    <td mat-cell *matCellDef="let row">{{ formatCurrency(row.TotalValue) }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="PotentialProfit">
+                    <th mat-header-cell *matHeaderCellDef>Potential Profit</th>
+                    <td mat-cell *matCellDef="let row" [ngClass]="row.PotentialProfit >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ formatCurrency(row.PotentialProfit) }}
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="inventoryHotelColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: inventoryHotelColumns;"></tr>
+                </table>
+              </div>
+            </div>
+
+            <div class="flex justify-end mt-4">
+              <button mat-stroked-button (click)="loadInventoryAnalysis()" type="button">
+                <mat-icon>refresh</mat-icon>
+                Refresh Analysis
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

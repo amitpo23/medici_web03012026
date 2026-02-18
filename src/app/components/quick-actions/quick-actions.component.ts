@@ -269,7 +269,7 @@ export class QuickActionsComponent implements OnInit {
       icon: 'notifications',
       label: 'Alerts',
       color: '#f44336',
-      route: '/system/alerts',
+      route: '/alerts',
       shortcut: 'Alt+N'
     }
   ];

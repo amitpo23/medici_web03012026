@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
+import { environment } from 'src/app/environments/environment';
 
 export interface KPIs {
   current: {
@@ -80,7 +81,7 @@ export interface RevenueTrend {
   providedIn: 'root'
 })
 export class RevenueAnalyticsService {
-  private apiUrl = '/revenue-analytics';
+  private apiUrl = `${environment.baseUrl}revenue-analytics`;
 
   constructor(private http: HttpClient) {}
 
@@ -189,12 +190,12 @@ export class RevenueAnalyticsService {
   }
 
   /**
-   * Get growth icon
+   * Get growth icon (Material icon name)
    */
   getGrowthIcon(value: number): string {
-    if (value > 0) return '📈';
-    if (value < 0) return '📉';
-    return '➡️';
+    if (value > 0) return 'trending_up';
+    if (value < 0) return 'trending_down';
+    return 'trending_flat';
   }
 
   /**

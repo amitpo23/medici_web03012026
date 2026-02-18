@@ -1,0 +1,295 @@
+.workflows-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Tab content spacing
+.tab-content {
+  min-height: 300px;
+}
+
+// Empty state icon
+.empty-icon {
+  font-size: 64px;
+  width: 64px;
+  height: 64px;
+}
+
+// Rule Cards
+.rule-card {
+  transition: all 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  mat-card-content {
+    padding: 1rem !important;
+  }
+}
+
+// Process Card
+.process-card {
+  mat-card-content {
+    padding: 1rem !important;
+  }
+}
+
+// Form fields
+.id-field {
+  width: 220px;
+}
+
+.batch-field {
+  width: 100%;
+}
+
+.limit-field {
+  width: 120px;
+}
+
+// Result Card
+.result-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    border-color: #334155;
+  }
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.result-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.05em;
+
+  :host-context(.dark) & {
+    color: #94a3b8;
+  }
+}
+
+.result-value {
+  font-size: 0.925rem;
+  font-weight: 500;
+  color: #1e293b;
+
+  :host-context(.dark) & {
+    color: #e2e8f0;
+  }
+}
+
+// Action Badges
+.action-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.action-approve {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.action-reject {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.action-hold {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.action-alert {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+.action-default {
+  background-color: #f9fafb;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+// Status Badges
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.status-enabled {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.status-disabled {
+    background-color: #f9fafb;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+  }
+}
+
+// Errors section
+.errors-section {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+
+  :host-context(.dark) & {
+    background: #450a0a;
+    border-color: #7f1d1d;
+  }
+}
+
+.error-item {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  color: #dc2626;
+  font-size: 0.875rem;
+
+  :host-context(.dark) & {
+    color: #fca5a5;
+  }
+}
+
+// Workflows Table (batch results)
+.workflows-table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead {
+    background: #f1f5f9;
+
+    :host-context(.dark) & {
+      background: #1e293b;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+
+      :host-context(.dark) & {
+        color: #94a3b8;
+        border-color: #334155;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.15s ease;
+
+      :host-context(.dark) & {
+        border-color: #334155;
+      }
+
+      &:hover {
+        background: #f8fafc;
+
+        :host-context(.dark) & {
+          background: #1e293b;
+        }
+      }
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      color: #334155;
+
+      :host-context(.dark) & {
+        color: #cbd5e1;
+      }
+    }
+  }
+}
+
+// Mat-table overrides for history tab
+.mat-mdc-table {
+  background: transparent !important;
+}
+
+.mat-mdc-header-cell {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  :host-context(.dark) & {
+    color: #94a3b8;
+  }
+}
+
+.mat-mdc-cell {
+  color: #334155;
+  font-size: 0.875rem;
+
+  :host-context(.dark) & {
+    color: #cbd5e1;
+  }
+}
+
+.mat-mdc-row {
+  &:hover {
+    background: #f8fafc !important;
+
+    :host-context(.dark) & {
+      background: #1e293b !important;
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .workflows-container {
+    padding: 1rem;
+  }
+
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .id-field {
+    width: 100%;
+  }
+
+  .workflows-table {
+    font-size: 0.8rem;
+
+    th, td {
+      padding: 0.5rem;
+    }
+  }
+}

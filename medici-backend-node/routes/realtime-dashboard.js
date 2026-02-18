@@ -33,7 +33,7 @@ router.get('/dashboard', authenticateRequest, async (req, res) => {
           AVG(CASE WHEN IsActive = 1 THEN AIConfidence ELSE NULL END) as AvgConfidence,
           SUM(CASE WHEN IsActive = 1 AND IsSale = 0 THEN SuggestedSellPrice - SuggestedBuyPrice ELSE 0 END) as PotentialProfit,
           SUM(CASE WHEN IsSale = 1 THEN SuggestedSellPrice - SuggestedBuyPrice ELSE 0 END) as RealizedProfit
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE DateCreate >= DATEADD(HOUR, -${hoursBack}, GETDATE())
       `),
 
@@ -256,7 +256,7 @@ async function getTopOpportunities(pool) {
       o.AIConfidence,
       o.AIRiskLevel,
       o.AIPriorityScore
-    FROM [MED_ֹOֹֹpportunities] o
+    FROM [MED_Opportunities] o
     LEFT JOIN MED_Hotels h ON o.HotelId = h.HotelId
     WHERE o.IsActive = 1
     AND o.IsSale = 0
@@ -277,7 +277,7 @@ async function getRecentSales(pool) {
       (o.SuggestedSellPrice - o.SuggestedBuyPrice) as Profit,
       o.DateCreate,
       DATEDIFF(HOUR, o.DateCreate, o.Lastupdate) as HoursToSell
-    FROM [MED_ֹOֹֹpportunities] o
+    FROM [MED_Opportunities] o
     LEFT JOIN MED_Hotels h ON o.HotelId = h.HotelId
     WHERE o.IsSale = 1
     ORDER BY o.Lastupdate DESC
@@ -310,7 +310,7 @@ async function getRiskDistribution(pool) {
       COUNT(*) as Count,
       AVG(AIConfidence) as AvgConfidence,
       AVG(SuggestedSellPrice - SuggestedBuyPrice) as AvgProfit
-    FROM [MED_ֹOֹֹpportunities]
+    FROM [MED_Opportunities]
     WHERE IsActive = 1
     AND IsSale = 0
     GROUP BY AIRiskLevel

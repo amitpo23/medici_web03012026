@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const competitorScraper = require('../services/competitor-scraper');
 const { getPool } = require('../config/database');
+const logger = require('../config/logger');
+const { validate, schemas } = require('../middleware/validate');
 
 /**
  * POST /scraper/competitor-prices
@@ -16,18 +18,11 @@ const { getPool } = require('../config/database');
  *   "sources": ["booking.com"] // Optional, defaults to all
  * }
  */
-router.post('/competitor-prices', async (req, res) => {
+router.post('/competitor-prices', validate({ body: schemas.scraperRequest }), async (req, res) => {
   try {
     const { hotelName, checkIn, checkOut, guests = 2, sources } = req.body;
     
-    // Validation
-    if (!hotelName || !checkIn || !checkOut) {
-      return res.status(400).json({
-        error: 'Missing required fields: hotelName, checkIn, checkOut'
-      });
-    }
-    
-    console.log(`📊 Scraping request: ${hotelName} (${checkIn} → ${checkOut})`);
+    logger.info('Scraping request', { hotelName, checkIn, checkOut });
     
     let result;
     
@@ -47,7 +42,7 @@ router.post('/competitor-prices', async (req, res) => {
     res.json(result);
     
   } catch (error) {
-    console.error('❌ Scraper endpoint error:', error);
+    logger.error('Scraper endpoint error', { error: error.message });
     res.status(500).json({
       error: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -81,7 +76,7 @@ router.post('/compare-prices', async (req, res) => {
     res.json(result);
     
   } catch (error) {
-    console.error('❌ Compare prices error:', error);
+    logger.error('Compare prices error', { error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
@@ -105,7 +100,7 @@ router.get('/sessions', async (req, res) => {
  */
 router.post('/test', async (req, res) => {
   try {
-    console.log('🧪 Testing scraper...');
+    logger.info('Testing scraper');
     
     const result = await competitorScraper.scrapeBookingCom(
       'David Intercontinental Tel Aviv',
@@ -151,11 +146,11 @@ async function saveCompetitorPrice(priceData) {
         (@hotelName, @source, @checkIn, @checkOut, @price, @currency, @scrapedAt, @raw)
       `);
     
-    console.log(`💾 Saved competitor price: ${priceData.source} - ${priceData.price} ${priceData.currency}`);
+    logger.info('Saved competitor price', { source: priceData.source, price: priceData.price, currency: priceData.currency });
     
   } catch (error) {
     // Don't fail the request if DB save fails
-    console.error('⚠️ Failed to save to DB:', error.message);
+    logger.warn('Failed to save competitor price to DB', { error: error.message });
   }
 }
 

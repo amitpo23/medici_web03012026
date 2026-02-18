@@ -83,7 +83,7 @@ router.get('/recent', async (req, res) => {
           o.Price as Amount,
           h.name as HotelName
         FROM MED_CancelBook cb
-        LEFT JOIN [MED_ֹOֹֹpportunities] o ON cb.PreBookId = o.OpportunityId
+        LEFT JOIN [MED_Opportunities] o ON cb.PreBookId = o.OpportunityId
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
         ORDER BY cb.DateInsert DESC
       `);
@@ -102,7 +102,7 @@ router.get('/recent', async (req, res) => {
           o.Price as Amount,
           h.name as HotelName
         FROM MED_CancelBookError cbe
-        LEFT JOIN [MED_ֹOֹֹpportunities] o ON cbe.PreBookId = o.OpportunityId
+        LEFT JOIN [MED_Opportunities] o ON cbe.PreBookId = o.OpportunityId
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
         ORDER BY cbe.DateInsert DESC
       `);
@@ -174,7 +174,7 @@ router.get('/auto', async (req, res) => {
         h.name as HotelName,
         o.DateForm as CheckIn
       FROM MED_OpportunitiesLog ol
-      LEFT JOIN [MED_ֹOֹֹpportunities] o ON ol.OpportunityId = o.OpportunityId
+      LEFT JOIN [MED_Opportunities] o ON ol.OpportunityId = o.OpportunityId
       LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
       WHERE ol.ActionType IN ('AUTO_CANCELLED', 'CANCEL_FAILED')
       ORDER BY ol.DateTimeUTC DESC
@@ -226,7 +226,7 @@ router.get('/opportunity/:id', async (req, res) => {
       .input('id', id)
       .query(`
         SELECT o.*, h.name as HotelName, rc.Name as RoomName
-        FROM [MED_ֹOֹֹpportunities] o
+        FROM [MED_Opportunities] o
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
         LEFT JOIN MED_RoomCategory rc ON o.CategoryId = rc.CategoryId
         WHERE o.OpportunityId = @id

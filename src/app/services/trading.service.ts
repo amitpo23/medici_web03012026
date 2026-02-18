@@ -2,6 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { environment } from 'src/app/environments/environment';
 
 export interface SearchAnalysisRequest {
   hotelId: number;
@@ -146,21 +147,50 @@ export interface PriceCheckResult {
   recommendation: string;
 }
 
+export interface CitySearchRequest {
+  city: string;
+  dateFrom: string;
+  dateTo: string;
+  adults?: number;
+  stars?: number;
+  limit?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class TradingService {
-  private apiUrl = '/api/trading';
-  
+  private apiUrl = `${environment.baseUrl}api/trading`;
+
   // Observable for inventory updates
   private inventoryUpdated$ = new BehaviorSubject<boolean>(false);
   public inventoryUpdates = this.inventoryUpdated$.asObservable();
 
   constructor(private http: HttpClient) { }
 
-  /**
-   * Search with AI analysis and buy recommendations
-   */
+  getAISignals(minConfidence = 50, limit = 10): Observable<any> {
+    const params = new HttpParams()
+      .set('minConfidence', minConfidence.toString())
+      .set('limit', limit.toString());
+    return this.http.get<any>(`${environment.baseUrl}api/trading-exchange/ai-signals`, { params });
+  }
+
+  getHotDeals(limit = 6): Observable<any> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<any>(`${environment.baseUrl}api/trading-exchange/HotDeals`, { params });
+  }
+
+  searchByCity(request: CitySearchRequest): Observable<any> {
+    return this.http.post<any>(`${environment.baseUrl}Search/InnstantPrice`, {
+      city: request.city,
+      dateFrom: request.dateFrom,
+      dateTo: request.dateTo,
+      adults: request.adults || 2,
+      stars: request.stars,
+      limit: request.limit || 50
+    });
+  }
+
   searchWithAnalysis(request: SearchAnalysisRequest): Observable<SearchAnalysisResponse> {
     return this.http.post<SearchAnalysisResponse>(`${this.apiUrl}/search-with-analysis`, request);
   }

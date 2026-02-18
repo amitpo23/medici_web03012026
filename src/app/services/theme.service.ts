@@ -83,43 +83,63 @@ export class ThemeService {
   }
 
   private applyDarkThemeVariables(root: HTMLElement): void {
-    root.style.setProperty('--bg-primary', '#0a0e27');
-    root.style.setProperty('--bg-secondary', '#0f1629');
-    root.style.setProperty('--bg-tertiary', '#1a1f35');
-    root.style.setProperty('--bg-card', 'rgba(255, 255, 255, 0.03)');
-    root.style.setProperty('--bg-card-hover', 'rgba(255, 255, 255, 0.06)');
-    root.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.1)');
+    // Medici World Trade Market - Premium Dark Theme with Gold Accents
+    root.style.setProperty('--bg-primary', '#0a0e14');
+    root.style.setProperty('--bg-secondary', '#12171f');
+    root.style.setProperty('--bg-tertiary', '#1a2029');
+    root.style.setProperty('--bg-card', 'rgba(255, 255, 255, 0.02)');
+    root.style.setProperty('--bg-card-hover', 'rgba(255, 255, 255, 0.05)');
+    root.style.setProperty('--bg-row-selected', 'rgba(212, 175, 55, 0.15)');
+    root.style.setProperty('--border-color', 'rgba(255, 255, 255, 0.08)');
     root.style.setProperty('--text-primary', '#f1f5f9');
     root.style.setProperty('--text-secondary', '#94a3b8');
     root.style.setProperty('--text-muted', '#64748b');
-    root.style.setProperty('--accent-primary', '#818cf8');
-    root.style.setProperty('--accent-secondary', '#a78bfa');
+    // Gold/Amber accent colors (Medici branding)
+    root.style.setProperty('--accent-primary', '#D4AF37');
+    root.style.setProperty('--accent-secondary', '#C9A227');
+    root.style.setProperty('--accent-light', '#E5C158');
+    root.style.setProperty('--accent-dark', '#B8962E');
     root.style.setProperty('--success', '#22c55e');
     root.style.setProperty('--warning', '#f59e0b');
     root.style.setProperty('--error', '#ef4444');
     root.style.setProperty('--info', '#3b82f6');
-    root.style.setProperty('--glow-color', 'rgba(99, 102, 241, 0.15)');
-    root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.3)');
+    root.style.setProperty('--glow-color', 'rgba(212, 175, 55, 0.2)');
+    root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.4)');
+    // Status colors
+    root.style.setProperty('--status-sold', '#22c55e');
+    root.style.setProperty('--status-pending', '#D4AF37');
+    root.style.setProperty('--status-bought', '#3b82f6');
+    root.style.setProperty('--status-cancel', '#ef4444');
   }
 
   private applyLightThemeVariables(root: HTMLElement): void {
+    // Medici World Trade Market - Light Theme with Gold Accents
     root.style.setProperty('--bg-primary', '#f8fafc');
     root.style.setProperty('--bg-secondary', '#ffffff');
     root.style.setProperty('--bg-tertiary', '#f1f5f9');
     root.style.setProperty('--bg-card', 'rgba(255, 255, 255, 0.9)');
     root.style.setProperty('--bg-card-hover', 'rgba(255, 255, 255, 1)');
+    root.style.setProperty('--bg-row-selected', 'rgba(212, 175, 55, 0.1)');
     root.style.setProperty('--border-color', 'rgba(0, 0, 0, 0.1)');
     root.style.setProperty('--text-primary', '#0f172a');
     root.style.setProperty('--text-secondary', '#475569');
     root.style.setProperty('--text-muted', '#94a3b8');
-    root.style.setProperty('--accent-primary', '#6366f1');
-    root.style.setProperty('--accent-secondary', '#8b5cf6');
+    // Gold/Amber accent colors (Medici branding)
+    root.style.setProperty('--accent-primary', '#B8962E');
+    root.style.setProperty('--accent-secondary', '#9A7B1C');
+    root.style.setProperty('--accent-light', '#D4AF37');
+    root.style.setProperty('--accent-dark', '#7A6118');
     root.style.setProperty('--success', '#16a34a');
     root.style.setProperty('--warning', '#d97706');
     root.style.setProperty('--error', '#dc2626');
     root.style.setProperty('--info', '#2563eb');
-    root.style.setProperty('--glow-color', 'rgba(99, 102, 241, 0.1)');
+    root.style.setProperty('--glow-color', 'rgba(212, 175, 55, 0.15)');
     root.style.setProperty('--shadow-color', 'rgba(0, 0, 0, 0.1)');
+    // Status colors
+    root.style.setProperty('--status-sold', '#16a34a');
+    root.style.setProperty('--status-pending', '#B8962E');
+    root.style.setProperty('--status-bought', '#2563eb');
+    root.style.setProperty('--status-cancel', '#dc2626');
   }
 
   // Get CSS variable value

@@ -1,0 +1,204 @@
+<div class="ai-command-container">
+  <div class="page-header">
+    <h1>AI Command Center</h1>
+    <p class="subtitle">Natural language interface for system control and analysis</p>
+  </div>
+
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" [selectedIndex]="selectedTabIndex" animationDuration="200ms">
+
+    <!-- Tab 1: Command Center -->
+    <mat-tab label="Command">
+      <div class="tab-content">
+        <mat-card class="command-card">
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Enter command (Hebrew or English)</mat-label>
+              <input matInput [(ngModel)]="commandInput" (keyup.enter)="executeCommand()"
+                     placeholder="e.g., 'analyze performance' or 'scan market'" />
+              <mat-icon matSuffix>terminal</mat-icon>
+            </mat-form-field>
+            <button mat-raised-button color="primary" (click)="executeCommand()"
+                    [disabled]="isExecuting || !commandInput.trim()" type="button">
+              <mat-icon>play_arrow</mat-icon>
+              {{ isExecuting ? 'Executing...' : 'Execute' }}
+            </button>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-progress-bar *ngIf="isExecuting" mode="indeterminate"></mat-progress-bar>
+
+        <mat-card *ngIf="commandResult" class="result-card">
+          <mat-card-header>
+            <mat-card-title>Result</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <pre class="result-output">{{ formatResult(commandResult) }}</pre>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Quick Actions -->
+        <h3>Quick Actions</h3>
+        <div class="quick-actions-grid">
+          <mat-card *ngFor="let qa of quickActions" class="action-card"
+                    (click)="runQuickAction(qa.action)" [class.disabled]="isRunningAction">
+            <mat-card-content>
+              <mat-icon>{{ qa.icon }}</mat-icon>
+              <span>{{ qa.label }}</span>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <mat-progress-bar *ngIf="isRunningAction" mode="indeterminate"></mat-progress-bar>
+
+        <mat-card *ngIf="actionResult" class="result-card">
+          <mat-card-header>
+            <mat-card-title>Action Result</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <pre class="result-output">{{ formatResult(actionResult) }}</pre>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Chat -->
+    <mat-tab label="Chat">
+      <div class="tab-content">
+        <div class="chat-container">
+          <div class="chat-messages">
+            <div *ngFor="let msg of chatMessages" class="chat-message" [ngClass]="msg.role">
+              <div class="message-header">
+                <mat-icon>{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+                <span class="role-label">{{ msg.role === 'user' ? 'You' : 'AI' }}</span>
+                <span class="timestamp">{{ msg.timestamp | date:'HH:mm:ss' }}</span>
+              </div>
+              <div class="message-content">{{ msg.content }}</div>
+            </div>
+
+            <div *ngIf="chatMessages.length === 0" class="empty-chat">
+              <mat-icon>chat</mat-icon>
+              <p>Start a conversation with the AI. Ask about system status, market analysis, or give instructions.</p>
+            </div>
+          </div>
+
+          <div class="chat-input">
+            <mat-form-field appearance="outline" class="full-width">
+              <input matInput [(ngModel)]="chatInput" (keyup.enter)="sendChat()"
+                     placeholder="Type your message..." [disabled]="isChatting" />
+            </mat-form-field>
+            <button mat-fab color="primary" (click)="sendChat()"
+                    [disabled]="isChatting || !chatInput.trim()" type="button">
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+
+          <div class="chat-actions">
+            <button mat-stroked-button (click)="clearChatHistory()" type="button">
+              <mat-icon>delete_sweep</mat-icon>
+              Clear History
+            </button>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Status & Recommendations -->
+    <mat-tab label="Status">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-stroked-button (click)="loadStatus()" [disabled]="isLoadingStatus" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingStatus" mode="indeterminate"></mat-progress-bar>
+
+        <mat-card *ngIf="systemStatus" class="result-card">
+          <mat-card-header>
+            <mat-card-title>System Status (AI Analysis)</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <pre class="result-output">{{ formatResult(systemStatus) }}</pre>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-progress-bar *ngIf="isLoadingRecommendations" mode="indeterminate"></mat-progress-bar>
+
+        <mat-card *ngIf="recommendations" class="result-card">
+          <mat-card-header>
+            <mat-card-title>AI Recommendations</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <pre class="result-output">{{ formatResult(recommendations) }}</pre>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 4: History -->
+    <mat-tab label="History">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-stroked-button (click)="loadHistory()" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+          <button mat-stroked-button color="warn" (click)="clearChatHistory()" type="button">
+            <mat-icon>delete</mat-icon>
+            Clear All
+          </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingHistory" mode="indeterminate"></mat-progress-bar>
+
+        <div *ngIf="history.length > 0" class="history-list">
+          <mat-card *ngFor="let msg of history" class="history-item" [ngClass]="msg.role">
+            <mat-card-content>
+              <div class="history-header">
+                <mat-icon>{{ msg.role === 'user' ? 'person' : 'smart_toy' }}</mat-icon>
+                <span>{{ msg.role }}</span>
+                <span class="timestamp">{{ msg.timestamp | date:'short' }}</span>
+              </div>
+              <p>{{ msg.content }}</p>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <mat-card *ngIf="history.length === 0 && !isLoadingHistory" class="empty-card">
+          <mat-card-content>
+            <mat-icon>history</mat-icon>
+            <p>No command history yet.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 5: Capabilities -->
+    <mat-tab label="Capabilities">
+      <div class="tab-content">
+        <mat-progress-bar *ngIf="isLoadingCapabilities" mode="indeterminate"></mat-progress-bar>
+
+        <div class="capabilities-grid" *ngIf="capabilities.length > 0">
+          <mat-card *ngFor="let cap of capabilities" class="capability-card">
+            <mat-card-header>
+              <mat-card-title>{{ cap.name }}</mat-card-title>
+              <mat-card-subtitle>{{ cap.category }}</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <p>{{ cap.description }}</p>
+              <div class="commands-list">
+                <span class="command-chip" *ngFor="let cmd of cap.commands">{{ cmd }}</span>
+              </div>
+              <div class="params-list" *ngIf="cap.params && cap.params.length > 0">
+                <span class="param-label">Parameters:</span>
+                <span class="param-chip" *ngFor="let param of cap.params">{{ param }}</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

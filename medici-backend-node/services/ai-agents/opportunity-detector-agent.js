@@ -115,12 +115,15 @@ class OpportunityDetectorAgent extends BaseAgent {
                     anomalies.push({
                         type: isLow ? 'BELOW_AVERAGE' : 'ABOVE_AVERAGE',
                         hotelName: hotel,
+                        hotelId: booking.HotelId,
+                        cityName: booking.CityName || null,
                         bookingId: booking.id,
                         price: booking.price,
                         avgPrice: stats.avg,
                         deviation: deviation.toFixed(2),
                         deviationPercent: ((deviation / stats.avg) * 100).toFixed(1),
                         startDate: booking.startDate,
+                        endDate: booking.endDate,
                         opportunity: isLow ? 'BUY' : 'SELL',
                         score: (deviation / stats.avg) * 100
                     });
@@ -171,6 +174,7 @@ class OpportunityDetectorAgent extends BaseAgent {
                         reason: 'Price below market average',
                         hotelName: hotel,
                         hotelId: b.HotelId,
+                        cityName: b.CityName || null,
                         bookingId: b.id,
                         currentPrice: b.price,
                         buyPrice: buyPrice,
@@ -230,6 +234,7 @@ class OpportunityDetectorAgent extends BaseAgent {
                         reason: 'Price above market average',
                         hotelName: hotel,
                         hotelId: b.HotelId,
+                        cityName: b.CityName || null,
                         bookingId: b.id,
                         currentPrice: b.price,
                         marketAvg: stats.avg,
@@ -269,7 +274,7 @@ class OpportunityDetectorAgent extends BaseAgent {
 
             const key = `${hotel}_${date}`;
             if (!hotelDatePrices[key]) {
-                hotelDatePrices[key] = { hotel, date, prices: [] };
+                hotelDatePrices[key] = { hotel, date, hotelId: b.HotelId, cityName: b.CityName || null, startDate: b.startDate, endDate: b.endDate, prices: [] };
             }
             hotelDatePrices[key].prices.push({ price: b.price, provider: b.providers, id: b.id });
         });
@@ -291,7 +296,11 @@ class OpportunityDetectorAgent extends BaseAgent {
                     type: 'ARBITRAGE',
                     reason: 'Same hotel/date with significant price difference',
                     hotelName: data.hotel,
+                    hotelId: data.hotelId,
+                    cityName: data.cityName,
                     date: data.date,
+                    startDate: data.startDate,
+                    endDate: data.endDate,
                     lowPrice: min,
                     highPrice: max,
                     spread: spread.toFixed(1),
@@ -326,9 +335,12 @@ class OpportunityDetectorAgent extends BaseAgent {
                     type: 'LAST_MINUTE',
                     reason: 'Approaching check-in date - potential price flexibility',
                     hotelName: b.HotelName,
+                    hotelId: b.HotelId,
+                    cityName: b.CityName || null,
                     bookingId: b.id,
                     price: b.price,
                     startDate: b.startDate,
+                    endDate: b.endDate,
                     daysUntilCheckIn: Math.floor(daysUntilCheckIn),
                     score: 7 - daysUntilCheckIn,
                     priority: daysUntilCheckIn < 3 ? 'high' : 'medium',

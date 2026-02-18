@@ -138,7 +138,7 @@ router.get('/quick-stats', async (req, res) => {
     const stats = await pool.request().query(`
       SELECT
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1) as TotalBookings,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1) as ActiveOpportunities,
+        (SELECT COUNT(*) FROM [MED_Opportunities] WHERE IsActive = 1) as ActiveOpportunities,
         (SELECT COUNT(*) FROM Med_Hotels WHERE isActive = 1) as ActiveHotels,
         (SELECT SUM(ISNULL(lastPrice, price)) FROM MED_Book WHERE IsActive = 1 AND price > 0) as TotalRevenue,
         (SELECT SUM(ISNULL(lastPrice, 0) - price) FROM MED_Book WHERE IsActive = 1 AND price > 0 AND lastPrice IS NOT NULL) as TotalProfit
@@ -204,7 +204,7 @@ router.post('/analyze', async (req, res) => {
               CASE WHEN IsActive = 1 THEN 'ACTIVE' ELSE 'INACTIVE' END as Status,
               COUNT(*) as Count,
               AVG(PushPrice - Price) as AvgMargin
-            FROM [MED_ֹOֹֹpportunities]
+            FROM [MED_Opportunities]
             WHERE DateCreate >= DATEADD(DAY, -@days, GETDATE())
             GROUP BY CASE WHEN IsActive = 1 THEN 'ACTIVE' ELSE 'INACTIVE' END
           `);

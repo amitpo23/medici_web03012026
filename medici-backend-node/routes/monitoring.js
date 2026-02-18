@@ -102,7 +102,7 @@ router.get('/activity', async (req, res) => {
         DateCreate as timestamp,
         Price as amount,
         CityName as details
-      FROM [MED_ֹOֹֹpportunities]
+      FROM [MED_Opportunities]
       WHERE IsSale = 1
       
       UNION ALL
@@ -165,7 +165,7 @@ router.get('/trends', async (req, res) => {
         ISNULL(SUM(o.Price), 0) as revenue,
         ISNULL(SUM(o.PushPrice - o.Price), 0) as profit
       FROM Hours h
-      LEFT JOIN [MED_ֹOֹֹpportunities] o ON
+      LEFT JOIN [MED_Opportunities] o ON
         o.IsSale = 1 AND
         o.DateCreate >= h.hour_start AND
         o.DateCreate < DATEADD(HOUR, 1, h.hour_start)

@@ -28,9 +28,6 @@ const routes: Routes = [
   { path: 'alerts', loadChildren: () => import('./modules/alerts/alerts.module').then(m => m.AlertsModule), canActivate: [AuthGuard] },
   { path: 'system-admin', loadChildren: () => import('./modules/system-admin/system-admin.module').then(m => m.SystemAdminModule), canActivate: [AuthGuard] },
   
-  // 🆕 System Monitoring & Analytics (Tasks 2, 3, 5)
-  { path: 'system', loadChildren: () => import('./modules/system-monitoring/system-monitoring.module').then(m => m.SystemMonitoringModule), canActivate: [AuthGuard] },
-  
   // 🆕 Trading Workflow - Search, Buy & Inventory Management
   { path: 'trading', loadChildren: () => import('./modules/trading/trading.module').then(m => m.TradingModule), canActivate: [AuthGuard] },
 
@@ -39,6 +36,42 @@ const routes: Routes = [
 
   // 🆕 Zenith Distribution Channel - Push Availability & Rates to OTAs
   { path: 'zenith', loadChildren: () => import('./modules/zenith/zenith.module').then(m => m.ZenithModule), canActivate: [AuthGuard] },
+
+  // Azure Infrastructure - Cloud resource monitoring & management
+  { path: 'azure-infra', loadChildren: () => import('./modules/azure-infrastructure/azure-infrastructure.module').then(m => m.AzureInfrastructureModule), canActivate: [AuthGuard] },
+
+  // Workflows - Automated Decision Engine
+  { path: 'workflows', loadChildren: () => import('./modules/workflows/workflows.module').then(m => m.WorkflowsModule), canActivate: [AuthGuard] },
+
+  // Logs & Diagnostics - System logs, worker health, cancellation errors
+  { path: 'logs-diagnostics', loadChildren: () => import('./modules/logs-diagnostics/logs-diagnostics.module').then(m => m.LogsDiagnosticsModule), canActivate: [AuthGuard] },
+
+  // Data Explorer - Browse database tables, schemas, queries
+  { path: 'data-explorer', loadChildren: () => import('./modules/data-explorer/data-explorer.module').then(m => m.DataExplorerModule), canActivate: [AuthGuard] },
+
+  // Revenue Analytics - KPIs, P&L, forecasts, trends
+  { path: 'revenue-analytics', loadChildren: () => import('./modules/revenue-analytics/revenue-analytics.module').then(m => m.RevenueAnalyticsModule), canActivate: [AuthGuard] },
+
+  // Advanced Pricing - ML pricing, A/B tests, elasticity, competitor tracking
+  { path: 'advanced-pricing', loadChildren: () => import('./modules/advanced-pricing/advanced-pricing.module').then(m => m.AdvancedPricingModule), canActivate: [AuthGuard] },
+
+  // Scraper - Competitor price scraping
+  { path: 'scraper', loadChildren: () => import('./modules/scraper/scraper.module').then(m => m.ScraperModule), canActivate: [AuthGuard] },
+
+  // Documents - PDF generation for bookings and reservations
+  { path: 'documents', loadChildren: () => import('./modules/documents/documents.module').then(m => m.DocumentsModule), canActivate: [AuthGuard] },
+
+  // Search Intelligence - Search analytics, demand forecasting, seasonality
+  { path: 'search-intelligence', loadChildren: () => import('./modules/search-intelligence/search-intelligence.module').then(m => m.SearchIntelligenceModule), canActivate: [AuthGuard] },
+
+  // Data Sync - External data synchronization
+  { path: 'data-sync', loadChildren: () => import('./modules/data-sync/data-sync.module').then(m => m.DataSyncModule), canActivate: [AuthGuard] },
+
+  // AI Command Center - Natural language system control
+  { path: 'ai-command', loadChildren: () => import('./modules/ai-command/ai-command.module').then(m => m.AICommandModule), canActivate: [AuthGuard] },
+
+  // Database Catalog - All tables with descriptions and sample data
+  { path: 'db-catalog', loadChildren: () => import('./modules/database-catalog/database-catalog.module').then(m => m.DatabaseCatalogModule), canActivate: [AuthGuard] },
 
   // Catch-all route - redirect unknown routes to dashboard
   { path: '**', redirectTo: 'dashboard' }

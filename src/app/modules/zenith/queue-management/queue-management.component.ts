@@ -520,16 +520,46 @@ export class QueueManagementComponent implements OnInit, OnDestroy {
   }
 
   retryFailed(): void {
-    this.snackBar.open('Retry failed items - Coming soon', 'Close', { duration: 3000 });
+    this.zenithService.retryFailed()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.snackBar.open(result.message, 'Close', { duration: 4000 });
+          this.refreshStatus();
+        },
+        error: () => {
+          this.snackBar.open('Failed to retry items', 'Close', { duration: 4000 });
+        }
+      });
   }
 
   clearCompleted(): void {
-    this.snackBar.open('Clear completed items - Coming soon', 'Close', { duration: 3000 });
+    this.zenithService.clearCompleted()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (result) => {
+          this.snackBar.open(result.message, 'Close', { duration: 4000 });
+          this.refreshStatus();
+        },
+        error: () => {
+          this.snackBar.open('Failed to clear completed items', 'Close', { duration: 4000 });
+        }
+      });
   }
 
   clearQueue(): void {
     if (confirm('Are you sure you want to clear all pending items from the queue?')) {
-      this.snackBar.open('Clear queue - Coming soon', 'Close', { duration: 3000 });
+      this.zenithService.clearPending()
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (result) => {
+            this.snackBar.open(result.message, 'Close', { duration: 4000 });
+            this.refreshStatus();
+          },
+          error: () => {
+            this.snackBar.open('Failed to clear pending items', 'Close', { duration: 4000 });
+          }
+        });
     }
   }
 }

@@ -15,6 +15,11 @@ export interface PricePrediction {
 export interface BuySellAlert {
   type: 'buy' | 'sell' | 'warning';
   hotelName: string;
+  hotelId?: number;
+  boardId?: number;
+  categoryId?: number;
+  checkIn?: string;
+  checkOut?: string;
   message: string;
   priority: 'high' | 'medium' | 'low';
   suggestedPrice?: number;
@@ -84,12 +89,26 @@ export class PredictionService {
         const alerts: BuySellAlert[] = [];
         const hotelStats = this.groupByHotel(bookings);
 
+        // Calculate default future dates for opportunities
+        const today = new Date();
+        const defaultCheckIn = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const defaultCheckOut = new Date(today.getTime() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
         hotelStats.forEach((stats, hotelName) => {
+          const baseFields = {
+            hotelName,
+            hotelId: stats.hotelId,
+            boardId: stats.boardId,
+            categoryId: stats.categoryId,
+            checkIn: defaultCheckIn,
+            checkOut: defaultCheckOut
+          };
+
           // Alert for high profit margin opportunities
           if (stats.avgProfitMargin > 30) {
             alerts.push({
+              ...baseFields,
               type: 'buy',
-              hotelName,
               message: `מרווח רווח גבוה (${stats.avgProfitMargin.toFixed(1)}%) - הזדמנות מעולה!`,
               priority: 'high',
               suggestedPrice: stats.avgCost,
@@ -100,8 +119,8 @@ export class PredictionService {
           // Alert for declining prices
           if (stats.pricetrend < -0.1) {
             alerts.push({
+              ...baseFields,
               type: 'warning',
-              hotelName,
               message: 'מחירים יורדים - שקול למכור לפני ירידה נוספת',
               priority: 'medium'
             });
@@ -110,8 +129,8 @@ export class PredictionService {
           // Alert for rising demand
           if (stats.recentBookings > stats.avgBookings * 1.5) {
             alerts.push({
+              ...baseFields,
               type: 'buy',
-              hotelName,
               message: 'ביקוש עולה - זמן טוב לקנייה!',
               priority: 'high'
             });
@@ -120,8 +139,8 @@ export class PredictionService {
           // Alert for underpriced opportunities
           if (stats.avgPrice < stats.marketAvg * 0.8) {
             alerts.push({
+              ...baseFields,
               type: 'buy',
-              hotelName,
               message: 'מחיר מתחת לממוצע השוק - הזדמנות!',
               priority: 'medium',
               suggestedPrice: stats.avgPrice,
@@ -154,6 +173,21 @@ export class PredictionService {
       annualizedROI: annualizedROI.toFixed(2),
       profitMargin: ((profit / expectedRevenue) * 100).toFixed(2)
     };
+  }
+
+  /**
+   * קנייה מהירה - הכנסת הזדמנות דרך InsertOpp + Push to Zenith
+   */
+  buyFromAlert(alert: BuySellAlert): Observable<{ success: boolean; opportunityId?: number; id?: number; error?: string }> {
+    const sourcePrice = alert.suggestedPrice || 100;
+    return this.http.post<any>(`${this.baseUrl}Opportunity/InsertOpp`, {
+      hotelId: alert.hotelId,
+      startDateStr: alert.checkIn,
+      endDateStr: alert.checkOut,
+      boardlId: alert.boardId || 1,
+      categorylId: alert.categoryId || 1,
+      sourcePrice
+    });
   }
 
   // Helper methods
@@ -205,6 +239,9 @@ export class PredictionService {
 
       if (!hotelStats.has(b.HotelName)) {
         hotelStats.set(b.HotelName, {
+          hotelId: b.HotelId,
+          boardId: b.BoardId || 1,
+          categoryId: b.CategoryId || 1,
           prices: [],
           profits: [],
           costs: [],

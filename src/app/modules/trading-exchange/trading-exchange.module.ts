@@ -22,6 +22,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatSliderModule } from '@angular/material/slider';
 
 // Routing
 import { TradingExchangeRoutingModule } from './trading-exchange-routing.module';
@@ -33,9 +34,16 @@ import { OrderBookComponent } from './components/order-book/order-book.component
 import { PortfolioDashboardComponent } from './components/portfolio-dashboard/portfolio-dashboard.component';
 import { TradingSignalsComponent } from './components/trading-signals/trading-signals.component';
 import { MarketAnalysisPanelComponent } from './components/market-analysis-panel/market-analysis-panel.component';
+import { OrdersPageComponent } from './components/orders-page/orders-page.component';
 
 // Services
 import { TradingExchangeService } from './services/trading-exchange.service';
+
+// Shared Components
+import { HotSaleSidebarComponent } from '../../components/shared/hot-sale-sidebar/hot-sale-sidebar.component';
+import { BuyOptionDialogComponent } from '../../components/shared/buy-option-dialog/buy-option-dialog.component';
+import { InsightsChartComponent } from '../../components/shared/insights-chart/insights-chart.component';
+import { MlAnalysisPanelComponent } from '../../components/shared/ml-analysis-panel/ml-analysis-panel.component';
 
 @NgModule({
   declarations: [
@@ -44,13 +52,19 @@ import { TradingExchangeService } from './services/trading-exchange.service';
     OrderBookComponent,
     PortfolioDashboardComponent,
     TradingSignalsComponent,
-    MarketAnalysisPanelComponent
+    MarketAnalysisPanelComponent,
+    OrdersPageComponent
   ],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     TradingExchangeRoutingModule,
+    // Standalone Components
+    HotSaleSidebarComponent,
+    BuyOptionDialogComponent,
+    InsightsChartComponent,
+    MlAnalysisPanelComponent,
     // Material
     MatCardModule,
     MatButtonModule,
@@ -70,7 +84,8 @@ import { TradingExchangeService } from './services/trading-exchange.service';
     MatDividerModule,
     MatMenuModule,
     MatSnackBarModule,
-    MatDialogModule
+    MatDialogModule,
+    MatSliderModule
   ],
   providers: [
     TradingExchangeService

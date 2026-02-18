@@ -1,0 +1,214 @@
+.documents-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Document Cards
+.document-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  mat-card-content {
+    padding-top: 1rem;
+  }
+}
+
+.form-row {
+  margin-bottom: 0.5rem;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.action-row {
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 0.5rem;
+}
+
+// Download Button
+.download-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  height: 44px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: all 0.2s ease;
+
+  &:not([disabled]):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &[disabled] {
+    opacity: 0.6;
+  }
+}
+
+.button-spinner {
+  display: inline-block;
+}
+
+// Batch Card
+.batch-card {
+  opacity: 0.75;
+
+  mat-card-content {
+    padding-top: 1rem;
+  }
+}
+
+.coming-soon-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 2rem;
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    border-color: #475569;
+  }
+}
+
+.coming-soon-icon {
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+  color: #f59e0b;
+}
+
+.coming-soon-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #64748b;
+
+  :host-context(.dark) & {
+    color: #94a3b8;
+  }
+}
+
+// History Table
+.history-table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  thead {
+    background: #f1f5f9;
+
+    :host-context(.dark) & {
+      background: #1e293b;
+    }
+
+    th {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: #475569;
+      border-bottom: 2px solid #e2e8f0;
+
+      :host-context(.dark) & {
+        color: #94a3b8;
+        border-color: #334155;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid #e2e8f0;
+      transition: background 0.15s ease;
+
+      :host-context(.dark) & {
+        border-color: #334155;
+      }
+
+      &:hover {
+        background: #f8fafc;
+
+        :host-context(.dark) & {
+          background: #1e293b;
+        }
+      }
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      color: #334155;
+
+      :host-context(.dark) & {
+        color: #cbd5e1;
+      }
+    }
+  }
+}
+
+// Type Badges
+.type-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.type-booking {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.type-reservation {
+    background-color: #f5f3ff;
+    color: #7c3aed;
+    border: 1px solid #ddd6fe;
+  }
+}
+
+// Status Badges
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.status-success {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    border: 1px solid #bbf7d0;
+  }
+
+  &.status-error {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .history-table {
+    font-size: 0.8rem;
+
+    th, td {
+      padding: 0.5rem;
+    }
+  }
+
+  .download-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

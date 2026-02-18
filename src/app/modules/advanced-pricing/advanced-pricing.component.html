@@ -1,0 +1,1084 @@
+<div class="advanced-pricing-container">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>price_change</mat-icon>
+        Advanced Pricing
+      </h1>
+      <p class="subtitle">ML pricing, elasticity analysis, competitor tracking, and revenue optimization</p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="days-field">
+        <mat-label>Period (days)</mat-label>
+        <mat-select [(ngModel)]="globalDays">
+          <mat-option *ngFor="let d of daysOptions" [value]="d">{{ d }} days</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" [selectedIndex]="selectedTabIndex">
+
+    <!-- ================================================================= -->
+    <!-- Tab 1: A/B Tests -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>science</mat-icon>
+        <span>A/B Tests</span>
+      </ng-template>
+      <div class="tab-panel">
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>A/B Test Results</mat-card-title>
+            <mat-card-subtitle *ngIf="abTestsPeriod">{{ abTestsPeriod }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <!-- Filters -->
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Test Type</mat-label>
+                <input matInput [(ngModel)]="abTestFilterType" placeholder="e.g. price_level">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Strategy</mat-label>
+                <input matInput [(ngModel)]="abTestFilterStrategy" placeholder="e.g. aggressive">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadABTests()" type="button">
+                <mat-icon>search</mat-icon> Search
+              </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="loading-inline" *ngIf="abTestsLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading A/B test data...</span>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards" *ngIf="abTestsSummary && !abTestsLoading">
+              <mat-card class="summary-item">
+                <span class="summary-label">Total Tests</span>
+                <span class="summary-value">{{ abTestsSummary.totalTests | number }}</span>
+              </mat-card>
+              <mat-card class="summary-item">
+                <span class="summary-label">Avg Conversion Rate</span>
+                <span class="summary-value">{{ (abTestsSummary.avgConversionRate * 100) | number:'1.2-2' }}%</span>
+              </mat-card>
+              <mat-card class="summary-item" *ngIf="abTestsSummary.bestPerformer">
+                <span class="summary-label">Best Performer</span>
+                <span class="summary-value">{{ abTestsSummary.bestPerformer.Strategy }} / {{ abTestsSummary.bestPerformer.Variant }}</span>
+              </mat-card>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container" *ngIf="abTestsData.length > 0 && !abTestsLoading">
+              <table mat-table [dataSource]="abTestsData" class="mat-elevation-z2 data-table">
+                <ng-container matColumnDef="TestType">
+                  <th mat-header-cell *matHeaderCellDef>Test Type</th>
+                  <td mat-cell *matCellDef="let row">{{ row.TestType }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Variant">
+                  <th mat-header-cell *matHeaderCellDef>Variant</th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-chip-listbox>
+                      <mat-chip [class.variant-control]="row.Variant === 'control'" [class.variant-test]="row.Variant !== 'control'">
+                        {{ row.Variant }}
+                      </mat-chip>
+                    </mat-chip-listbox>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Strategy">
+                  <th mat-header-cell *matHeaderCellDef>Strategy</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Strategy }}</td>
+                </ng-container>
+                <ng-container matColumnDef="TotalTests">
+                  <th mat-header-cell *matHeaderCellDef>Sample Size</th>
+                  <td mat-cell *matCellDef="let row">{{ row.sampleSize | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Conversions">
+                  <th mat-header-cell *matHeaderCellDef>Conversions</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Conversions | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="ConversionRate">
+                  <th mat-header-cell *matHeaderCellDef>Conv. Rate</th>
+                  <td mat-cell *matCellDef="let row" class="profit-positive">{{ row.ConversionRate }}%</td>
+                </ng-container>
+                <ng-container matColumnDef="AvgTestPrice">
+                  <th mat-header-cell *matHeaderCellDef>Avg Test Price</th>
+                  <td mat-cell *matCellDef="let row">{{ row.AvgTestPrice | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="AvgControlPrice">
+                  <th mat-header-cell *matHeaderCellDef>Avg Control Price</th>
+                  <td mat-cell *matCellDef="let row">{{ row.AvgControlPrice | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="improvement">
+                  <th mat-header-cell *matHeaderCellDef>Improvement</th>
+                  <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.improvement)">
+                    <span *ngIf="row.improvement !== null">{{ row.improvement | number:'1.2-2' }}%</span>
+                    <span *ngIf="row.improvement === null">--</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="significanceLevel">
+                  <th mat-header-cell *matHeaderCellDef>Significance</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="significance-badge" [ngClass]="getSignificanceClass(row.significanceLevel)">
+                      {{ row.significanceLevel || '--' }}
+                    </span>
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="abTestColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: abTestColumns;"></tr>
+              </table>
+            </div>
+
+            <!-- No data -->
+            <div class="no-data" *ngIf="abTestsData.length === 0 && !abTestsLoading">
+              <mat-icon>info</mat-icon>
+              <p>No A/B test data available for the selected filters.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 2: Strategy Comparison -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>compare_arrows</mat-icon>
+        <span>Strategy Comparison</span>
+      </ng-template>
+      <div class="tab-panel">
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Pricing Strategy Performance</mat-card-title>
+            <mat-card-subtitle *ngIf="strategyPeriod">{{ strategyPeriod }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <button mat-flat-button color="primary" (click)="loadStrategyComparison()" type="button">
+                <mat-icon>refresh</mat-icon> Refresh
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="strategyLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading strategy data...</span>
+            </div>
+
+            <!-- Recommendation -->
+            <div class="recommendation-banner" *ngIf="strategyRecommendation && !strategyLoading">
+              <mat-icon>recommend</mat-icon>
+              <span>Recommended Strategy: <strong>{{ strategyRecommendation }}</strong></span>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container" *ngIf="strategyData.length > 0 && !strategyLoading">
+              <table mat-table [dataSource]="strategyData" class="mat-elevation-z2 data-table">
+                <ng-container matColumnDef="strategy">
+                  <th mat-header-cell *matHeaderCellDef>Strategy</th>
+                  <td mat-cell *matCellDef="let row"><strong>{{ row.strategy }}</strong></td>
+                </ng-container>
+                <ng-container matColumnDef="total">
+                  <th mat-header-cell *matHeaderCellDef>Total Opps</th>
+                  <td mat-cell *matCellDef="let row">{{ row.total | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="sold">
+                  <th mat-header-cell *matHeaderCellDef>Sold</th>
+                  <td mat-cell *matCellDef="let row">{{ row.sold | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="conversionRate">
+                  <th mat-header-cell *matHeaderCellDef>Conv. Rate</th>
+                  <td mat-cell *matCellDef="let row" class="profit-positive">{{ row.conversionRate }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgProfit">
+                  <th mat-header-cell *matHeaderCellDef>Avg Profit</th>
+                  <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avgProfit)">
+                    {{ row.avgProfit | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="avgMargin">
+                  <th mat-header-cell *matHeaderCellDef>Avg Margin</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgMargin }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgConfidence">
+                  <th mat-header-cell *matHeaderCellDef>Avg Confidence</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgConfidence | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="totalProfit">
+                  <th mat-header-cell *matHeaderCellDef>Total Profit</th>
+                  <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.totalProfit)">
+                    {{ row.totalProfit | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="expectedValuePerOpp">
+                  <th mat-header-cell *matHeaderCellDef>EV / Opp</th>
+                  <td mat-cell *matCellDef="let row">{{ row.expectedValuePerOpp | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgTimeToAction">
+                  <th mat-header-cell *matHeaderCellDef>Avg Time (hrs)</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgTimeToAction | number }}</td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="strategyColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: strategyColumns;"></tr>
+              </table>
+            </div>
+
+            <div class="no-data" *ngIf="strategyData.length === 0 && !strategyLoading">
+              <mat-icon>info</mat-icon>
+              <p>No strategy comparison data available.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 3: Price Adjustments -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>tune</mat-icon>
+        <span>Price Adjustments</span>
+      </ng-template>
+      <div class="tab-panel">
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Price Adjustment Analysis</mat-card-title>
+            <mat-card-subtitle *ngIf="adjustmentsPeriod">{{ adjustmentsPeriod }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Filter by Reason</mat-label>
+                <input matInput [(ngModel)]="adjustmentFilterReason" placeholder="e.g. competitor_change">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadAdjustments()" type="button">
+                <mat-icon>search</mat-icon> Search
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="adjustmentsLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading adjustment data...</span>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-cards" *ngIf="adjustmentsSummary && !adjustmentsLoading">
+              <mat-card class="summary-item">
+                <span class="summary-label">Total Adjustments</span>
+                <span class="summary-value">{{ adjustmentsSummary.totalAdjustments | number }}</span>
+              </mat-card>
+              <mat-card class="summary-item">
+                <span class="summary-label">Avg Conv. Rate</span>
+                <span class="summary-value">{{ (adjustmentsSummary.avgConversionRate * 100) | number:'1.2-2' }}%</span>
+              </mat-card>
+              <mat-card class="summary-item" *ngIf="adjustmentsSummary.bestPerformingReason">
+                <span class="summary-label">Top Reason</span>
+                <span class="summary-value">{{ adjustmentsSummary.bestPerformingReason }}</span>
+              </mat-card>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container" *ngIf="adjustmentsData.length > 0 && !adjustmentsLoading">
+              <table mat-table [dataSource]="adjustmentsData" class="mat-elevation-z2 data-table">
+                <ng-container matColumnDef="reason">
+                  <th mat-header-cell *matHeaderCellDef>Reason</th>
+                  <td mat-cell *matCellDef="let row"><strong>{{ row.reason }}</strong></td>
+                </ng-container>
+                <ng-container matColumnDef="strategy">
+                  <th mat-header-cell *matHeaderCellDef>Strategy</th>
+                  <td mat-cell *matCellDef="let row">{{ row.strategy }}</td>
+                </ng-container>
+                <ng-container matColumnDef="count">
+                  <th mat-header-cell *matHeaderCellDef>Count</th>
+                  <td mat-cell *matCellDef="let row">{{ row.count | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgChange">
+                  <th mat-header-cell *matHeaderCellDef>Avg Change</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgChange }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgPriceDiff">
+                  <th mat-header-cell *matHeaderCellDef>Avg Price Diff</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgPriceDiff | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="automatic">
+                  <th mat-header-cell *matHeaderCellDef>Auto</th>
+                  <td mat-cell *matCellDef="let row">{{ row.automatic | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="manual">
+                  <th mat-header-cell *matHeaderCellDef>Manual</th>
+                  <td mat-cell *matCellDef="let row">{{ row.manual | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgConfidence">
+                  <th mat-header-cell *matHeaderCellDef>Confidence</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgConfidence | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="conversions">
+                  <th mat-header-cell *matHeaderCellDef>Conversions</th>
+                  <td mat-cell *matCellDef="let row">{{ row.conversions | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="conversionRate">
+                  <th mat-header-cell *matHeaderCellDef>Conv. Rate</th>
+                  <td mat-cell *matCellDef="let row" class="profit-positive">{{ row.conversionRate }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgProfitWhenSold">
+                  <th mat-header-cell *matHeaderCellDef>Avg Profit (Sold)</th>
+                  <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avgProfitWhenSold)">
+                    {{ row.avgProfitWhenSold | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="adjustmentColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: adjustmentColumns;"></tr>
+              </table>
+            </div>
+
+            <div class="no-data" *ngIf="adjustmentsData.length === 0 && !adjustmentsLoading">
+              <mat-icon>info</mat-icon>
+              <p>No price adjustment data available.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 4: Revenue Optimization -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>trending_up</mat-icon>
+        <span>Revenue Optimization</span>
+      </ng-template>
+      <div class="tab-panel">
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Revenue Optimization Insights</mat-card-title>
+            <mat-card-subtitle *ngIf="revenueOptPeriod">{{ revenueOptPeriod }}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <button mat-flat-button color="primary" (click)="loadRevenueOptimization()" type="button">
+                <mat-icon>refresh</mat-icon> Refresh
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="revenueOptLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading optimization data...</span>
+            </div>
+
+            <!-- Current Performance -->
+            <div *ngIf="revenueOptCurrent && !revenueOptLoading">
+              <h3 class="section-title">Current Performance</h3>
+              <div class="summary-cards">
+                <mat-card class="summary-item">
+                  <span class="summary-label">Opportunities</span>
+                  <span class="summary-value">{{ revenueOptCurrent.opportunities | number }}</span>
+                </mat-card>
+                <mat-card class="summary-item">
+                  <span class="summary-label">Sold</span>
+                  <span class="summary-value">{{ revenueOptCurrent.sold | number }}</span>
+                </mat-card>
+                <mat-card class="summary-item">
+                  <span class="summary-label">Conversion</span>
+                  <span class="summary-value">{{ revenueOptCurrent.conversionRate }}</span>
+                </mat-card>
+                <mat-card class="summary-item">
+                  <span class="summary-label">Avg Profit</span>
+                  <span class="summary-value">{{ revenueOptCurrent.avgProfit | currency:'EUR':'symbol':'1.2-2' }}</span>
+                </mat-card>
+                <mat-card class="summary-item">
+                  <span class="summary-label">Total Profit</span>
+                  <span class="summary-value profit-positive">{{ revenueOptCurrent.totalProfit | currency:'EUR':'symbol':'1.2-2' }}</span>
+                </mat-card>
+              </div>
+            </div>
+
+            <!-- Optimization Opportunities -->
+            <div *ngIf="revenueOptOptimizations.length > 0 && !revenueOptLoading">
+              <h3 class="section-title">Optimization Opportunities</h3>
+              <div class="table-container">
+                <table mat-table [dataSource]="revenueOptOptimizations" class="mat-elevation-z2 data-table">
+                  <ng-container matColumnDef="opportunity">
+                    <th mat-header-cell *matHeaderCellDef>Opportunity</th>
+                    <td mat-cell *matCellDef="let row"><strong>{{ row.opportunity }}</strong></td>
+                  </ng-container>
+                  <ng-container matColumnDef="affectedCount">
+                    <th mat-header-cell *matHeaderCellDef>Affected Count</th>
+                    <td mat-cell *matCellDef="let row">{{ row.affectedCount | number }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="currentMargin">
+                    <th mat-header-cell *matHeaderCellDef>Current Margin</th>
+                    <td mat-cell *matCellDef="let row">{{ row.currentMargin }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="potentialMargin">
+                    <th mat-header-cell *matHeaderCellDef>Potential Margin</th>
+                    <td mat-cell *matCellDef="let row" class="profit-positive">{{ row.potentialMargin }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="potentialRevenue">
+                    <th mat-header-cell *matHeaderCellDef>Potential Revenue</th>
+                    <td mat-cell *matCellDef="let row" class="profit-positive">
+                      {{ row.potentialRevenue | currency:'EUR':'symbol':'1.2-2' }}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="expectedImpact">
+                    <th mat-header-cell *matHeaderCellDef>Impact</th>
+                    <td mat-cell *matCellDef="let row">
+                      <span class="impact-badge" [ngClass]="getImpactClass(row.expectedImpact)">
+                        {{ row.expectedImpact }}
+                      </span>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="revenueOptColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: revenueOptColumns;"></tr>
+                </table>
+              </div>
+            </div>
+
+            <!-- Projected Impact -->
+            <div *ngIf="revenueOptProjectedImpact && !revenueOptLoading">
+              <h3 class="section-title">Projected Impact</h3>
+              <div class="summary-cards">
+                <mat-card class="summary-item highlight">
+                  <span class="summary-label">Potential Revenue</span>
+                  <span class="summary-value profit-positive">
+                    {{ revenueOptProjectedImpact.totalPotentialRevenue | currency:'EUR':'symbol':'1.2-2' }}
+                  </span>
+                </mat-card>
+                <mat-card class="summary-item highlight">
+                  <span class="summary-label">Revenue Increase</span>
+                  <span class="summary-value profit-positive">{{ revenueOptProjectedImpact.revenueIncrease }}</span>
+                </mat-card>
+                <mat-card class="summary-item highlight">
+                  <span class="summary-label">Recommended Action</span>
+                  <span class="summary-value">{{ revenueOptProjectedImpact.recommendedAction }}</span>
+                </mat-card>
+              </div>
+            </div>
+
+            <!-- Run Metrics -->
+            <div class="metrics-section">
+              <h3 class="section-title">Manual Metrics Calculation</h3>
+              <div class="filter-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Date (optional)</mat-label>
+                  <input matInput [(ngModel)]="runMetricsDate" placeholder="YYYY-MM-DD">
+                </mat-form-field>
+                <button mat-flat-button color="accent" (click)="runDailyMetrics()" [disabled]="runMetricsLoading" type="button">
+                  <mat-icon>play_arrow</mat-icon> Run Metrics
+                </button>
+              </div>
+              <div class="loading-inline" *ngIf="runMetricsLoading">
+                <mat-spinner diameter="24"></mat-spinner>
+                <span>Running metrics...</span>
+              </div>
+              <mat-card class="result-card" *ngIf="runMetricsResult && !runMetricsLoading">
+                <pre class="json-output">{{ formatJson(runMetricsResult) }}</pre>
+              </mat-card>
+            </div>
+
+            <div class="no-data" *ngIf="!revenueOptCurrent && !revenueOptLoading">
+              <mat-icon>info</mat-icon>
+              <p>No revenue optimization data available.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 5: ML Pricing -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>psychology</mat-icon>
+        <span>ML Pricing</span>
+      </ng-template>
+      <div class="tab-panel">
+
+        <!-- Single Prediction -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>ML Price Prediction</mat-card-title>
+            <mat-card-subtitle>Predict optimal pricing using machine learning</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="mlFormData.hotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Check-In *</mat-label>
+                <input matInput type="date" [(ngModel)]="mlFormData.checkIn">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Check-Out *</mat-label>
+                <input matInput type="date" [(ngModel)]="mlFormData.checkOut">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Buy Price *</mat-label>
+                <input matInput type="number" [(ngModel)]="mlFormData.buyPrice" placeholder="e.g. 150">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Room Type</mat-label>
+                <input matInput [(ngModel)]="mlFormData.roomType" placeholder="e.g. Double">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Lead Time (days)</mat-label>
+                <input matInput type="number" [(ngModel)]="mlFormData.leadTimeDays" placeholder="e.g. 14">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Current Demand</mat-label>
+                <input matInput type="number" [(ngModel)]="mlFormData.currentDemand" placeholder="0.0 - 1.0">
+              </mat-form-field>
+            </div>
+
+            <div class="form-actions">
+              <button mat-flat-button color="primary" (click)="submitMLPrediction()" [disabled]="mlLoading" type="button">
+                <mat-icon>auto_awesome</mat-icon> Predict Price
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="mlLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Running ML prediction...</span>
+            </div>
+
+            <div class="error-message" *ngIf="mlError">
+              <mat-icon>error</mat-icon>
+              <span>{{ mlError }}</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="mlResult && !mlLoading">
+              <mat-card-header>
+                <mat-card-title>Prediction Result</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <pre class="json-output">{{ formatJson(mlResult) }}</pre>
+              </mat-card-content>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Batch Prediction -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Batch ML Predictions</mat-card-title>
+            <mat-card-subtitle>Submit multiple opportunities as JSON array</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Opportunities JSON Array</mat-label>
+              <textarea matInput [(ngModel)]="mlBatchInput" rows="6"
+                placeholder='[{"hotelId": 123, "checkIn": "2026-03-01", "checkOut": "2026-03-05", "buyPrice": 100}]'></textarea>
+            </mat-form-field>
+
+            <div class="form-actions">
+              <button mat-flat-button color="primary" (click)="submitBatchMLPrediction()" [disabled]="mlBatchLoading" type="button">
+                <mat-icon>batch_prediction</mat-icon> Run Batch
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="mlBatchLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Running batch predictions...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="mlBatchResult && !mlBatchLoading">
+              <mat-card-header>
+                <mat-card-title>Batch Result</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <pre class="json-output">{{ formatJson(mlBatchResult) }}</pre>
+              </mat-card-content>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 6: Elasticity -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>show_chart</mat-icon>
+        <span>Elasticity</span>
+      </ng-template>
+      <div class="tab-panel">
+
+        <!-- Price Elasticity -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Price Elasticity Analysis</mat-card-title>
+            <mat-card-subtitle>Measure how demand responds to price changes</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="elasticityHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Timeframe (days)</mat-label>
+                <input matInput type="number" [(ngModel)]="elasticityTimeframe" placeholder="e.g. 90">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Min Data Points</mat-label>
+                <input matInput type="number" [(ngModel)]="elasticityMinDataPoints" placeholder="e.g. 10">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadElasticity()" [disabled]="elasticityLoading" type="button">
+                <mat-icon>analytics</mat-icon> Analyze
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="elasticityLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Calculating elasticity...</span>
+            </div>
+
+            <div class="error-message" *ngIf="elasticityError">
+              <mat-icon>error</mat-icon>
+              <span>{{ elasticityError }}</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="elasticityResult && !elasticityLoading">
+              <pre class="json-output">{{ formatJson(elasticityResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Segment Elasticity -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Segment Elasticity</mat-card-title>
+            <mat-card-subtitle>Elasticity breakdown by customer segments</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="segmentElasticityHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadSegmentElasticity()" [disabled]="segmentElasticityLoading" type="button">
+                <mat-icon>segment</mat-icon> Load Segments
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="segmentElasticityLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading segment data...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="segmentElasticityResult && !segmentElasticityLoading">
+              <pre class="json-output">{{ formatJson(segmentElasticityResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Elasticity Recommendation -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Elasticity-Based Recommendation</mat-card-title>
+            <mat-card-subtitle>Get price recommendations based on elasticity data</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="elasticityRecHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Current Price *</mat-label>
+                <input matInput type="number" [(ngModel)]="elasticityRecCurrentPrice" placeholder="e.g. 200">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Target Metric</mat-label>
+                <mat-select [(ngModel)]="elasticityRecTargetMetric">
+                  <mat-option value="revenue">Revenue</mat-option>
+                  <mat-option value="profit">Profit</mat-option>
+                  <mat-option value="occupancy">Occupancy</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadElasticityRecommendation()" [disabled]="elasticityRecLoading" type="button">
+                <mat-icon>recommend</mat-icon> Get Recommendation
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="elasticityRecLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Generating recommendation...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="elasticityRecResult && !elasticityRecLoading">
+              <pre class="json-output">{{ formatJson(elasticityRecResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 7: Competitor Tracking -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>visibility</mat-icon>
+        <span>Competitor Tracking</span>
+      </ng-template>
+      <div class="tab-panel">
+
+        <!-- Competitor Changes -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Competitor Price Changes</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="competitorChangesHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Days Back</mat-label>
+                <input matInput type="number" [(ngModel)]="competitorChangesDaysBack" placeholder="e.g. 14">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadCompetitorChanges()" [disabled]="competitorChangesLoading" type="button">
+                <mat-icon>search</mat-icon> Track Changes
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="competitorChangesLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading competitor changes...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="competitorChangesResult && !competitorChangesLoading">
+              <pre class="json-output">{{ formatJson(competitorChangesResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Competitive Position -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Competitive Position Analysis</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="competitorPositionHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Our Price *</mat-label>
+                <input matInput type="number" [(ngModel)]="competitorPositionOurPrice" placeholder="e.g. 180">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadCompetitivePosition()" [disabled]="competitorPositionLoading" type="button">
+                <mat-icon>leaderboard</mat-icon> Analyze Position
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="competitorPositionLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Analyzing competitive position...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="competitorPositionResult && !competitorPositionLoading">
+              <pre class="json-output">{{ formatJson(competitorPositionResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Response Strategy -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Competitor Response Strategy</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="responseStrategyHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+            </div>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Competitor Change (JSON) *</mat-label>
+              <textarea matInput [(ngModel)]="responseStrategyChange" rows="3"
+                placeholder='{"competitor": "Booking.com", "oldPrice": 200, "newPrice": 180}'></textarea>
+            </mat-form-field>
+            <div class="form-actions">
+              <button mat-flat-button color="primary" (click)="loadResponseStrategy()" [disabled]="responseStrategyLoading" type="button">
+                <mat-icon>strategy</mat-icon> Get Strategy
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="responseStrategyLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Generating response strategy...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="responseStrategyResult && !responseStrategyLoading">
+              <pre class="json-output">{{ formatJson(responseStrategyResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- New Competitors -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>New Competitors Detection</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="newCompetitorsHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Days Back</mat-label>
+                <input matInput type="number" [(ngModel)]="newCompetitorsDaysBack" placeholder="e.g. 30">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadNewCompetitors()" [disabled]="newCompetitorsLoading" type="button">
+                <mat-icon>person_add</mat-icon> Detect
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="newCompetitorsLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Detecting new competitors...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="newCompetitorsResult && !newCompetitorsLoading">
+              <pre class="json-output">{{ formatJson(newCompetitorsResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Market Share -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Market Share Trends</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="marketShareHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Weeks</mat-label>
+                <input matInput type="number" [(ngModel)]="marketShareWeeks" placeholder="e.g. 12">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadMarketShare()" [disabled]="marketShareLoading" type="button">
+                <mat-icon>pie_chart</mat-icon> Load Market Share
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="marketShareLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Calculating market share...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="marketShareResult && !marketShareLoading">
+              <pre class="json-output">{{ formatJson(marketShareResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ================================================================= -->
+    <!-- Tab 8: Yield Management -->
+    <!-- ================================================================= -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>attach_money</mat-icon>
+        <span>Yield Management</span>
+      </ng-template>
+      <div class="tab-panel">
+
+        <!-- Yield Management Analysis -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Yield Management</mat-card-title>
+            <mat-card-subtitle>Dynamic pricing based on demand and inventory</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="yieldHotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Time Horizon (days)</mat-label>
+                <input matInput type="number" [(ngModel)]="yieldTimeHorizon" placeholder="e.g. 30">
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadYieldManagement()" [disabled]="yieldLoading" type="button">
+                <mat-icon>analytics</mat-icon> Analyze
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="yieldLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading yield management data...</span>
+            </div>
+
+            <div class="error-message" *ngIf="yieldError">
+              <mat-icon>error</mat-icon>
+              <span>{{ yieldError }}</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="yieldResult && !yieldLoading">
+              <pre class="json-output">{{ formatJson(yieldResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Revenue Maximize -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Revenue Maximization</mat-card-title>
+            <mat-card-subtitle>Calculate revenue-maximizing price for a specific opportunity</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="form-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Hotel ID *</mat-label>
+                <input matInput type="number" [(ngModel)]="revMaxFormData.hotelId" placeholder="Enter hotel ID">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Check-In *</mat-label>
+                <input matInput type="date" [(ngModel)]="revMaxFormData.checkIn">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Check-Out *</mat-label>
+                <input matInput type="date" [(ngModel)]="revMaxFormData.checkOut">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Buy Price *</mat-label>
+                <input matInput type="number" [(ngModel)]="revMaxFormData.buyPrice" placeholder="e.g. 150">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Available Inventory</mat-label>
+                <input matInput type="number" [(ngModel)]="revMaxFormData.availableInventory" placeholder="e.g. 10">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Current Demand</mat-label>
+                <input matInput type="number" [(ngModel)]="revMaxFormData.currentDemand" placeholder="0.0 - 1.0">
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="full-width-field">
+                <mat-label>Competitor Prices (comma-separated)</mat-label>
+                <input matInput [(ngModel)]="revMaxFormData.competitorPrices" placeholder="e.g. 180, 195, 210">
+              </mat-form-field>
+            </div>
+
+            <div class="form-actions">
+              <button mat-flat-button color="primary" (click)="submitRevenueMaximize()" [disabled]="revMaxLoading" type="button">
+                <mat-icon>monetization_on</mat-icon> Maximize Revenue
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="revMaxLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Calculating optimal revenue...</span>
+            </div>
+
+            <mat-card class="result-card" *ngIf="revMaxResult && !revMaxLoading">
+              <pre class="json-output">{{ formatJson(revMaxResult) }}</pre>
+            </mat-card>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Trends -->
+        <mat-card class="section-card">
+          <mat-card-header>
+            <mat-card-title>Price Trends</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="filter-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Granularity</mat-label>
+                <mat-select [(ngModel)]="trendsGranularity">
+                  <mat-option value="daily">Daily</mat-option>
+                  <mat-option value="weekly">Weekly</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <button mat-flat-button color="primary" (click)="loadTrends()" [disabled]="trendsLoading" type="button">
+                <mat-icon>refresh</mat-icon> Load Trends
+              </button>
+            </div>
+
+            <div class="loading-inline" *ngIf="trendsLoading">
+              <mat-spinner diameter="32"></mat-spinner>
+              <span>Loading trend data...</span>
+            </div>
+
+            <div class="table-container" *ngIf="trendsData.length > 0 && !trendsLoading">
+              <table mat-table [dataSource]="trendsData" class="mat-elevation-z2 data-table">
+                <ng-container matColumnDef="period">
+                  <th mat-header-cell *matHeaderCellDef>Period</th>
+                  <td mat-cell *matCellDef="let row">{{ row.period }}</td>
+                </ng-container>
+                <ng-container matColumnDef="created">
+                  <th mat-header-cell *matHeaderCellDef>Created</th>
+                  <td mat-cell *matCellDef="let row">{{ row.created | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="sold">
+                  <th mat-header-cell *matHeaderCellDef>Sold</th>
+                  <td mat-cell *matCellDef="let row">{{ row.sold | number }}</td>
+                </ng-container>
+                <ng-container matColumnDef="conversionRate">
+                  <th mat-header-cell *matHeaderCellDef>Conv. Rate</th>
+                  <td mat-cell *matCellDef="let row">{{ row.conversionRate }}%</td>
+                </ng-container>
+                <ng-container matColumnDef="avgSellPrice">
+                  <th mat-header-cell *matHeaderCellDef>Avg Sell</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgSellPrice | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgBuyPrice">
+                  <th mat-header-cell *matHeaderCellDef>Avg Buy</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgBuyPrice | currency:'EUR':'symbol':'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgMargin">
+                  <th mat-header-cell *matHeaderCellDef>Avg Margin</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgMargin }}</td>
+                </ng-container>
+                <ng-container matColumnDef="avgConfidence">
+                  <th mat-header-cell *matHeaderCellDef>Confidence</th>
+                  <td mat-cell *matCellDef="let row">{{ row.avgConfidence | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="totalProfit">
+                  <th mat-header-cell *matHeaderCellDef>Total Profit</th>
+                  <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.totalProfit)">
+                    {{ row.totalProfit | currency:'EUR':'symbol':'1.2-2' }}
+                  </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="trendsColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: trendsColumns;"></tr>
+              </table>
+            </div>
+
+            <div class="no-data" *ngIf="trendsData.length === 0 && !trendsLoading">
+              <mat-icon>info</mat-icon>
+              <p>No trend data available. Click "Load Trends" to fetch data.</p>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { interval, Observable } from 'rxjs';
 import { shareReplay, startWith, switchMap } from 'rxjs/operators';
+import { environment } from 'src/app/environments/environment';
 
 export interface Metrics {
   bookings: {
@@ -95,7 +96,7 @@ export interface Alert {
   providedIn: 'root'
 })
 export class MonitoringService {
-  private apiUrl = '/monitoring';
+  private apiUrl = `${environment.baseUrl}monitoring`;
   
   // Auto-refresh metrics every 10 seconds
   public metrics$: Observable<Metrics>;

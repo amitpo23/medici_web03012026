@@ -132,7 +132,7 @@ router.post('/:id/approve', async (req, res) => {
       .input('userId', userId || null)
       .input('notes', notes || null)
       .query(`
-        UPDATE [MED_ֹOֹֹpportunities]
+        UPDATE [MED_Opportunities]
         SET IsActive = 1,
             Lastupdate = GETDATE()
         WHERE OpportunityId = @opportunityId
@@ -181,7 +181,7 @@ router.post('/:id/reject', async (req, res) => {
     await pool.request()
       .input('opportunityId', id)
       .query(`
-        UPDATE [MED_ֹOֹֹpportunities]
+        UPDATE [MED_Opportunities]
         SET IsActive = 0,
             Lastupdate = GETDATE()
         WHERE OpportunityId = @opportunityId
@@ -230,7 +230,7 @@ router.get('/stats', async (req, res) => {
       .query(`
         -- AI opportunity stats
         DECLARE @TotalCreated INT = (
-          SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities]
+          SELECT COUNT(*) FROM [MED_Opportunities]
           WHERE AIGenerated = 1
           AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         );
@@ -255,21 +255,21 @@ router.get('/stats', async (req, res) => {
         );
 
         DECLARE @Sold INT = (
-          SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities]
+          SELECT COUNT(*) FROM [MED_Opportunities]
           WHERE AIGenerated = 1
           AND IsSale = 1
           AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         );
 
         DECLARE @TotalRevenue DECIMAL(18,2) = (
-          SELECT ISNULL(SUM(PushPrice), 0) FROM [MED_ֹOֹֹpportunities]
+          SELECT ISNULL(SUM(PushPrice), 0) FROM [MED_Opportunities]
           WHERE AIGenerated = 1
           AND IsSale = 1
           AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         );
 
         DECLARE @TotalCost DECIMAL(18,2) = (
-          SELECT ISNULL(SUM(Price), 0) FROM [MED_ֹOֹֹpportunities]
+          SELECT ISNULL(SUM(Price), 0) FROM [MED_Opportunities]
           WHERE AIGenerated = 1
           AND IsSale = 1
           AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
@@ -309,7 +309,7 @@ router.get('/stats', async (req, res) => {
           END as ConfidenceRange,
           COUNT(*) as Count,
           SUM(CASE WHEN IsSale = 1 THEN 1 ELSE 0 END) as SoldCount
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         GROUP BY
@@ -332,7 +332,7 @@ router.get('/stats', async (req, res) => {
           SUM(CASE WHEN IsSale = 1 THEN 1 ELSE 0 END) as SoldCount,
           AVG(AIConfidence) as AvgConfidence,
           AVG(AIPriorityScore) as AvgPriorityScore
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         AND AIRiskLevel IS NOT NULL
@@ -385,7 +385,7 @@ router.post('/batch-approve', async (req, res) => {
         await pool.request()
           .input('opportunityId', id)
           .query(`
-            UPDATE [MED_ֹOֹֹpportunities]
+            UPDATE [MED_Opportunities]
             SET IsActive = 1, Lastupdate = GETDATE()
             WHERE OpportunityId = @opportunityId AND AIGenerated = 1
           `);

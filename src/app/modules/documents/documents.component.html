@@ -1,0 +1,170 @@
+<div class="documents-container p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-blue-600">description</mat-icon>
+        Document Generation
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Generate and download PDF confirmations for bookings and reservations
+      </p>
+    </div>
+  </div>
+
+  <!-- PDF Generation Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Booking Confirmation Card -->
+    <mat-card class="document-card">
+      <mat-card-header>
+        <mat-card-title class="flex items-center gap-2">
+          <mat-icon class="text-green-600">hotel</mat-icon>
+          Booking Confirmation PDF
+        </mat-card-title>
+        <mat-card-subtitle>
+          Generate a PDF confirmation for a confirmed booking from MED_Book
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Booking ID</mat-label>
+            <input matInput
+                   type="number"
+                   [(ngModel)]="bookingId"
+                   placeholder="Enter booking ID (e.g. 1001)"
+                   min="1"
+                   [disabled]="bookingLoading">
+            <mat-icon matPrefix>tag</mat-icon>
+            <mat-hint>Enter the BookID from MED_Book table</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="action-row">
+          <button mat-flat-button
+                  color="primary"
+                  (click)="downloadBookingConfirmation()"
+                  [disabled]="bookingLoading || !bookingId"
+                  type="button"
+                  class="download-button">
+            <mat-icon *ngIf="!bookingLoading">picture_as_pdf</mat-icon>
+            <mat-spinner *ngIf="bookingLoading" diameter="20" class="button-spinner"></mat-spinner>
+            {{ bookingLoading ? 'Generating PDF...' : 'Download Booking PDF' }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Reservation Confirmation Card -->
+    <mat-card class="document-card">
+      <mat-card-header>
+        <mat-card-title class="flex items-center gap-2">
+          <mat-icon class="text-purple-600">event_available</mat-icon>
+          Reservation Confirmation PDF
+        </mat-card-title>
+        <mat-card-subtitle>
+          Generate a PDF confirmation for a Zenith reservation from Med_Reservation
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reservation ID</mat-label>
+            <input matInput
+                   type="number"
+                   [(ngModel)]="reservationId"
+                   placeholder="Enter reservation ID (e.g. 1)"
+                   min="1"
+                   [disabled]="reservationLoading">
+            <mat-icon matPrefix>tag</mat-icon>
+            <mat-hint>Enter the Id from Med_Reservation table</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="action-row">
+          <button mat-flat-button
+                  color="accent"
+                  (click)="downloadReservationConfirmation()"
+                  [disabled]="reservationLoading || !reservationId"
+                  type="button"
+                  class="download-button">
+            <mat-icon *ngIf="!reservationLoading">picture_as_pdf</mat-icon>
+            <mat-spinner *ngIf="reservationLoading" diameter="20" class="button-spinner"></mat-spinner>
+            {{ reservationLoading ? 'Generating PDF...' : 'Download Reservation PDF' }}
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+
+  <!-- Batch Generation Card (Coming Soon) -->
+  <mat-card class="batch-card">
+    <mat-card-header>
+      <mat-card-title class="flex items-center gap-2">
+        <mat-icon class="text-orange-600">dynamic_feed</mat-icon>
+        Batch PDF Generation
+      </mat-card-title>
+      <mat-card-subtitle>
+        Generate multiple confirmation PDFs at once
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="coming-soon-banner">
+        <mat-icon class="coming-soon-icon">construction</mat-icon>
+        <span class="coming-soon-text">This feature is coming soon</span>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Download History -->
+  <mat-card *ngIf="downloadHistory.length > 0">
+    <mat-card-header>
+      <mat-card-title class="flex items-center gap-2">
+        <mat-icon class="text-gray-600">history</mat-icon>
+        Download History
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="flex justify-end mb-3">
+        <button mat-stroked-button (click)="clearHistory()" type="button">
+          <mat-icon>delete_sweep</mat-icon>
+          Clear History
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="history-table w-full">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>ID</th>
+              <th>Filename</th>
+              <th>Timestamp</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of downloadHistory">
+              <td>
+                <span class="type-badge" [class.type-booking]="item.type === 'booking'" [class.type-reservation]="item.type === 'reservation'">
+                  {{ getTypeLabel(item.type) }}
+                </span>
+              </td>
+              <td class="font-semibold">{{ item.id }}</td>
+              <td>{{ item.filename }}</td>
+              <td class="whitespace-nowrap">{{ item.timestamp | date:'medium' }}</td>
+              <td>
+                <span class="status-badge" [ngClass]="getStatusClass(item.status)">
+                  {{ item.status === 'success' ? 'Downloaded' : 'Failed' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+</div>

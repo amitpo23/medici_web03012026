@@ -1,0 +1,675 @@
+// ========================================
+// Revenue Analytics Component Styles
+// ========================================
+
+.revenue-analytics-container {
+  padding: 24px;
+  background: var(--bg-secondary, #f5f7fa);
+  min-height: calc(100vh - 64px);
+}
+
+// ========================================
+// Page Header
+// ========================================
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .header-content {
+    h1 {
+      margin: 0 0 8px 0;
+      color: var(--text-primary, #1e293b);
+      font-size: 28px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #7c3aed;
+      }
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--text-secondary, #64748b);
+      font-size: 15px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    .period-field {
+      width: 180px;
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+
+    .refresh-btn {
+      border-color: var(--border-color, #e2e8f0);
+      color: var(--text-secondary, #64748b);
+      height: 56px;
+
+      mat-icon {
+        margin-right: 4px;
+      }
+
+      &:hover {
+        border-color: #7c3aed;
+        color: #7c3aed;
+      }
+    }
+  }
+}
+
+// ========================================
+// Loading & Error States
+// ========================================
+.loading-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+
+  p {
+    margin-top: 16px;
+    color: var(--text-secondary, #64748b);
+    font-size: 14px;
+  }
+}
+
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  color: #dc2626;
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+}
+
+// ========================================
+// Tab Styling
+// ========================================
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-panel {
+  padding: 24px 0;
+}
+
+.section-title {
+  margin: 0 0 16px 0;
+  color: var(--text-primary, #1e293b);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+// ========================================
+// KPI Cards Grid
+// ========================================
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.kpi-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: none;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+  }
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+.kpi-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+  }
+
+  &.blue { background: #3b82f6; }
+  &.green { background: #16a34a; }
+  &.orange { background: #f59e0b; }
+  &.red { background: #dc2626; }
+  &.purple { background: #7c3aed; }
+  &.teal { background: #0d9488; }
+}
+
+.kpi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ========================================
+// Growth Cards
+// ========================================
+.growth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.growth-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: none;
+
+  mat-card-content {
+    padding: 20px;
+  }
+}
+
+.growth-label {
+  font-size: 14px;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.growth-value-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.growth-value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.growth-detail {
+  font-size: 13px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.growth-positive {
+  color: #16a34a;
+}
+
+.growth-negative {
+  color: #dc2626;
+}
+
+.growth-neutral {
+  color: #64748b;
+}
+
+// ========================================
+// Table Styles
+// ========================================
+.table-info {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary, #94a3b8);
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  th.mat-mdc-header-cell {
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-primary, #1e293b);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 16px;
+    border-bottom: 2px solid var(--border-color, #e2e8f0);
+  }
+
+  td.mat-mdc-cell {
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text-primary, #334155);
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--bg-secondary, #f8fafc);
+  }
+}
+
+// ========================================
+// Profit/Loss Color Coding
+// ========================================
+.profit-positive {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.profit-negative {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+// ========================================
+// Bar Chart Visualization (City Tab)
+// ========================================
+.bar-chart-section {
+  margin-bottom: 32px;
+}
+
+.bar-chart-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bar-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  width: 140px;
+  font-size: 13px;
+  color: var(--text-primary, #334155);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.bar-track {
+  flex: 1;
+  height: 24px;
+  background: var(--bg-secondary, #f1f5f9);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+
+  &.revenue-bar {
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+  }
+}
+
+.bar-value {
+  width: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+// ========================================
+// Supplier Cards
+// ========================================
+.supplier-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.supplier-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: none;
+
+  mat-card-header {
+    padding: 16px 16px 0;
+  }
+
+  mat-card-content {
+    padding: 16px;
+  }
+}
+
+.supplier-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.supplier-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0;
+
+  .stat-label {
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+  }
+}
+
+// ========================================
+// Forecast Cards
+// ========================================
+.forecast-controls {
+  margin-bottom: 16px;
+
+  .forecast-field {
+    width: 180px;
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.forecast-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: none;
+
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+  }
+}
+
+.forecast-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: #fff;
+  }
+
+  &.blue { background: #3b82f6; }
+  &.green { background: #16a34a; }
+  &.purple { background: #7c3aed; }
+  &.confidence-high { background: #16a34a; }
+  &.confidence-medium { background: #f59e0b; }
+  &.confidence-low { background: #dc2626; }
+}
+
+.forecast-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.forecast-label {
+  font-size: 13px;
+  color: var(--text-secondary, #64748b);
+  font-weight: 500;
+}
+
+.forecast-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+}
+
+.forecast-details-card {
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: none;
+  margin-top: 16px;
+
+  mat-card-header {
+    padding: 16px 16px 0;
+  }
+
+  mat-card-content {
+    padding: 16px;
+  }
+}
+
+.forecast-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .detail-label {
+    font-size: 13px;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .detail-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary, #1e293b);
+  }
+}
+
+// ========================================
+// Trend Controls
+// ========================================
+.trend-controls {
+  margin-bottom: 16px;
+
+  mat-button-toggle-group {
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #e2e8f0);
+  }
+}
+
+// ========================================
+// No Data State
+// ========================================
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: var(--text-secondary, #94a3b8);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: 15px;
+    margin: 0;
+  }
+}
+
+// ========================================
+// Dark Mode Support
+// ========================================
+:host-context(.dark) {
+  .kpi-card,
+  .growth-card,
+  .supplier-card,
+  .forecast-card,
+  .forecast-details-card {
+    background: var(--bg-primary, #1e293b);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .data-table {
+    th.mat-mdc-header-cell {
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    tr.mat-mdc-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  .bar-track {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .error-banner {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+}
+
+// ========================================
+// Responsive Design
+// ========================================
+@media (max-width: 768px) {
+  .revenue-analytics-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+
+    .header-actions {
+      width: 100%;
+
+      .period-field {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      .refresh-btn {
+        width: 100%;
+      }
+    }
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .growth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .supplier-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .bar-chart-row {
+    flex-wrap: wrap;
+
+    .bar-label {
+      width: 100%;
+    }
+
+    .bar-value {
+      width: auto;
+    }
+  }
+
+  .tab-panel {
+    padding: 16px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-value,
+  .forecast-value {
+    font-size: 18px;
+  }
+
+  .growth-value {
+    font-size: 22px;
+  }
+}

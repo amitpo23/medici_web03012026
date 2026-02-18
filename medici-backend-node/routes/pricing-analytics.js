@@ -150,7 +150,7 @@ router.get('/analytics/strategy-comparison', async (req, res) => {
             AVG(AIConfidence) as AvgConfidence,
             AVG(AIPriorityScore) as AvgPriority,
             AVG(DATEDIFF(HOUR, DateCreate, Lastupdate)) as AvgTimeToAction
-          FROM [MED_ֹOֹֹpportunities] o
+          FROM [MED_Opportunities] o
           WHERE AIGenerated = 1
           AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
           GROUP BY 
@@ -238,7 +238,7 @@ router.get('/analytics/adjustments', async (req, res) => {
         AVG(CASE WHEN o.IsSale = 1 THEN (o.PushPrice - o.Price) END) as AvgProfitWhenSold
         
       FROM MED_PriceAdjustments pa
-      LEFT JOIN [MED_ֹOֹֹpportunities] o ON pa.OpportunityId = o.OpportunityId
+      LEFT JOIN [MED_Opportunities] o ON pa.OpportunityId = o.OpportunityId
       WHERE pa.CreatedAt >= DATEADD(DAY, -@days, GETDATE())
     `;
 
@@ -307,7 +307,7 @@ router.get('/analytics/revenue-optimization', async (req, res) => {
           AVG(PushPrice - Price) as AvgProfit,
           AVG((PushPrice - Price) / PushPrice) as AvgMargin,
           SUM(CASE WHEN IsSale = 1 THEN (PushPrice - Price) ELSE 0 END) as TotalProfit
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
       `);
@@ -327,7 +327,7 @@ router.get('/analytics/revenue-optimization', async (req, res) => {
           AVG((PushPrice - Price) / PushPrice) as CurrentMargin,
           0.35 as PotentialMargin,
           SUM(Price * 0.10) as PotentialAdditionalRevenue
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND IsActive = 1
         AND IsSale = 0
@@ -342,7 +342,7 @@ router.get('/analytics/revenue-optimization', async (req, res) => {
           AVG((PushPrice - Price) / PushPrice) as CurrentMargin,
           0.18 as PotentialMargin,
           COUNT(*) * AVG(Price) * 0.20 as PotentialAdditionalRevenue
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND IsActive = 1
         AND IsSale = 0
@@ -357,7 +357,7 @@ router.get('/analytics/revenue-optimization', async (req, res) => {
           AVG((PushPrice - Price) / PushPrice) as CurrentMargin,
           0.25 as PotentialMargin,
           COUNT(*) * AVG(Price) * 0.15 as PotentialAdditionalRevenue
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND IsActive = 1
         AND IsSale = 0
@@ -437,7 +437,7 @@ router.get('/analytics/trends', async (req, res) => {
           AVG((PushPrice - Price) / PushPrice) as AvgMargin,
           AVG(AIConfidence) as AvgConfidence,
           SUM(CASE WHEN IsSale = 1 THEN (PushPrice - Price) ELSE 0 END) as TotalProfit
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE AIGenerated = 1
         AND DateCreate >= DATEADD(DAY, -@days, GETDATE())
         GROUP BY ${groupByClause}

@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const logger = require('../config/logger');
+const { getPool, sql } = require('../config/database');
 const { getPredictionEngine } = require('../services/prediction-engine');
 
 /**
@@ -57,11 +58,11 @@ function mapOpportunityToFrontend(opp) {
         expectedProfit: Math.round(potentialProfit),
         currentPrice: lowPrice,
         targetPrice: highPrice,
-        checkIn: opp.date || opp.checkIn || null,
-        checkOut: opp.checkOut || null,
+        checkIn: opp.date || opp.checkIn || opp.startDate || null,
+        checkOut: opp.checkOut || opp.endDate || null,
         hotelName: opp.hotelName || '',
         hotelId: opp.hotelId || null,
-        cityName: opp.cityName || opp.city || null,
+        cityName: opp.cityName || opp.city || opp.CityName || null,
         margin: Math.round(margin * 10) / 10,
         buyFrom: opp.buyFrom || '',
         sellTo: opp.sellTo || ''
@@ -502,6 +503,158 @@ router.get('/sanity-check', async (req, res) => {
             error: error.message,
             checks,
             elapsed: `${Date.now() - startTime}ms`
+        });
+    }
+});
+
+/**
+ * POST /ai/search-city-forward
+ * Search city for opportunities - checks DB historical data + compares prices
+ * Body: { cityCode, checkInFrom, checkInTo, nights, minProfit }
+ */
+router.post('/search-city-forward', async (req, res) => {
+    try {
+        const {
+            cityCode,
+            checkInFrom,
+            checkInTo,
+            nights = 3,
+            minProfit = 10
+        } = req.body;
+
+        if (!cityCode) {
+            return res.status(400).json({ success: false, error: 'cityCode is required' });
+        }
+
+        logger.info('City forward search requested', { cityCode, checkInFrom, checkInTo, nights, minProfit });
+
+        const pool = await getPool();
+
+        // 1. Get existing opportunities from DB for this city
+        // Note: MED_Opportunities uses DestinationsId to reference Med_Hotels.HotelId
+        const dbResult = await pool.request()
+            .input('city', sql.NVarChar, `%${cityCode}%`)
+            .input('dateFrom', sql.NVarChar, checkInFrom)
+            .input('dateTo', sql.NVarChar, checkInTo)
+            .input('minProfit', sql.Float, parseInt(minProfit, 10) || 10)
+            .query(`
+                SELECT TOP 100
+                    o.OpportunityId, o.DestinationsId AS HotelId, h.name AS HotelName,
+                    o.DateForm AS CheckIn, o.DateTo AS CheckOut,
+                    o.Price AS BuyPrice, o.PushPrice AS SellPrice,
+                    (o.PushPrice - o.Price) AS Profit,
+                    CASE WHEN o.PushPrice > 0
+                        THEN ROUND(((o.PushPrice - o.Price) / o.PushPrice) * 100, 1)
+                        ELSE 0
+                    END AS Margin,
+                    d.Name AS CityName
+                FROM [MED_Opportunities] o
+                LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
+                LEFT JOIN DestinationsHotels dh ON h.HotelId = dh.HotelId
+                LEFT JOIN Destinations d ON dh.DestinationId = d.Id AND d.Type = 'city'
+                WHERE d.Name LIKE @city
+                    AND o.IsActive = 1
+                    AND o.DateForm >= @dateFrom
+                    AND o.DateForm <= @dateTo
+                    AND (o.PushPrice - o.Price) >= @minProfit
+                ORDER BY (o.PushPrice - o.Price) DESC
+            `);
+
+        // 2. Get recent search results for price comparison
+        // MED_SearchHotels uses DateForm/DateTo (not CheckIn/CheckOut), RequestTime (not DateInsert)
+        const searchResult = await pool.request()
+            .input('city2', sql.NVarChar, `%${cityCode}%`)
+            .input('dateFrom2', sql.NVarChar, checkInFrom)
+            .input('dateTo2', sql.NVarChar, checkInTo)
+            .query(`
+                SELECT TOP 100
+                    sh.HotelId, h.name AS HotelName,
+                    sh.DateForm AS CheckIn, sh.DateTo AS CheckOut,
+                    sh.Price AS BuyPrice,
+                    d.Name AS CityName
+                FROM MED_SearchHotels sh
+                JOIN Med_Hotels h ON sh.HotelId = h.HotelId
+                LEFT JOIN DestinationsHotels dh ON h.HotelId = dh.HotelId
+                LEFT JOIN Destinations d ON dh.DestinationId = d.Id AND d.Type = 'city'
+                WHERE d.Name LIKE @city2
+                    AND sh.DateForm >= @dateFrom2
+                    AND sh.DateForm <= @dateTo2
+                    AND sh.Price > 0
+                ORDER BY sh.RequestTime DESC
+            `);
+
+        // Map DB opportunities to frontend format
+        const dbOpportunities = dbResult.recordset.map(row => mapOpportunityToFrontend({
+            hotelId: row.HotelId,
+            hotelName: row.HotelName,
+            cityName: row.CityName,
+            lowPrice: row.BuyPrice,
+            highPrice: row.SellPrice,
+            buyPrice: row.BuyPrice,
+            estimatedSellPrice: row.SellPrice,
+            potentialProfit: row.Profit,
+            checkIn: row.CheckIn,
+            checkOut: row.CheckOut,
+            type: 'BUY',
+            priority: row.Profit > 100 ? 'HIGH' : row.Profit > 50 ? 'MEDIUM' : 'LOW',
+            reason: `הזדמנות קיימת ב-DB - רווח $${Math.round(row.Profit)}`,
+            confidence: 80,
+            source: 'DB'
+        }));
+
+        // Map search results - estimate sell price as buyPrice * 1.2 (20% markup)
+        const searchOpportunities = searchResult.recordset
+            .map(row => {
+                const estimatedSellPrice = Math.round(row.BuyPrice * 1.2);
+                const profit = estimatedSellPrice - row.BuyPrice;
+                if (profit < minProfit) return null;
+                return mapOpportunityToFrontend({
+                    hotelId: row.HotelId,
+                    hotelName: row.HotelName,
+                    cityName: row.CityName,
+                    lowPrice: row.BuyPrice,
+                    highPrice: estimatedSellPrice,
+                    buyPrice: row.BuyPrice,
+                    estimatedSellPrice,
+                    potentialProfit: profit,
+                    checkIn: row.CheckIn,
+                    checkOut: row.CheckOut,
+                    type: 'BUY',
+                    priority: profit > 100 ? 'HIGH' : profit > 50 ? 'MEDIUM' : 'LOW',
+                    reason: `מחיר ספק $${Math.round(row.BuyPrice)} - מרווח משוער ${Math.round((profit / estimatedSellPrice) * 100)}%`,
+                    confidence: 60,
+                    source: 'SEARCH'
+                });
+            })
+            .filter(Boolean);
+
+        // Combine, deduplicate by hotelId+checkIn
+        const seen = new Set();
+        const combined = [];
+        for (const opp of [...dbOpportunities, ...searchOpportunities]) {
+            const key = `${opp.hotelId}-${opp.checkIn}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                combined.push(opp);
+            }
+        }
+
+        // Sort by profit descending
+        combined.sort((a, b) => (b.expectedProfit || 0) - (a.expectedProfit || 0));
+
+        res.json({
+            success: true,
+            opportunities: combined,
+            fromDb: dbOpportunities.length,
+            fromSearch: searchOpportunities.length,
+            total: combined.length
+        });
+    } catch (error) {
+        logger.error('Error in city forward search', { error: error.message });
+        res.status(500).json({
+            success: false,
+            error: 'Failed to search city',
+            message: error.message
         });
     }
 });

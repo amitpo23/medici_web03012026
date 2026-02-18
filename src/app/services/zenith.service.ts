@@ -149,7 +149,7 @@ export interface PushHistory {
   providedIn: 'root'
 })
 export class ZenithService {
-  private apiUrl = `${environment.apiUrl}/ZenithApi`;
+  private apiUrl = `${environment.apiUrl}ZenithApi`;
 
   private queueUpdated$ = new BehaviorSubject<boolean>(false);
   public queueUpdates = this.queueUpdated$.asObservable();
@@ -205,7 +205,7 @@ export class ZenithService {
     if (filters?.limit) params = params.set('limit', filters.limit.toString());
 
     return this.http.get<{ success: boolean; opportunities: OpportunityForPush[]; total: number }>(
-      `${environment.apiUrl}/Opportunity/ForPush`,
+      `${environment.apiUrl}Opportunity/ForPush`,
       { params }
     );
   }
@@ -404,6 +404,35 @@ export class ZenithService {
     return this.http.post<{ success: boolean; message: string }>(
       `${this.apiUrl}/process-cancellation`,
       { cancellationId, refundAmount, notes }
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+
+  // ==================== QUEUE MANAGEMENT ====================
+
+  /**
+   * Retry failed queue items
+   */
+  retryFailed(): Observable<{ success: boolean; message: string; count: number }> {
+    return this.http.post<{ success: boolean; message: string; count: number }>(
+      `${this.apiUrl}/retry-failed`, {}
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+
+  /**
+   * Clear completed queue items
+   */
+  clearCompleted(): Observable<{ success: boolean; message: string; count: number }> {
+    return this.http.post<{ success: boolean; message: string; count: number }>(
+      `${this.apiUrl}/clear-completed`, {}
+    ).pipe(tap(() => this.queueUpdated$.next(true)));
+  }
+
+  /**
+   * Clear all pending queue items
+   */
+  clearPending(): Observable<{ success: boolean; message: string; count: number }> {
+    return this.http.post<{ success: boolean; message: string; count: number }>(
+      `${this.apiUrl}/clear-pending`, {}
     ).pipe(tap(() => this.queueUpdated$.next(true)));
   }
 

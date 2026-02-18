@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { environment } from 'src/app/environments/environment';
 
@@ -30,6 +30,9 @@ interface MLPrediction {
   };
 }
 
+interface City { cityName: string; count?: number; }
+interface Hotel { hotelId: number; hotelName: string; cityName?: string; }
+
 @Component({
   selector: 'app-ml-price-predictor',
   templateUrl: './ml-price-predictor.component.html',
@@ -40,7 +43,18 @@ export class MlPricePredictorComponent implements OnInit, OnDestroy {
   prediction: MLPrediction | null = null;
   loading = false;
   error: string | null = null;
-  
+
+  cities: City[] = [];
+  filteredCities: City[] = [];
+  hotels: Hotel[] = [];
+  filteredHotels: Hotel[] = [];
+  displayedHotels: Hotel[] = [];
+  selectedCity: string | null = null;
+  selectedHotelName = '';
+
+  citySearchCtrl = new FormControl('');
+  hotelSearchCtrl = new FormControl('');
+
   private destroy$ = new Subject<void>();
   private baseUrl = environment.baseUrl;
 
@@ -59,6 +73,9 @@ export class MlPricePredictorComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.loadCities();
+    this.loadHotels();
+
     // Set default dates (2 weeks from now for 2 nights)
     const checkIn = new Date();
     checkIn.setDate(checkIn.getDate() + 14);
@@ -69,6 +86,110 @@ export class MlPricePredictorComponent implements OnInit, OnDestroy {
       checkIn: checkIn.toISOString().split('T')[0],
       checkOut: checkOut.toISOString().split('T')[0]
     });
+
+    // Setup city autocomplete filter
+    this.citySearchCtrl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(val => {
+        this.filterCities(val || '');
+      });
+
+    // Setup hotel autocomplete filter
+    this.hotelSearchCtrl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(val => {
+        this.filterDisplayedHotels(val || '');
+      });
+  }
+
+  loadCities(): void {
+    this.http.get<any>(`${this.baseUrl}ai/cities`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.cities = res.cities || [];
+          this.filteredCities = this.cities;
+        },
+        error: () => { this.cities = []; this.filteredCities = []; }
+      });
+  }
+
+  loadHotels(): void {
+    this.http.get<any>(`${this.baseUrl}ai/hotels`)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this.hotels = res.hotels || [];
+          this.filteredHotels = this.hotels;
+          this.displayedHotels = this.hotels;
+        },
+        error: () => { this.hotels = []; this.filteredHotels = []; this.displayedHotels = []; }
+      });
+  }
+
+  filterCities(search: string): void {
+    if (!search) {
+      this.filteredCities = this.cities;
+      return;
+    }
+    const term = search.toLowerCase();
+    this.filteredCities = this.cities.filter(c =>
+      c.cityName.toLowerCase().includes(term)
+    );
+  }
+
+  filterDisplayedHotels(search: string): void {
+    if (!search) {
+      this.displayedHotels = this.filteredHotels;
+      return;
+    }
+    const term = search.toLowerCase();
+    this.displayedHotels = this.filteredHotels.filter(h =>
+      h.hotelName.toLowerCase().includes(term)
+    );
+  }
+
+  onCityChange(city: string | null): void {
+    this.selectedCity = city;
+    this.filteredHotels = city
+      ? this.hotels.filter(h => h.cityName === city)
+      : this.hotels;
+    this.displayedHotels = this.filteredHotels;
+    this.predictionForm.patchValue({ hotelId: null });
+    this.selectedHotelName = '';
+    this.hotelSearchCtrl.setValue('');
+  }
+
+  onCitySelected(cityName: string): void {
+    this.onCityChange(cityName);
+  }
+
+  onHotelSelected(hotelId: number): void {
+    this.predictionForm.patchValue({ hotelId });
+    const hotel = this.hotels.find(h => h.hotelId === hotelId);
+    this.selectedHotelName = hotel?.hotelName || '';
+  }
+
+  clearCity(): void {
+    this.citySearchCtrl.setValue('');
+    this.onCityChange(null);
+  }
+
+  clearHotel(): void {
+    this.hotelSearchCtrl.setValue('');
+    this.predictionForm.patchValue({ hotelId: null });
+    this.selectedHotelName = '';
+    this.displayedHotels = this.filteredHotels;
+  }
+
+  displayCityFn(cityName: string): string {
+    return cityName || '';
+  }
+
+  displayHotelFn = (hotelId: number): string => {
+    if (!hotelId) return '';
+    const hotel = this.hotels.find(h => h.hotelId === hotelId);
+    return hotel?.hotelName || '';
   }
 
   ngOnDestroy(): void {
@@ -90,7 +211,7 @@ export class MlPricePredictorComponent implements OnInit, OnDestroy {
 
     const formValue = this.predictionForm.value;
 
-    this.http.post<any>(`${this.baseUrl}/pricing/v2/ml-predict`, formValue)
+    this.http.post<any>(`${this.baseUrl}advanced-pricing/v2/ml-predict`, formValue)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

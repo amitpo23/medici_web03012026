@@ -9,6 +9,7 @@ import { PredictionService, BuySellAlert } from '../../services/prediction.servi
 export class BuySellAlertsComponent implements OnInit {
   alerts: BuySellAlert[] = [];
   loading = true;
+  buying = false;
   filterType: 'all' | 'buy' | 'sell' | 'warning' = 'all';
 
   constructor(private predictionService: PredictionService) {}
@@ -55,5 +56,27 @@ export class BuySellAlertsComponent implements OnInit {
 
   getPriorityClass(priority: string): string {
     return `priority-${priority}`;
+  }
+
+  buyNow(item: BuySellAlert): void {
+    if (!item.hotelId) {
+      window.alert('חסר מזהה מלון - לא ניתן לבצע קנייה');
+      return;
+    }
+    this.buying = true;
+    this.predictionService.buyFromAlert(item).subscribe({
+      next: (response) => {
+        this.buying = false;
+        if (response.success) {
+          window.alert(`ההזדמנות נוספה בהצלחה! ID: ${response.id || response.opportunityId}\nהמחיר הועבר לזניט`);
+        } else {
+          window.alert(`שגיאה: ${response.error}`);
+        }
+      },
+      error: (err) => {
+        this.buying = false;
+        window.alert(`שגיאה בקנייה: ${err.error?.message || err.message}`);
+      }
+    });
   }
 }

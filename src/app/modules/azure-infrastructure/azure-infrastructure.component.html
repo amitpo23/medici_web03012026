@@ -1,0 +1,573 @@
+<div class="azure-infra-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-blue-600">cloud</mat-icon>
+        Azure Infrastructure
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Monitor and manage Azure cloud resources
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button mat-stroked-button (click)="refreshAll()" matTooltip="Clear cache and refresh" type="button">
+        <mat-icon>refresh</mat-icon>
+        <span class="hidden md:inline ml-1">Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group
+    [selectedIndex]="selectedTabIndex"
+    (selectedIndexChange)="onTabChange($event)"
+    animationDuration="0ms">
+
+    <!-- ==================== TAB 1: APP SERVICE ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">dns</mat-icon>
+        App Service
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <div *ngIf="isLoadingAppService" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingAppService">
+          <!-- Status Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4" *ngIf="appServiceOverview">
+            <mat-card class="status-card">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl" [ngClass]="appServiceOverview.state === 'Running' ? 'text-green-500' : 'text-red-500'">
+                  {{ appServiceOverview.state === 'Running' ? 'check_circle' : 'error' }}
+                </mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Status</div>
+                <div class="text-lg font-bold" [ngClass]="appServiceOverview.state === 'Running' ? 'text-green-600' : 'text-red-600'">
+                  {{ appServiceOverview.state }}
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-blue-500">location_on</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Region</div>
+                <div class="text-lg font-bold">{{ appServiceOverview.location }}</div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-purple-500">memory</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Plan</div>
+                <div class="text-lg font-bold">{{ appServiceOverview.appServicePlan }}</div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-teal-500">lock</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">HTTPS Only</div>
+                <div class="text-lg font-bold">{{ appServiceOverview.httpsOnly ? 'Yes' : 'No' }}</div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Configuration Details -->
+          <mat-card *ngIf="appServiceConfig">
+            <mat-card-header>
+              <mat-card-title>Configuration</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="config-table w-full">
+                <tbody>
+                  <tr><td class="font-medium">Always On</td><td>{{ appServiceConfig.alwaysOn ? 'Enabled' : 'Disabled' }}</td></tr>
+                  <tr><td class="font-medium">FTPS State</td><td [ngClass]="appServiceConfig.ftpsState === 'AllAllowed' ? 'text-red-500 font-bold' : ''">{{ appServiceConfig.ftpsState }}</td></tr>
+                  <tr><td class="font-medium">Health Check</td><td [ngClass]="!appServiceConfig.healthCheckPath ? 'text-yellow-600' : ''">{{ appServiceConfig.healthCheckPath || 'Not configured' }}</td></tr>
+                  <tr><td class="font-medium">HTTP/2</td><td>{{ appServiceConfig.http20Enabled ? 'Enabled' : 'Disabled' }}</td></tr>
+                  <tr><td class="font-medium">HTTP Logging</td><td [ngClass]="!appServiceConfig.httpLoggingEnabled ? 'text-yellow-600' : ''">{{ appServiceConfig.httpLoggingEnabled ? 'Enabled' : 'Disabled' }}</td></tr>
+                  <tr><td class="font-medium">Min TLS Version</td><td>{{ appServiceConfig.minTlsVersion }}</td></tr>
+                  <tr><td class="font-medium">Worker Process</td><td>{{ appServiceConfig.use32BitWorkerProcess ? '32-bit' : '64-bit' }}</td></tr>
+                  <tr><td class="font-medium">Workers</td><td>{{ appServiceConfig.numberOfWorkers }}</td></tr>
+                  <tr><td class="font-medium">WebSockets</td><td>{{ appServiceConfig.webSocketsEnabled ? 'Enabled' : 'Disabled' }}</td></tr>
+                  <tr><td class="font-medium">Remote Debug</td><td>{{ appServiceConfig.remoteDebuggingEnabled ? 'Enabled' : 'Disabled' }}</td></tr>
+                  <tr><td class="font-medium">SCM Type</td><td>{{ appServiceConfig.scmType || 'None' }}</td></tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Security Findings -->
+          <mat-card *ngIf="appServiceConfig?.securityFindings?.length">
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2">
+                <mat-icon class="text-yellow-600">warning</mat-icon>
+                Security Findings
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="space-y-3">
+                <div *ngFor="let finding of appServiceConfig!.securityFindings"
+                     class="finding-row flex items-start gap-3 p-3 rounded-lg"
+                     [ngClass]="getSeverityClass(finding.severity)">
+                  <span class="severity-badge" [ngClass]="getSeverityClass(finding.severity)">{{ finding.severity }}</span>
+                  <div>
+                    <div class="font-medium">{{ finding.finding }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ finding.recommendation }}</div>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- App Settings -->
+          <mat-card *ngIf="appSettings.length > 0">
+            <mat-card-header>
+              <mat-card-title>App Settings</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="config-table w-full">
+                <thead>
+                  <tr><th>Name</th><th>Value</th><th>Slot Setting</th></tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let setting of appSettings">
+                    <td class="font-medium">{{ setting.name }}</td>
+                    <td class="font-mono text-sm">{{ setting.value }}</td>
+                    <td>{{ setting.slotSetting ? 'Yes' : 'No' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+    <!-- ==================== TAB 2: SQL DATABASE ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">storage</mat-icon>
+        SQL Database
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <div *ngIf="isLoadingSql" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingSql">
+          <!-- SQL Overview Cards -->
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <mat-card class="status-card" *ngIf="sqlOverview">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl" [ngClass]="sqlOverview.status === 'Online' ? 'text-green-500' : 'text-red-500'">
+                  {{ sqlOverview.status === 'Online' ? 'check_circle' : 'error' }}
+                </mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Database Status</div>
+                <div class="text-lg font-bold">{{ sqlOverview.status }}</div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card" *ngIf="sqlOverview?.sku">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-blue-500">speed</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Tier / DTU</div>
+                <div class="text-lg font-bold">{{ sqlOverview!.sku.tier }} {{ sqlOverview!.sku.capacity }}</div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card" *ngIf="sqlOverview">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-purple-500">sd_storage</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Max Size</div>
+                <div class="text-lg font-bold">{{ sqlOverview.maxSizeGB }} GB</div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="status-card" *ngIf="sqlServer">
+              <mat-card-content class="text-center py-4">
+                <mat-icon class="text-4xl text-teal-500">location_on</mat-icon>
+                <div class="text-sm text-gray-500 mt-1">Region</div>
+                <div class="text-lg font-bold">{{ sqlServer.location }}</div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Server Details -->
+          <mat-card *ngIf="sqlServer">
+            <mat-card-header>
+              <mat-card-title>Server Details</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="config-table w-full">
+                <tbody>
+                  <tr><td class="font-medium">Server Name</td><td>{{ sqlServer.name }}</td></tr>
+                  <tr><td class="font-medium">FQDN</td><td class="font-mono text-sm">{{ sqlServer.fullyQualifiedDomainName }}</td></tr>
+                  <tr><td class="font-medium">Version</td><td>{{ sqlServer.version }}</td></tr>
+                  <tr><td class="font-medium">Admin Login</td><td>{{ sqlServer.administratorLogin }}</td></tr>
+                  <tr><td class="font-medium">Public Access</td><td>{{ sqlServer.publicNetworkAccess }}</td></tr>
+                  <tr><td class="font-medium">Min TLS</td><td>{{ sqlServer.minimalTlsVersion }}</td></tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Firewall Rules -->
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2">
+                <mat-icon>security</mat-icon>
+                Firewall Rules
+              </mat-card-title>
+              <div class="ml-auto">
+                <button mat-raised-button color="primary" (click)="showAddFirewallForm = !showAddFirewallForm" type="button">
+                  <mat-icon>add</mat-icon> Add Rule
+                </button>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- Add Form -->
+              <div *ngIf="showAddFirewallForm" class="add-firewall-form p-4 mb-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Rule Name</mat-label>
+                    <input matInput [(ngModel)]="newFirewallRule.name" placeholder="my-rule">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Start IP</mat-label>
+                    <input matInput [(ngModel)]="newFirewallRule.startIpAddress" placeholder="0.0.0.0">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>End IP</mat-label>
+                    <input matInput [(ngModel)]="newFirewallRule.endIpAddress" placeholder="0.0.0.0">
+                  </mat-form-field>
+                </div>
+                <div class="flex gap-2">
+                  <button mat-raised-button color="primary" (click)="addFirewallRule()" type="button">Save</button>
+                  <button mat-stroked-button (click)="showAddFirewallForm = false" type="button">Cancel</button>
+                </div>
+              </div>
+
+              <!-- Rules Table -->
+              <table class="config-table w-full" *ngIf="firewallRules.length > 0">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Start IP</th>
+                    <th>End IP</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let rule of firewallRules" [ngClass]="{ 'bg-red-50 dark:bg-red-900/20': rule.isOpenToAll }">
+                    <td class="font-medium">{{ rule.name }}</td>
+                    <td class="font-mono text-sm">{{ rule.startIpAddress }}</td>
+                    <td class="font-mono text-sm">{{ rule.endIpAddress }}</td>
+                    <td>
+                      <span *ngIf="rule.isOpenToAll" class="severity-badge severity-high">OPEN TO ALL</span>
+                      <span *ngIf="rule.isAzureServices && !rule.isOpenToAll" class="severity-badge severity-low">Azure Services</span>
+                      <span *ngIf="!rule.isOpenToAll && !rule.isAzureServices" class="severity-badge severity-ok">Restricted</span>
+                    </td>
+                    <td>
+                      <button mat-icon-button color="warn" (click)="deleteFirewallRule(rule)" matTooltip="Delete rule" type="button">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div *ngIf="firewallRules.length === 0 && !isLoadingSql" class="text-center py-4 text-gray-500">
+                No firewall rules found
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+    <!-- ==================== TAB 3: MONITOR ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">monitoring</mat-icon>
+        Monitor
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div class="flex items-center gap-3">
+            <mat-form-field appearance="outline" class="time-range-select">
+              <mat-label>Time Range</mat-label>
+              <mat-select [(ngModel)]="selectedTimeRange" (selectionChange)="onTimeRangeChange()">
+                <mat-option *ngFor="let opt of timeRangeOptions" [value]="opt.value">{{ opt.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-slide-toggle
+            [checked]="autoRefreshEnabled"
+            (change)="toggleAutoRefresh()"
+            matTooltip="Auto-refresh every 30s">
+            Auto-refresh
+          </mat-slide-toggle>
+        </div>
+
+        <div *ngIf="isLoadingMetrics" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingMetrics && monitorMetrics">
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Requests Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title class="text-sm">HTTP Requests</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [type]="'line'"
+                    [data]="requestsChartData"
+                    [options]="chartOptions">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Response Time Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title class="text-sm">Avg Response Time</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [type]="'line'"
+                    [data]="responseTimeChartData"
+                    [options]="chartOptions">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- CPU Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title class="text-sm">CPU Time</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [type]="'line'"
+                    [data]="cpuChartData"
+                    [options]="chartOptions">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Memory Chart -->
+            <mat-card class="chart-card">
+              <mat-card-header>
+                <mat-card-title class="text-sm">Memory Working Set</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [type]="'line'"
+                    [data]="memoryChartData"
+                    [options]="chartOptions">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <!-- Errors Chart (full width) -->
+            <mat-card class="chart-card md:col-span-2">
+              <mat-card-header>
+                <mat-card-title class="text-sm">HTTP 5xx Errors</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="chart-container">
+                  <canvas baseChart
+                    [type]="'line'"
+                    [data]="errorsChartData"
+                    [options]="chartOptions">
+                  </canvas>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+    <!-- ==================== TAB 4: RESOURCE HEALTH ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">favorite</mat-icon>
+        Health
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <div *ngIf="isLoadingHealth" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingHealth">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <mat-card *ngFor="let health of healthStatuses" class="health-card" [ngClass]="'health-' + getHealthColor(health.availabilityState)">
+              <mat-card-content class="text-center py-6">
+                <mat-icon class="text-5xl health-icon" [ngClass]="'health-icon-' + getHealthColor(health.availabilityState)">
+                  {{ getHealthIcon(health.availabilityState) }}
+                </mat-icon>
+                <div class="text-lg font-bold mt-3">{{ health.resource }}</div>
+                <div class="text-sm text-gray-500 mt-1">{{ health.resourceName }}</div>
+                <div class="text-xl font-semibold mt-2" [ngClass]="'health-text-' + getHealthColor(health.availabilityState)">
+                  {{ health.availabilityState }}
+                </div>
+                <div class="text-sm text-gray-500 mt-2" *ngIf="health.summary">
+                  {{ health.summary }}
+                </div>
+                <div class="text-xs text-gray-400 mt-2" *ngIf="health.reportedTime">
+                  Last checked: {{ health.reportedTime | date:'medium' }}
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <div *ngIf="healthStatuses.length === 0" class="text-center py-8 text-gray-500">
+            No health data available
+          </div>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+    <!-- ==================== TAB 5: ADVISOR ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">lightbulb</mat-icon>
+        Advisor
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <div *ngIf="isLoadingAdvisor" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingAdvisor && advisorData">
+          <!-- Summary Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <mat-card *ngFor="let cat of advisorCategories" class="advisor-summary-card cursor-default">
+              <mat-card-content class="text-center py-3">
+                <mat-icon class="text-3xl" [ngClass]="'advisor-icon-' + cat.toLowerCase()">{{ getCategoryIcon(cat) }}</mat-icon>
+                <div class="text-2xl font-bold mt-1">{{ getCategoryCount(cat) }}</div>
+                <div class="text-xs text-gray-500">{{ getCategoryLabel(cat) }}</div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Recommendations by Category -->
+          <div *ngFor="let cat of advisorCategories">
+            <mat-card *ngIf="getRecommendations(cat).length > 0" class="mt-4">
+              <mat-card-header>
+                <mat-card-title class="flex items-center gap-2">
+                  <mat-icon>{{ getCategoryIcon(cat) }}</mat-icon>
+                  {{ getCategoryLabel(cat) }} ({{ getRecommendations(cat).length }})
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="space-y-3">
+                  <div *ngFor="let rec of getRecommendations(cat)"
+                       class="recommendation-row p-3 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-start gap-3">
+                    <span class="impact-badge" [ngClass]="getImpactClass(rec.impact)">{{ rec.impact }}</span>
+                    <div class="flex-1">
+                      <div class="font-medium">{{ rec.problem }}</div>
+                      <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">{{ rec.solution }}</div>
+                      <div class="text-xs text-gray-400 mt-1" *ngIf="rec.impactedValue">
+                        Resource: {{ rec.impactedValue }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <div *ngIf="advisorData!.total === 0" class="text-center py-8 text-gray-500">
+            No advisor recommendations found
+          </div>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+    <!-- ==================== TAB 6: ARCHITECTURE ==================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">account_tree</mat-icon>
+        Architecture
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <div *ngIf="isLoadingArchitecture" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <ng-container *ngIf="!isLoadingArchitecture && architectureDiagram">
+          <!-- Diagram as Code -->
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title class="flex items-center gap-2">
+                <mat-icon>schema</mat-icon>
+                Infrastructure Topology
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <pre class="mermaid-code p-4 rounded-lg bg-gray-900 text-green-400 overflow-x-auto text-sm">{{ architectureDiagram.mermaid }}</pre>
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Resources Table -->
+          <mat-card>
+            <mat-card-header>
+              <mat-card-title>Azure Resources</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <table class="config-table w-full">
+                <thead>
+                  <tr>
+                    <th>Resource</th>
+                    <th>Type</th>
+                    <th>Tier</th>
+                    <th>Region</th>
+                    <th>Details</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let resource of architectureDiagram.resources">
+                    <td class="font-medium">{{ resource.name }}</td>
+                    <td>{{ resource.type }}</td>
+                    <td>
+                      <span class="tier-badge">{{ resource.tier }}</span>
+                    </td>
+                    <td>{{ resource.region }}</td>
+                    <td>
+                      <span *ngIf="resource.os">OS: {{ resource.os }}</span>
+                      <span *ngIf="resource.maxSize">Max: {{ resource.maxSize }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </mat-card-content>
+          </mat-card>
+        </ng-container>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

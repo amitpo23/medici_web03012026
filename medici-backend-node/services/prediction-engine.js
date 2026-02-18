@@ -55,6 +55,7 @@ class PredictionEngine {
                     b.PreBookId,
                     b.HotelId,
                     h.Name as HotelName,
+                    d.Name as CityName,
                     b.startDate,
                     b.endDate,
                     b.price,
@@ -67,6 +68,8 @@ class PredictionEngine {
                     b.supplierReference
                 FROM MED_Book b
                 LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
+                LEFT JOIN DestinationsHotels dh ON b.HotelId = dh.HotelId
+                LEFT JOIN Destinations d ON dh.DestinationId = d.Id AND d.Type = 'city'
                 WHERE b.price > 0
             `;
 
@@ -107,17 +110,28 @@ class PredictionEngine {
     }
 
     /**
-     * Fetch available cities
+     * Fetch available cities (cached 10 minutes)
+     * Optimized: starts from MED_Book (5K rows) instead of Destinations (40K)
      */
     async fetchCities() {
+        const cacheKey = 'cities_list';
+        const cached = this.cache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+            return cached.data;
+        }
+
         try {
             const pool = await getPool();
             const result = await pool.request().query(`
-                SELECT Name as cityName, Id, CountryId
-                FROM Destinations
-                WHERE Type = 'city'
-                ORDER BY Name
+                SELECT d.Name as cityName, COUNT(DISTINCT b.id) as bookingCount
+                FROM MED_Book b
+                INNER JOIN DestinationsHotels dh ON b.HotelId = dh.HotelId
+                INNER JOIN Destinations d ON dh.DestinationId = d.Id
+                WHERE d.Type = 'city' AND d.Name IS NOT NULL
+                GROUP BY d.Name
+                ORDER BY COUNT(DISTINCT b.id) DESC
             `);
+            this.cache.set(cacheKey, { data: result.recordset, timestamp: Date.now() });
             return result.recordset;
         } catch (error) {
             logger.error('Error fetching cities:', { error: error.message });
@@ -126,25 +140,42 @@ class PredictionEngine {
     }
 
     /**
-     * Fetch available hotels
+     * Fetch available hotels (cached 10 minutes)
+     * Optimized: starts from MED_Book (5K rows) instead of Med_Hotels (744K)
      */
     async fetchHotels(city = null) {
+        const cacheKey = `hotels_${city || 'all'}`;
+        const cached = this.cache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < 10 * 60 * 1000) {
+            return cached.data;
+        }
+
         try {
             const pool = await getPool();
-            let query = `
-                SELECT DISTINCT TOP 100
-                    h.HotelId as hotelId, 
+            const request = pool.request();
+            let cityFilter = '';
+            if (city) {
+                cityFilter = `AND d.Name = @city`;
+                request.input('city', city);
+            }
+            const query = `
+                SELECT TOP 500
+                    b.HotelId as hotelId,
                     h.Name as hotelName,
+                    MAX(d.Name) as cityName,
                     COUNT(b.id) as bookingCount,
                     AVG(b.price) as avgPrice
-                FROM Med_Hotels h
-                LEFT JOIN MED_Book b ON h.HotelId = b.HotelId
-                WHERE h.Name IS NOT NULL
-                GROUP BY h.HotelId, h.Name 
-                ORDER BY bookingCount DESC
+                FROM MED_Book b
+                INNER JOIN Med_Hotels h ON b.HotelId = h.HotelId
+                LEFT JOIN DestinationsHotels dh ON h.HotelId = dh.HotelId
+                LEFT JOIN Destinations d ON dh.DestinationId = d.Id AND d.Type = 'city'
+                WHERE h.Name IS NOT NULL ${cityFilter}
+                GROUP BY b.HotelId, h.Name
+                ORDER BY COUNT(b.id) DESC
             `;
 
-            const result = await pool.request().query(query);
+            const result = await request.query(query);
+            this.cache.set(cacheKey, { data: result.recordset, timestamp: Date.now() });
             return result.recordset;
         } catch (error) {
             logger.error('Error fetching hotels:', { error: error.message });

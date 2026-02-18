@@ -7,6 +7,7 @@
  */
 
 const { AppError } = require('../utils/errors');
+const logger = require('../config/logger');
 
 /**
  * Development error response - includes stack trace
@@ -39,7 +40,7 @@ function sendProdError(err, res) {
     });
   } else {
     // Programming/unknown errors: don't leak details
-    console.error('ERROR 💥:', err);
+    logger.error('Unhandled error', { error: err.message, stack: err.stack });
     res.status(500).json({
       success: false,
       message: 'Something went wrong. Please try again later.',
@@ -117,12 +118,12 @@ function errorHandler(err, req, res, next) {
   };
 
   if (processedError.statusCode >= 500) {
-    console.error('[ERROR]', JSON.stringify(logData));
+    logger.error('Request error', logData);
     if (!processedError.isOperational) {
-      console.error('[STACK]', processedError.stack);
+      logger.error('Stack trace', { stack: processedError.stack });
     }
   } else {
-    console.warn('[WARN]', JSON.stringify(logData));
+    logger.warn('Request warning', logData);
   }
 
   // Send appropriate response
@@ -146,15 +147,12 @@ function notFoundHandler(req, res, next) {
  */
 function setupUncaughtHandlers() {
   process.on('uncaughtException', (err) => {
-    console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
-    console.error(err.name, err.message);
-    console.error(err.stack);
+    logger.error('Uncaught exception - shutting down', { name: err.name, message: err.message, stack: err.stack });
     process.exit(1);
   });
 
   process.on('unhandledRejection', (err) => {
-    console.error('UNHANDLED REJECTION! 💥 Shutting down...');
-    console.error(err);
+    logger.error('Unhandled rejection - shutting down', { error: String(err) });
     process.exit(1);
   });
 }

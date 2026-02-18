@@ -1,7 +1,7 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { environment } from '../environments/environment';
+import { environment } from 'src/app/environments/environment';
 
 export interface TableInfo {
   TableName: string;
@@ -55,16 +55,14 @@ export interface ComprehensiveStats {
 export interface Destination {
   id: number;
   Name: string;
-  CountryCode: string;
-  Type: string;
   HotelCount: number;
 }
 
 export interface QueueItem {
   Id: number;
   Status: string;
-  CreatedAt: Date;
-  ProcessedAt?: Date;
+  CreatedAt: string;
+  ProcessedAt?: string;
 }
 
 export interface QueueStats {
@@ -73,6 +71,12 @@ export interface QueueStats {
   Processing: number;
   Completed: number;
   Failed: number;
+}
+
+export interface QueueResponse {
+  success: boolean;
+  queue: QueueItem[];
+  stats: QueueStats;
 }
 
 export interface LookupData {
@@ -92,6 +96,46 @@ export interface SalesOfficeSummary {
   };
   bookings: number;
   details: number;
+}
+
+export interface BackofficeStats {
+  options: {
+    TotalOpts: number;
+    ActiveOpts: number;
+  };
+  topActions: { ActionType: string; Count: number }[];
+}
+
+export interface UserInfo {
+  userid: number;
+  username: string;
+  IsActive: boolean;
+  AetherTokenStorageId: string | null;
+}
+
+export interface HotelToPush {
+  BookId: number;
+  OpportunityId: number;
+  IsActive: boolean;
+  DateInsert: string;
+  HotelName: string;
+  BookingPrice: number;
+  BookingStatus: string;
+}
+
+export interface PriceUpdate {
+  Id: number;
+  HotelId: number;
+  OldPrice: number;
+  NewPrice: number;
+  UpdateDate: string;
+}
+
+export interface SystemLog {
+  LogID: number;
+  Message: string;
+  LogDate: string;
+  LogLevel: string;
 }
 
 @Injectable({
@@ -114,22 +158,23 @@ export class DataExplorerService {
 
   getTableSchema(tableName: string): Observable<{ success: boolean; tableName: string; columns: ColumnInfo[] }> {
     return this.http.get<{ success: boolean; tableName: string; columns: ColumnInfo[] }>(
-      `${this.baseUrl}data-explorer/schema/${tableName}`
+      `${this.baseUrl}data-explorer/schema/${encodeURIComponent(tableName)}`
     );
   }
 
-  queryTable<T>(
+  queryTable(
     tableName: string,
     options: { limit?: number; offset?: number; orderBy?: string; orderDir?: 'ASC' | 'DESC' } = {}
-  ): Observable<PaginatedResponse<T>> {
-    const params = new URLSearchParams();
-    if (options.limit) params.set('limit', options.limit.toString());
-    if (options.offset) params.set('offset', options.offset.toString());
-    if (options.orderBy) params.set('orderBy', options.orderBy);
-    if (options.orderDir) params.set('orderDir', options.orderDir);
+  ): Observable<PaginatedResponse<Record<string, unknown>>> {
+    let params = new HttpParams();
+    if (options.limit) params = params.set('limit', options.limit.toString());
+    if (options.offset !== undefined) params = params.set('offset', options.offset.toString());
+    if (options.orderBy) params = params.set('orderBy', options.orderBy);
+    if (options.orderDir) params = params.set('orderDir', options.orderDir);
 
-    return this.http.get<PaginatedResponse<T>>(
-      `${this.baseUrl}data-explorer/query/${tableName}?${params.toString()}`
+    return this.http.get<PaginatedResponse<Record<string, unknown>>>(
+      `${this.baseUrl}data-explorer/query/${encodeURIComponent(tableName)}`,
+      { params }
     );
   }
 
@@ -148,12 +193,12 @@ export class DataExplorerService {
   // ============================================
 
   getDestinations(search?: string, limit = 100): Observable<{ success: boolean; destinations: Destination[] }> {
-    const params = new URLSearchParams();
-    params.set('limit', limit.toString());
-    if (search) params.set('search', search);
+    let params = new HttpParams().set('limit', limit.toString());
+    if (search) params = params.set('search', search);
 
     return this.http.get<{ success: boolean; destinations: Destination[] }>(
-      `${this.baseUrl}data-explorer/destinations?${params.toString()}`
+      `${this.baseUrl}data-explorer/destinations`,
+      { params }
     );
   }
 
@@ -163,55 +208,60 @@ export class DataExplorerService {
     );
   }
 
-  getSalesOfficeOrders(limit = 50, status?: string): Observable<{ success: boolean; orders: unknown[] }> {
-    const params = new URLSearchParams();
-    params.set('limit', limit.toString());
-    if (status) params.set('status', status);
+  getSalesOfficeOrders(limit = 50, status?: string): Observable<{ success: boolean; orders: Record<string, unknown>[] }> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (status) params = params.set('status', status);
 
-    return this.http.get<{ success: boolean; orders: unknown[] }>(
-      `${this.baseUrl}data-explorer/sales-office/orders?${params.toString()}`
+    return this.http.get<{ success: boolean; orders: Record<string, unknown>[] }>(
+      `${this.baseUrl}data-explorer/sales-office/orders`,
+      { params }
     );
   }
 
-  getBackofficeStats(): Observable<{ success: boolean; stats: unknown }> {
-    return this.http.get<{ success: boolean; stats: unknown }>(
+  getBackofficeStats(): Observable<{ success: boolean; stats: BackofficeStats }> {
+    return this.http.get<{ success: boolean; stats: BackofficeStats }>(
       `${this.baseUrl}data-explorer/backoffice/stats`
     );
   }
 
-  getQueue(status?: string, limit = 50): Observable<{ success: boolean; queue: QueueItem[]; stats: QueueStats }> {
-    const params = new URLSearchParams();
-    params.set('limit', limit.toString());
-    if (status) params.set('status', status);
+  getQueue(status?: string, limit = 50): Observable<QueueResponse> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (status) params = params.set('status', status);
 
-    return this.http.get<{ success: boolean; queue: QueueItem[]; stats: QueueStats }>(
-      `${this.baseUrl}data-explorer/queue?${params.toString()}`
+    return this.http.get<QueueResponse>(
+      `${this.baseUrl}data-explorer/queue`,
+      { params }
     );
   }
 
-  getHotelsToPush(active = true, limit = 50): Observable<{ success: boolean; hotelsToPush: unknown[] }> {
-    return this.http.get<{ success: boolean; hotelsToPush: unknown[] }>(
-      `${this.baseUrl}data-explorer/hotels-to-push?limit=${limit}&active=${active}`
+  getHotelsToPush(active = true, limit = 50): Observable<{ success: boolean; hotelsToPush: HotelToPush[] }> {
+    const params = new HttpParams()
+      .set('limit', limit.toString())
+      .set('active', active.toString());
+
+    return this.http.get<{ success: boolean; hotelsToPush: HotelToPush[] }>(
+      `${this.baseUrl}data-explorer/hotels-to-push`,
+      { params }
     );
   }
 
-  getPriceUpdates(hotelId?: number, limit = 100): Observable<{ success: boolean; priceUpdates: unknown[] }> {
-    const params = new URLSearchParams();
-    params.set('limit', limit.toString());
-    if (hotelId) params.set('hotelId', hotelId.toString());
+  getPriceUpdates(hotelId?: number, limit = 100): Observable<{ success: boolean; priceUpdates: PriceUpdate[] }> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (hotelId) params = params.set('hotelId', hotelId.toString());
 
-    return this.http.get<{ success: boolean; priceUpdates: unknown[] }>(
-      `${this.baseUrl}data-explorer/price-updates?${params.toString()}`
+    return this.http.get<{ success: boolean; priceUpdates: PriceUpdate[] }>(
+      `${this.baseUrl}data-explorer/price-updates`,
+      { params }
     );
   }
 
-  getSystemLogs(search?: string, limit = 100): Observable<{ success: boolean; logs: unknown[] }> {
-    const params = new URLSearchParams();
-    params.set('limit', limit.toString());
-    if (search) params.set('search', search);
+  getSystemLogs(search?: string, limit = 100): Observable<{ success: boolean; logs: SystemLog[] }> {
+    let params = new HttpParams().set('limit', limit.toString());
+    if (search) params = params.set('search', search);
 
-    return this.http.get<{ success: boolean; logs: unknown[] }>(
-      `${this.baseUrl}data-explorer/system-logs?${params.toString()}`
+    return this.http.get<{ success: boolean; logs: SystemLog[] }>(
+      `${this.baseUrl}data-explorer/system-logs`,
+      { params }
     );
   }
 
@@ -221,8 +271,8 @@ export class DataExplorerService {
     );
   }
 
-  getUsers(): Observable<{ success: boolean; users: unknown[] }> {
-    return this.http.get<{ success: boolean; users: unknown[] }>(
+  getUsers(): Observable<{ success: boolean; users: UserInfo[] }> {
+    return this.http.get<{ success: boolean; users: UserInfo[] }>(
       `${this.baseUrl}data-explorer/users`
     );
   }

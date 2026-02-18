@@ -1,0 +1,992 @@
+<div class="data-explorer-container p-6 space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-indigo-600">storage</mat-icon>
+        Data Explorer
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Browse database tables, query data, view operations and lookup tables
+      </p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button mat-stroked-button (click)="refreshAll()" matTooltip="Refresh current tab data" type="button">
+        <mat-icon>refresh</mat-icon>
+        <span class="hidden md:inline ml-1">Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group
+    [selectedIndex]="selectedTabIndex"
+    (selectedIndexChange)="onTabChange($event)"
+    animationDuration="0ms">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: Tables Overview                     -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">table_chart</mat-icon>
+        Tables Overview
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-indigo-600 text-3xl">table_chart</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ tables.length }}
+              </div>
+              <div class="text-sm text-gray-500">Total Tables</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-blue-600 text-3xl">format_list_numbered</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ formatNumber(getTotalRows()) }}
+              </div>
+              <div class="text-sm text-gray-500">Total Rows</div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="metric-card">
+            <mat-card-content class="text-center py-3">
+              <mat-icon class="text-green-600 text-3xl">data_usage</mat-icon>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {{ formatSize(getTotalSize()) }}
+              </div>
+              <div class="text-sm text-gray-500">Total Size</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Search -->
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Search tables</mat-label>
+          <input matInput
+                 [(ngModel)]="tableSearchText"
+                 (ngModelChange)="filterTables()"
+                 placeholder="Filter by table or schema name...">
+          <mat-icon matPrefix>search</mat-icon>
+        </mat-form-field>
+
+        <!-- Loading -->
+        <div *ngIf="isLoadingTables" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Tables List -->
+        <div *ngIf="!isLoadingTables" class="tables-grid">
+          <mat-card *ngFor="let table of filteredTables"
+                    class="table-card"
+                    (click)="viewSchema(table)">
+            <mat-card-content class="py-3 px-4">
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <div class="font-semibold text-gray-900 dark:text-white truncate">
+                    {{ table.TableName }}
+                  </div>
+                  <div class="text-xs text-gray-400 mt-1">
+                    {{ table.SchemaName }}
+                  </div>
+                </div>
+                <div class="text-right ml-3">
+                  <div class="text-sm font-bold text-indigo-600">
+                    {{ formatNumber(table.RowCount) }} rows
+                  </div>
+                  <div class="text-xs text-gray-400">
+                    {{ formatSize(table.SizeMB) }}
+                  </div>
+                </div>
+              </div>
+              <div class="flex gap-2 mt-3">
+                <button mat-stroked-button
+                        class="table-action-btn"
+                        (click)="viewSchema(table); $event.stopPropagation()"
+                        matTooltip="View schema"
+                        type="button">
+                  <mat-icon>schema</mat-icon>
+                  Schema
+                </button>
+                <button mat-flat-button
+                        color="primary"
+                        class="table-action-btn"
+                        (click)="openTableInQuery(table); $event.stopPropagation()"
+                        matTooltip="Query this table"
+                        type="button">
+                  <mat-icon>search</mat-icon>
+                  Query
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Schema Panel -->
+        <mat-card *ngIf="selectedTableForSchema" class="schema-panel">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon>schema</mat-icon>
+              Schema: {{ selectedTableForSchema.TableName }}
+              <button mat-icon-button (click)="closeSchema()" matTooltip="Close" type="button" class="ml-auto">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingSchema" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <table mat-table [dataSource]="schemaColumns" *ngIf="!isLoadingSchema && schemaColumns.length > 0" class="w-full schema-table">
+              <ng-container matColumnDef="columnName">
+                <th mat-header-cell *matHeaderCellDef>Column Name</th>
+                <td mat-cell *matCellDef="let col">
+                  <span class="font-medium">{{ col.columnName }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="dataType">
+                <th mat-header-cell *matHeaderCellDef>Data Type</th>
+                <td mat-cell *matCellDef="let col">
+                  <span class="data-type-badge">{{ col.dataType }}</span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="nullable">
+                <th mat-header-cell *matHeaderCellDef>Nullable</th>
+                <td mat-cell *matCellDef="let col">
+                  <span [ngClass]="col.nullable === 'YES' ? 'text-green-600' : 'text-red-600'">
+                    {{ col.nullable }}
+                  </span>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="maxLength">
+                <th mat-header-cell *matHeaderCellDef>Max Length</th>
+                <td mat-cell *matCellDef="let col">{{ col.maxLength || '-' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="defaultValue">
+                <th mat-header-cell *matHeaderCellDef>Default</th>
+                <td mat-cell *matCellDef="let col">
+                  <code *ngIf="col.defaultValue" class="default-value">{{ col.defaultValue }}</code>
+                  <span *ngIf="!col.defaultValue">-</span>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="['columnName', 'dataType', 'nullable', 'maxLength', 'defaultValue']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['columnName', 'dataType', 'nullable', 'maxLength', 'defaultValue']"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: Table Query                         -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">manage_search</mat-icon>
+        Table Query
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <!-- Table Selection -->
+        <mat-card>
+          <mat-card-content class="py-4">
+            <div class="flex flex-col md:flex-row gap-4 items-end">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Select Table</mat-label>
+                <mat-select [(ngModel)]="queryTableName" (selectionChange)="onTableSelected()">
+                  <mat-option *ngFor="let table of tables" [value]="table.TableName">
+                    {{ table.TableName }} ({{ formatNumber(table.RowCount) }} rows)
+                  </mat-option>
+                </mat-select>
+                <mat-icon matPrefix>table_chart</mat-icon>
+              </mat-form-field>
+              <button mat-flat-button
+                      color="primary"
+                      (click)="executeQuery()"
+                      [disabled]="!queryTableName || isLoadingQuery"
+                      type="button"
+                      class="query-btn">
+                <mat-icon>play_arrow</mat-icon>
+                Execute Query
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Column Info -->
+        <mat-card *ngIf="queryColumns.length > 0">
+          <mat-card-content class="py-3">
+            <div class="text-sm text-gray-500 mb-2">
+              Columns ({{ queryColumns.length }}):
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <span *ngFor="let col of queryColumns" class="column-chip">
+                {{ col.columnName }}
+                <span class="column-chip-type">{{ col.dataType }}</span>
+              </span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Loading Schema -->
+        <div *ngIf="isLoadingQuerySchema" class="flex justify-center py-4">
+          <mat-spinner diameter="30"></mat-spinner>
+        </div>
+
+        <!-- Error -->
+        <mat-card *ngIf="queryError" class="error-card">
+          <mat-card-content class="flex items-center gap-3 py-3">
+            <mat-icon class="text-red-600">error</mat-icon>
+            <span class="text-red-700">{{ queryError }}</span>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Query Results -->
+        <mat-card *ngIf="queryDisplayedColumns.length > 0 && queryDataSource.data.length > 0" class="query-results-card">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2 text-base">
+              <mat-icon>table_rows</mat-icon>
+              Results: {{ formatNumber(queryTotalRows) }} total rows
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-3">
+            <!-- Loading Query -->
+            <div *ngIf="isLoadingQuery" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+
+            <div class="query-table-wrapper" *ngIf="!isLoadingQuery">
+              <table mat-table
+                     [dataSource]="queryDataSource"
+                     matSort
+                     (matSortChange)="onQuerySortChange($event)"
+                     class="w-full query-results-table">
+                <ng-container *ngFor="let col of queryDisplayedColumns" [matColumnDef]="col">
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ col }}</th>
+                  <td mat-cell *matCellDef="let row" class="query-cell">
+                    {{ getCellValue(row, col) }}
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="queryDisplayedColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: queryDisplayedColumns"></tr>
+              </table>
+            </div>
+
+            <mat-paginator
+              #queryPaginator
+              [length]="queryTotalRows"
+              [pageSize]="queryPageSize"
+              [pageIndex]="queryPageIndex"
+              [pageSizeOptions]="[10, 25, 50, 100]"
+              (page)="onQueryPageChange($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- No Results -->
+        <div *ngIf="queryTableName && !isLoadingQuery && !isLoadingQuerySchema && queryDataSource.data.length === 0 && !queryError"
+             class="flex flex-col items-center py-12 text-gray-400">
+          <mat-icon class="text-6xl">search_off</mat-icon>
+          <p class="mt-2">No data found. Select a table and execute a query.</p>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: Operations                          -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">settings_suggest</mat-icon>
+        Operations
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+        <!-- Sales Office Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-blue-600">store</mat-icon>
+              Sales Office
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingSalesSummary" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <div *ngIf="!isLoadingSalesSummary && salesSummary" class="grid grid-cols-2 md:grid-cols-5 gap-4">
+              <div class="ops-stat">
+                <div class="ops-stat-value">{{ formatNumber(salesSummary.orders.TotalOrders) }}</div>
+                <div class="ops-stat-label">Total Orders</div>
+              </div>
+              <div class="ops-stat">
+                <div class="ops-stat-value text-green-600">{{ formatNumber(salesSummary.orders.CompletedOrders) }}</div>
+                <div class="ops-stat-label">Completed</div>
+              </div>
+              <div class="ops-stat">
+                <div class="ops-stat-value text-amber-600">{{ formatNumber(salesSummary.orders.PendingOrders) }}</div>
+                <div class="ops-stat-label">Pending</div>
+              </div>
+              <div class="ops-stat">
+                <div class="ops-stat-value text-blue-600">{{ formatNumber(salesSummary.bookings) }}</div>
+                <div class="ops-stat-label">Bookings</div>
+              </div>
+              <div class="ops-stat">
+                <div class="ops-stat-value text-indigo-600">{{ formatNumber(salesSummary.details) }}</div>
+                <div class="ops-stat-label">Details</div>
+              </div>
+            </div>
+            <div class="mt-3">
+              <button mat-stroked-button
+                      (click)="loadSalesOfficeOrders()"
+                      [disabled]="isLoadingSalesOrders"
+                      type="button">
+                <mat-icon>list</mat-icon>
+                Load Recent Orders
+              </button>
+            </div>
+            <!-- Sales Orders Table -->
+            <div *ngIf="salesOrders.length > 0" class="mt-4 query-table-wrapper">
+              <table mat-table [dataSource]="salesOrders" class="w-full">
+                <ng-container *ngFor="let col of salesOrderColumns" [matColumnDef]="col">
+                  <th mat-header-cell *matHeaderCellDef>{{ col }}</th>
+                  <td mat-cell *matCellDef="let row" class="query-cell">{{ getCellValue(row, col) }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="salesOrderColumns; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: salesOrderColumns"></tr>
+              </table>
+            </div>
+            <div *ngIf="isLoadingSalesOrders" class="flex justify-center py-4">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- BackOffice Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-purple-600">business_center</mat-icon>
+              BackOffice Statistics
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingBackoffice" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <div *ngIf="!isLoadingBackoffice && backofficeStats">
+              <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                <div class="ops-stat">
+                  <div class="ops-stat-value">{{ formatNumber(backofficeStats.options.TotalOpts) }}</div>
+                  <div class="ops-stat-label">Total Options</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-green-600">{{ formatNumber(backofficeStats.options.ActiveOpts) }}</div>
+                  <div class="ops-stat-label">Active Options</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-indigo-600">{{ backofficeStats.topActions.length }}</div>
+                  <div class="ops-stat-label">Action Types</div>
+                </div>
+              </div>
+              <!-- Top Actions -->
+              <div *ngIf="backofficeStats.topActions.length > 0" class="mt-4">
+                <div class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Top Actions</div>
+                <table mat-table [dataSource]="backofficeStats.topActions" class="w-full">
+                  <ng-container matColumnDef="ActionType">
+                    <th mat-header-cell *matHeaderCellDef>Action Type</th>
+                    <td mat-cell *matCellDef="let row">{{ row.ActionType }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="Count">
+                    <th mat-header-cell *matHeaderCellDef>Count</th>
+                    <td mat-cell *matCellDef="let row">
+                      <span class="font-semibold">{{ formatNumber(row.Count) }}</span>
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="['ActionType', 'Count']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['ActionType', 'Count']"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Queue Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-orange-600">queue</mat-icon>
+              Queue Status
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div *ngIf="isLoadingQueue" class="flex justify-center py-4">
+              <mat-spinner diameter="30"></mat-spinner>
+            </div>
+            <div *ngIf="!isLoadingQueue && queueStats">
+              <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                <div class="ops-stat">
+                  <div class="ops-stat-value">{{ formatNumber(queueStats.Total) }}</div>
+                  <div class="ops-stat-label">Total</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-amber-600">{{ formatNumber(queueStats.Pending) }}</div>
+                  <div class="ops-stat-label">Pending</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-blue-600">{{ formatNumber(queueStats.Processing) }}</div>
+                  <div class="ops-stat-label">Processing</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-green-600">{{ formatNumber(queueStats.Completed) }}</div>
+                  <div class="ops-stat-label">Completed</div>
+                </div>
+                <div class="ops-stat">
+                  <div class="ops-stat-value text-red-600">{{ formatNumber(queueStats.Failed) }}</div>
+                  <div class="ops-stat-label">Failed</div>
+                </div>
+              </div>
+              <!-- Queue Filter -->
+              <div class="flex gap-3 items-end mb-4">
+                <mat-form-field appearance="outline" class="w-48">
+                  <mat-label>Filter by Status</mat-label>
+                  <mat-select [(ngModel)]="queueStatusFilter">
+                    <mat-option value="">All</mat-option>
+                    <mat-option value="pending">Pending</mat-option>
+                    <mat-option value="processing">Processing</mat-option>
+                    <mat-option value="completed">Completed</mat-option>
+                    <mat-option value="failed">Failed</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <button mat-stroked-button (click)="loadQueue()" type="button">
+                  <mat-icon>filter_list</mat-icon>
+                  Apply
+                </button>
+              </div>
+              <!-- Queue Items Table -->
+              <div *ngIf="queueItems.length > 0" class="query-table-wrapper">
+                <table mat-table [dataSource]="queueItems" class="w-full">
+                  <ng-container matColumnDef="Id">
+                    <th mat-header-cell *matHeaderCellDef>ID</th>
+                    <td mat-cell *matCellDef="let row">{{ row.Id }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="Status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let row">
+                      <span class="queue-status-badge" [ngClass]="getQueueStatusClass(row.Status)">
+                        {{ row.Status }}
+                      </span>
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="CreatedAt">
+                    <th mat-header-cell *matHeaderCellDef>Created At</th>
+                    <td mat-cell *matCellDef="let row">{{ row.CreatedAt }}</td>
+                  </ng-container>
+                  <ng-container matColumnDef="ProcessedAt">
+                    <th mat-header-cell *matHeaderCellDef>Processed At</th>
+                    <td mat-cell *matCellDef="let row">{{ row.ProcessedAt || '-' }}</td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="['Id', 'Status', 'CreatedAt', 'ProcessedAt']"></tr>
+                  <tr mat-row *matRowDef="let row; columns: ['Id', 'Status', 'CreatedAt', 'ProcessedAt']"></tr>
+                </table>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Hotels to Push Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-teal-600">publish</mat-icon>
+              Hotels to Push (Zenith)
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <button mat-stroked-button
+                    (click)="loadHotelsToPush()"
+                    [disabled]="isLoadingHotelsToPush"
+                    type="button">
+              <mat-icon>download</mat-icon>
+              Load Hotels to Push
+            </button>
+            <div *ngIf="isLoadingHotelsToPush" class="flex justify-center py-4">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+            <div *ngIf="hotelsToPush.length > 0" class="mt-4 query-table-wrapper">
+              <table mat-table [dataSource]="hotelsToPush" class="w-full">
+                <ng-container matColumnDef="BookId">
+                  <th mat-header-cell *matHeaderCellDef>Book ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.BookId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="HotelName">
+                  <th mat-header-cell *matHeaderCellDef>Hotel</th>
+                  <td mat-cell *matCellDef="let row">{{ row.HotelName || '-' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="BookingPrice">
+                  <th mat-header-cell *matHeaderCellDef>Price</th>
+                  <td mat-cell *matCellDef="let row">{{ row.BookingPrice | number:'1.2-2' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="BookingStatus">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let row">{{ row.BookingStatus || '-' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="DateInsert">
+                  <th mat-header-cell *matHeaderCellDef>Date Inserted</th>
+                  <td mat-cell *matCellDef="let row">{{ row.DateInsert }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['BookId', 'HotelName', 'BookingPrice', 'BookingStatus', 'DateInsert']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['BookId', 'HotelName', 'BookingPrice', 'BookingStatus', 'DateInsert']"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Price Updates Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-lime-600">price_change</mat-icon>
+              Room Price Updates
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="flex gap-3 items-end mb-4">
+              <mat-form-field appearance="outline" class="w-48">
+                <mat-label>Hotel ID</mat-label>
+                <input matInput [(ngModel)]="priceUpdateHotelIdFilter" placeholder="Filter by hotel ID">
+              </mat-form-field>
+              <button mat-stroked-button
+                      (click)="loadPriceUpdates()"
+                      [disabled]="isLoadingPriceUpdates"
+                      type="button">
+                <mat-icon>search</mat-icon>
+                Load Price Updates
+              </button>
+            </div>
+            <div *ngIf="isLoadingPriceUpdates" class="flex justify-center py-4">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+            <div *ngIf="priceUpdates.length > 0" class="query-table-wrapper">
+              <table mat-table [dataSource]="priceUpdates" class="w-full">
+                <ng-container matColumnDef="Id">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Id }}</td>
+                </ng-container>
+                <ng-container matColumnDef="HotelId">
+                  <th mat-header-cell *matHeaderCellDef>Hotel ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.HotelId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="OldPrice">
+                  <th mat-header-cell *matHeaderCellDef>Old Price</th>
+                  <td mat-cell *matCellDef="let row">{{ row.OldPrice }}</td>
+                </ng-container>
+                <ng-container matColumnDef="NewPrice">
+                  <th mat-header-cell *matHeaderCellDef>New Price</th>
+                  <td mat-cell *matCellDef="let row">{{ row.NewPrice }}</td>
+                </ng-container>
+                <ng-container matColumnDef="UpdateDate">
+                  <th mat-header-cell *matHeaderCellDef>Update Date</th>
+                  <td mat-cell *matCellDef="let row">{{ row.UpdateDate }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['Id', 'HotelId', 'OldPrice', 'NewPrice', 'UpdateDate']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['Id', 'HotelId', 'OldPrice', 'NewPrice', 'UpdateDate']"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- System Logs Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-gray-600">description</mat-icon>
+              System Logs (MED_Log)
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="flex gap-3 items-end mb-4">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Search logs</mat-label>
+                <input matInput
+                       [(ngModel)]="systemLogSearch"
+                       placeholder="Search by message..."
+                       (keydown.enter)="loadSystemLogs()">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+              <button mat-stroked-button
+                      (click)="loadSystemLogs()"
+                      [disabled]="isLoadingSystemLogs"
+                      type="button">
+                <mat-icon>search</mat-icon>
+                Search
+              </button>
+            </div>
+            <div *ngIf="isLoadingSystemLogs" class="flex justify-center py-4">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+            <div *ngIf="systemLogs.length > 0" class="query-table-wrapper">
+              <table mat-table [dataSource]="systemLogs" class="w-full">
+                <ng-container matColumnDef="LogID">
+                  <th mat-header-cell *matHeaderCellDef>Log ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.LogID }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Message">
+                  <th mat-header-cell *matHeaderCellDef>Message</th>
+                  <td mat-cell *matCellDef="let row" class="log-message-cell">{{ row.Message }}</td>
+                </ng-container>
+                <ng-container matColumnDef="LogDate">
+                  <th mat-header-cell *matHeaderCellDef>Date</th>
+                  <td mat-cell *matCellDef="let row">{{ row.LogDate }}</td>
+                </ng-container>
+                <ng-container matColumnDef="LogLevel">
+                  <th mat-header-cell *matHeaderCellDef>Level</th>
+                  <td mat-cell *matCellDef="let row">{{ row.LogLevel }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['LogID', 'Message', 'LogDate', 'LogLevel']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['LogID', 'Message', 'LogDate', 'LogLevel']"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Destinations Section -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-pink-600">place</mat-icon>
+              Destinations
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="mt-4">
+            <div class="flex gap-3 items-end mb-4">
+              <mat-form-field appearance="outline" class="flex-1">
+                <mat-label>Search destinations</mat-label>
+                <input matInput
+                       [(ngModel)]="destinationSearch"
+                       placeholder="Search by name..."
+                       (keydown.enter)="loadDestinations()">
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+              <button mat-stroked-button
+                      (click)="loadDestinations()"
+                      [disabled]="isLoadingDestinations"
+                      type="button">
+                <mat-icon>search</mat-icon>
+                Search
+              </button>
+            </div>
+            <div *ngIf="isLoadingDestinations" class="flex justify-center py-4">
+              <mat-spinner diameter="24"></mat-spinner>
+            </div>
+            <div *ngIf="destinations.length > 0" class="query-table-wrapper">
+              <table mat-table [dataSource]="destinations" class="w-full">
+                <ng-container matColumnDef="id">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.id }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.Name }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="HotelCount">
+                  <th mat-header-cell *matHeaderCellDef>Hotel Count</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-semibold text-indigo-600">{{ formatNumber(row.HotelCount) }}</span>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['id', 'Name', 'HotelCount']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['id', 'Name', 'HotelCount']"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: Lookups                             -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">bookmark</mat-icon>
+        Lookups
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <div *ngIf="isLoadingLookups || isLoadingUsers" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <mat-tab-group *ngIf="!isLoadingLookups"
+                       [(selectedIndex)]="selectedLookupTab"
+                       animationDuration="0ms">
+          <!-- Boards -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">restaurant</mat-icon>
+              Boards ({{ lookupData?.boards?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.boards">
+              <table mat-table [dataSource]="lookupData!.boards" class="w-full">
+                <ng-container matColumnDef="BoardId">
+                  <th mat-header-cell *matHeaderCellDef>Board ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.BoardId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="BoardCode">
+                  <th mat-header-cell *matHeaderCellDef>Code</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="lookup-code-badge">{{ row.BoardCode }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['BoardId', 'BoardCode', 'Description']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['BoardId', 'BoardCode', 'Description']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Categories -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">category</mat-icon>
+              Categories ({{ lookupData?.categories?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.categories">
+              <table mat-table [dataSource]="lookupData!.categories" class="w-full">
+                <ng-container matColumnDef="CategoryId">
+                  <th mat-header-cell *matHeaderCellDef>Category ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.CategoryId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.Name }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+                </ng-container>
+                <ng-container matColumnDef="PMS_Code">
+                  <th mat-header-cell *matHeaderCellDef>PMS Code</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="lookup-code-badge" *ngIf="row.PMS_Code">{{ row.PMS_Code }}</span>
+                    <span *ngIf="!row.PMS_Code">-</span>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['CategoryId', 'Name', 'Description', 'PMS_Code']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['CategoryId', 'Name', 'Description', 'PMS_Code']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Beddings -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">bed</mat-icon>
+              Beddings ({{ lookupData?.beddings?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.beddings">
+              <table mat-table [dataSource]="lookupData!.beddings" class="w-full">
+                <ng-container matColumnDef="BeddingId">
+                  <th mat-header-cell *matHeaderCellDef>Bedding ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.BeddingId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.Name }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['BeddingId', 'Name', 'Description']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['BeddingId', 'Name', 'Description']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Currencies -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">currency_exchange</mat-icon>
+              Currencies ({{ lookupData?.currencies?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.currencies">
+              <table mat-table [dataSource]="lookupData!.currencies" class="w-full">
+                <ng-container matColumnDef="CurrencyId">
+                  <th mat-header-cell *matHeaderCellDef>Currency ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.CurrencyId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="CurrencyCode">
+                  <th mat-header-cell *matHeaderCellDef>Code</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="lookup-code-badge">{{ row.CurrencyCode }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['CurrencyId', 'CurrencyCode', 'Description']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['CurrencyId', 'CurrencyCode', 'Description']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Sources -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">source</mat-icon>
+              Sources ({{ lookupData?.sources?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.sources">
+              <table mat-table [dataSource]="lookupData!.sources" class="w-full">
+                <ng-container matColumnDef="Id">
+                  <th mat-header-cell *matHeaderCellDef>ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Id }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.Name }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="IsAcive">
+                  <th mat-header-cell *matHeaderCellDef>Active</th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-icon [ngClass]="row.IsAcive ? 'text-green-600' : 'text-red-600'">
+                      {{ row.IsAcive ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['Id', 'Name', 'IsAcive']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['Id', 'Name', 'IsAcive']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Confirmations -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">verified</mat-icon>
+              Confirmations ({{ lookupData?.confirmations?.length || 0 }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4" *ngIf="lookupData?.confirmations">
+              <table mat-table [dataSource]="lookupData!.confirmations" class="w-full">
+                <ng-container matColumnDef="ConfirmationId">
+                  <th mat-header-cell *matHeaderCellDef>Confirmation ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.ConfirmationId }}</td>
+                </ng-container>
+                <ng-container matColumnDef="Name">
+                  <th mat-header-cell *matHeaderCellDef>Name</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.Name }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="Description">
+                  <th mat-header-cell *matHeaderCellDef>Description</th>
+                  <td mat-cell *matCellDef="let row">{{ row.Description }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['ConfirmationId', 'Name', 'Description']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['ConfirmationId', 'Name', 'Description']"></tr>
+              </table>
+            </div>
+          </mat-tab>
+
+          <!-- Users -->
+          <mat-tab>
+            <ng-template mat-tab-label>
+              <mat-icon class="mr-1">people</mat-icon>
+              Users ({{ users.length }})
+            </ng-template>
+            <div class="lookup-table-wrapper mt-4">
+              <div *ngIf="isLoadingUsers" class="flex justify-center py-4">
+                <mat-spinner diameter="30"></mat-spinner>
+              </div>
+              <table mat-table [dataSource]="users" class="w-full" *ngIf="!isLoadingUsers && users.length > 0">
+                <ng-container matColumnDef="userid">
+                  <th mat-header-cell *matHeaderCellDef>User ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.userid }}</td>
+                </ng-container>
+                <ng-container matColumnDef="username">
+                  <th mat-header-cell *matHeaderCellDef>Username</th>
+                  <td mat-cell *matCellDef="let row">
+                    <span class="font-medium">{{ row.username }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="IsActive">
+                  <th mat-header-cell *matHeaderCellDef>Active</th>
+                  <td mat-cell *matCellDef="let row">
+                    <mat-icon [ngClass]="row.IsActive ? 'text-green-600' : 'text-red-600'">
+                      {{ row.IsActive ? 'check_circle' : 'cancel' }}
+                    </mat-icon>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="AetherTokenStorageId">
+                  <th mat-header-cell *matHeaderCellDef>Token Storage ID</th>
+                  <td mat-cell *matCellDef="let row">{{ row.AetherTokenStorageId || '-' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="['userid', 'username', 'IsActive', 'AetherTokenStorageId']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['userid', 'username', 'IsActive', 'AetherTokenStorageId']"></tr>
+              </table>
+              <div *ngIf="!isLoadingUsers && users.length === 0" class="text-center text-gray-400 py-8">
+                No users found
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: Comprehensive Stats                 -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">bar_chart</mat-icon>
+        Comprehensive Stats
+      </ng-template>
+
+      <div class="tab-content space-y-4 mt-4">
+        <div *ngIf="isLoadingStats" class="flex justify-center py-8">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <div *ngIf="!isLoadingStats && comprehensiveStats" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <mat-card *ngFor="let entry of getStatEntries()" class="stat-card">
+            <mat-card-content class="text-center py-4">
+              <mat-icon [ngClass]="entry.color" class="text-3xl">{{ entry.icon }}</mat-icon>
+              <div class="text-xl font-bold text-gray-900 dark:text-white mt-2">
+                {{ formatNumber(entry.value) }}
+              </div>
+              <div class="text-xs text-gray-500 mt-1">{{ entry.label }}</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <div *ngIf="!isLoadingStats && !comprehensiveStats" class="flex flex-col items-center py-12 text-gray-400">
+          <mat-icon class="text-6xl">analytics</mat-icon>
+          <p class="mt-2">No statistics available. Click refresh to load.</p>
+        </div>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

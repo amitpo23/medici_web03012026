@@ -286,6 +286,6 @@ export class MonitoringDashboardComponent implements OnInit, OnDestroy {
    * Navigate back to system overview
    */
   goBack(): void {
-    this.router.navigate(['/system']);
+    this.router.navigate(['/dashboard']);
   }
 }

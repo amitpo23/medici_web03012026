@@ -17,14 +17,43 @@
         <form [formGroup]="predictionForm" class="prediction-form">
           <div class="form-row">
             <mat-form-field appearance="outline">
-              <mat-label>Hotel ID</mat-label>
-              <input matInput type="number" formControlName="hotelId" placeholder="Enter hotel ID">
-              <mat-icon matPrefix>hotel</mat-icon>
-              <mat-error *ngIf="predictionForm.get('hotelId')?.hasError('required')">
-                Hotel ID is required
-              </mat-error>
+              <mat-label>City (type to search)</mat-label>
+              <input matInput [formControl]="citySearchCtrl" [matAutocomplete]="cityAuto"
+                     placeholder="Start typing city name...">
+              <mat-autocomplete #cityAuto="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)"
+                                [displayWith]="displayCityFn">
+                <mat-option [value]="''">All Cities</mat-option>
+                <mat-option *ngFor="let city of filteredCities" [value]="city.cityName">
+                  {{ city.cityName }}
+                </mat-option>
+              </mat-autocomplete>
+              <button mat-icon-button matSuffix *ngIf="citySearchCtrl.value" (click)="clearCity()" type="button">
+                <mat-icon>close</mat-icon>
+              </button>
+              <mat-icon matPrefix>location_city</mat-icon>
             </mat-form-field>
 
+            <mat-form-field appearance="outline">
+              <mat-label>Hotel (type to search)</mat-label>
+              <input matInput [formControl]="hotelSearchCtrl" [matAutocomplete]="hotelAuto"
+                     placeholder="Start typing hotel name...">
+              <mat-autocomplete #hotelAuto="matAutocomplete" (optionSelected)="onHotelSelected($event.option.value)"
+                                [displayWith]="displayHotelFn">
+                <mat-option *ngFor="let hotel of displayedHotels" [value]="hotel.hotelId">
+                  {{ hotel.hotelName }}
+                </mat-option>
+              </mat-autocomplete>
+              <button mat-icon-button matSuffix *ngIf="hotelSearchCtrl.value" (click)="clearHotel()" type="button">
+                <mat-icon>close</mat-icon>
+              </button>
+              <mat-icon matPrefix>hotel</mat-icon>
+              <mat-error *ngIf="predictionForm.get('hotelId')?.hasError('required')">
+                Hotel is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
             <mat-form-field appearance="outline">
               <mat-label>Buy Price (€)</mat-label>
               <input matInput type="number" formControlName="buyPrice" placeholder="0.00">

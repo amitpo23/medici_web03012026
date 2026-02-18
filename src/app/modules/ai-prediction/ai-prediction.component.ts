@@ -1,10 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
-import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { AIAnalysisResult, AIOpportunity, AIPredictionService, City, Hotel } from '../../services/ai-prediction.service';
-import { ZenithPushDialogComponent, ZenithPushDialogResult } from './components/zenith-push-dialog/zenith-push-dialog.component';
 
 @Component({
   selector: 'app-ai-prediction',
@@ -16,8 +15,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
 
   // Data
   cities: City[] = [];
+  filteredCities: City[] = [];
   hotels: Hotel[] = [];
   filteredHotels: Hotel[] = [];
+  displayedHotels: Hotel[] = [];
   opportunities: AIOpportunity[] = [];
   analysisResult: AIAnalysisResult | null = null;
 
@@ -25,11 +26,15 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   isLoading = false;
   isLoadingOpportunities = false;
   isPushingToZenith = false;
+  isSearchingCity = false;
+  isBuying = false;
+  buyingOppId: number | null = null;
   activeTab = 0;
   agentStatus: any = null;
-  autoRefreshTimer: any = null;
   lastRefreshTime: Date | null = null;
-  nextRefreshIn: number = 3600; // seconds
+
+  // Search stats
+  searchStats = { total: 0, fromDb: 0, fromSearch: 0 };
 
   // Selection State for Zenith Push
   selectedOpportunities: Set<number> = new Set();
@@ -38,6 +43,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   get selectedOpportunitiesCount(): number {
     return this.selectedOpportunities.size;
   }
+
+  // Autocomplete search controls
+  citySearchCtrl = new FormControl<string>('');
+  hotelSearchCtrl = new FormControl<string>('');
 
   // Filters Form
   filtersForm = new FormGroup({
@@ -65,23 +74,16 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
     avgConfidence: 0
   };
 
-  constructor(
-    private aiService: AIPredictionService,
-    private dialog: MatDialog
-  ) {}
+  constructor(private aiService: AIPredictionService, private snackBar: MatSnackBar) {}
 
   ngOnInit(): void {
     this.loadInitialData();
     this.setupFormListeners();
-    this.startAutoRefresh(); // Start auto-refresh every hour
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    if (this.autoRefreshTimer) {
-      clearInterval(this.autoRefreshTimer);
-    }
   }
 
   private loadInitialData(): void {
@@ -90,9 +92,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       next: (response) => {
         if (response.success) {
           this.cities = response.cities;
+          this.filteredCities = this.cities;
         }
       },
-      error: () => {}
+      error: (err) => console.error('Error loading cities:', err)
     });
 
     // Load hotels
@@ -101,9 +104,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         if (response.success) {
           this.hotels = response.hotels;
           this.filteredHotels = this.hotels;
+          this.displayedHotels = this.hotels;
         }
       },
-      error: () => {}
+      error: (err) => console.error('Error loading hotels:', err)
     });
 
     // Get AI status
@@ -111,7 +115,7 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       next: (status) => {
         this.agentStatus = status;
       },
-      error: () => {}
+      error: (err) => console.error('Error getting AI status:', err)
     });
 
     // Load initial opportunities
@@ -119,6 +123,26 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   }
 
   private setupFormListeners(): void {
+    // City autocomplete filter
+    this.citySearchCtrl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(val => {
+      const term = (val || '').toLowerCase();
+      this.filteredCities = term
+        ? this.cities.filter(c => c.cityName.toLowerCase().includes(term))
+        : this.cities;
+    });
+
+    // Hotel autocomplete filter
+    this.hotelSearchCtrl.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(val => {
+      const term = (val || '').toLowerCase();
+      this.displayedHotels = term
+        ? this.filteredHotels.filter(h => h.hotelName.toLowerCase().includes(term))
+        : this.filteredHotels;
+    });
+
     // When city changes, filter hotels
     this.filtersForm.get('city')?.valueChanges.pipe(
       takeUntil(this.destroy$),
@@ -129,7 +153,8 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       } else {
         this.filteredHotels = this.hotels;
       }
-      // Reset hotel selection when city changes
+      this.displayedHotels = this.filteredHotels;
+      this.hotelSearchCtrl.setValue('');
       this.filtersForm.patchValue({ hotelId: null });
     });
 
@@ -143,6 +168,35 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         this.loadOpportunities();
       }
     });
+  }
+
+  onCitySelected(cityName: string): void {
+    this.filtersForm.patchValue({ city: cityName || null });
+  }
+
+  onHotelSelectedAutocomplete(hotelId: number): void {
+    this.filtersForm.patchValue({ hotelId });
+  }
+
+  clearCityFilter(): void {
+    this.citySearchCtrl.setValue('');
+    this.filtersForm.patchValue({ city: null });
+  }
+
+  clearHotelFilter(): void {
+    this.hotelSearchCtrl.setValue('');
+    this.filtersForm.patchValue({ hotelId: null });
+    this.displayedHotels = this.filteredHotels;
+  }
+
+  displayCityFn(cityName: string): string {
+    return cityName || '';
+  }
+
+  displayHotelFn = (hotelId: number): string => {
+    if (!hotelId) return '';
+    const hotel = this.hotels.find(h => h.hotelId === hotelId);
+    return hotel?.hotelName || '';
   }
 
   loadOpportunities(): void {
@@ -173,7 +227,8 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         }
         this.isLoadingOpportunities = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error loading opportunities:', err);
         this.isLoadingOpportunities = false;
       }
     });
@@ -206,7 +261,8 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         }
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
+        console.error('Error running analysis:', err);
         this.isLoading = false;
       }
     });
@@ -243,9 +299,10 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
   clearCache(): void {
     this.aiService.clearCache().pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
+        console.log('Cache cleared');
         this.loadOpportunities();
       },
-      error: () => {}
+      error: (err) => console.error('Error clearing cache:', err)
     });
   }
 
@@ -259,6 +316,153 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
 
   getRiskClass(risk: string): string {
     return this.aiService.getRiskClass(risk);
+  }
+
+  /**
+   * Manual refresh - reload opportunities and update refresh time
+   */
+  manualRefresh(): void {
+    this.lastRefreshTime = new Date();
+    this.loadOpportunities();
+  }
+
+  /**
+   * Format remaining time until next auto-refresh
+   */
+  formatTimeRemaining(): string {
+    if (!this.lastRefreshTime) return '';
+    const elapsed = Date.now() - this.lastRefreshTime.getTime();
+    const remaining = Math.max(0, 5 * 60 * 1000 - elapsed); // 5 min refresh cycle
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Search opportunities by city using forward search (DB + live supplier search)
+   */
+  searchByCity(): void {
+    const city = this.filtersForm.controls.city.value;
+    if (!city) return;
+
+    this.isSearchingCity = true;
+    this.aiService.searchCityWithForwardSearch(city, {
+      minProfit: this.filtersForm.controls.minProfit.value || undefined
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.opportunities = response.opportunities || [];
+          this.searchStats = {
+            total: response.total || 0,
+            fromDb: response.fromDb || 0,
+            fromSearch: response.fromSearch || 0
+          };
+          this.calculateStats();
+        }
+        this.isSearchingCity = false;
+      },
+      error: () => {
+        this.isSearchingCity = false;
+      }
+    });
+  }
+
+  /**
+   * Format a date value to 'YYYY-MM-DD' string for the API
+   */
+  private formatDateStr(dateVal: string | Date | null | undefined): string | null {
+    if (!dateVal) return null;
+    if (typeof dateVal === 'string') {
+      return dateVal.split('T')[0];
+    }
+    if (dateVal instanceof Date) {
+      return dateVal.toISOString().split('T')[0];
+    }
+    return String(dateVal).split('T')[0];
+  }
+
+  /**
+   * Insert opportunity to database
+   */
+  insertOpportunity(opp: any): void {
+    if (!opp.hotelId) return;
+
+    const checkIn = this.formatDateStr(opp.checkIn);
+    const checkOut = this.formatDateStr(opp.checkOut);
+    if (!checkIn || !checkOut) {
+      this.snackBar.open('חסרים תאריכים להזדמנות זו', 'סגור', { duration: 3000, direction: 'rtl' });
+      return;
+    }
+
+    this.aiService.insertOpportunity({
+      hotelId: opp.hotelId,
+      checkIn,
+      checkOut,
+      buyPrice: opp.buyPrice || opp.currentPrice || 0,
+      sellPrice: opp.estimatedSellPrice || opp.targetPrice || 0,
+      profit: opp.expectedProfit || 0,
+      margin: opp.profitMargin || 0,
+      confidence: opp.confidence || 0,
+      source: 'AI-Prediction'
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.snackBar.open('ההזדמנות נוספה בהצלחה', 'סגור', { duration: 3000, direction: 'rtl' });
+          this.loadOpportunities();
+        } else {
+          this.snackBar.open(response.error || 'שגיאה בהוספת ההזדמנות', 'סגור', { duration: 3000, direction: 'rtl' });
+        }
+      },
+      error: (err) => {
+        this.snackBar.open('שגיאה בהוספת ההזדמנות: ' + (err.error?.message || err.message || 'Unknown'), 'סגור', { duration: 4000, direction: 'rtl' });
+      }
+    });
+  }
+
+  /**
+   * Buy opportunity - insert to DB and push to Zenith
+   */
+  buyOpportunity(opp: any): void {
+    if (!opp.hotelId) {
+      this.snackBar.open('חסר מזהה מלון', 'סגור', { duration: 3000, direction: 'rtl' });
+      return;
+    }
+
+    const startDateStr = this.formatDateStr(opp.checkIn);
+    const endDateStr = this.formatDateStr(opp.checkOut);
+    if (!startDateStr || !endDateStr) {
+      this.snackBar.open('חסרים תאריכי צ\'ק-אין / צ\'ק-אאוט', 'סגור', { duration: 3000, direction: 'rtl' });
+      return;
+    }
+
+    this.isBuying = true;
+    this.buyingOppId = opp.hotelId;
+
+    this.aiService.buyOpportunity({
+      hotelId: opp.hotelId,
+      startDateStr,
+      endDateStr,
+      boardlId: 1,
+      categorylId: 1,
+      buyPrice: opp.buyPrice || opp.currentPrice || 0,
+      pushPrice: opp.estimatedSellPrice || opp.targetPrice || 0
+    }).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => {
+        this.isBuying = false;
+        this.buyingOppId = null;
+        if (response.success) {
+          this.snackBar.open('הקנייה בוצעה בהצלחה!', 'סגור', { duration: 3000, direction: 'rtl' });
+          this.loadOpportunities();
+        } else {
+          this.snackBar.open(response.error || 'שגיאה בקנייה', 'סגור', { duration: 3000, direction: 'rtl' });
+        }
+      },
+      error: (err) => {
+        this.isBuying = false;
+        this.buyingOppId = null;
+        this.snackBar.open('שגיאה בקנייה: ' + (err.error?.message || err.message || 'Unknown'), 'סגור', { duration: 4000, direction: 'rtl' });
+      }
+    });
   }
 
   // Example instructions for users (in Hebrew)
@@ -306,19 +510,9 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
       return;
     }
 
-    const dialogRef = this.dialog.open(ZenithPushDialogComponent, {
-      width: '420px',
-      data: {
-        count: this.selectedOpportunities.size,
-        action: 'publish'
-      }
-    });
-
-    dialogRef.afterClosed().pipe(takeUntil(this.destroy$)).subscribe((result: ZenithPushDialogResult | undefined) => {
-      if (result?.confirmed) {
-        this.pushToZenith(result.action, {});
-      }
-    });
+    // TODO: Open Material Dialog for push confirmation and options
+    // For now, directly call push
+    this.pushToZenith('publish', {});
   }
 
   /**
@@ -334,116 +528,20 @@ export class AIPredictionComponent implements OnInit, OnDestroy {
         next: (response) => {
           this.isPushingToZenith = false;
           if (response.success) {
+            console.log('✅ Push successful:', response.summary);
             alert(`הצלחה! ${response.summary?.successful || 0} הזדמנויות נדחפו ל-Zenith`);
             this.clearSelection();
-            this.loadOpportunities();
+            this.loadOpportunities(); // Reload to update status
           } else {
+            console.error('❌ Push failed:', response);
             alert(`שגיאה: ${response.error}`);
           }
         },
         error: (err) => {
           this.isPushingToZenith = false;
+          console.error('Error pushing to Zenith:', err);
           alert(`שגיאה בדחיפה ל-Zenith: ${err.message}`);
         }
       });
-  }
-
-  /**
-   * Calculate potential profit for an opportunity
-   */
-  calculateProfit(opportunity: AIOpportunity): number {
-    const buyPrice = opportunity.buyPrice || 0;
-    const sellPrice = opportunity.estimatedSellPrice || 0;
-    return sellPrice - buyPrice;
-  }
-
-  /**
-   * Calculate profit margin percentage
-   */
-  calculateMargin(opportunity: AIOpportunity): number {
-    const buyPrice = opportunity.buyPrice || 0;
-    const sellPrice = opportunity.estimatedSellPrice || 0;
-    if (sellPrice === 0) return 0;
-    return ((sellPrice - buyPrice) / sellPrice) * 100;
-  }
-
-  /**
-   * Calculate ROI percentage
-   */
-  calculateROI(opportunity: AIOpportunity): number {
-    const buyPrice = opportunity.buyPrice || 0;
-    const profit = this.calculateProfit(opportunity);
-    if (buyPrice === 0) return 0;
-    return (profit / buyPrice) * 100;
-  }
-
-  /**
-   * Insert opportunity to database
-   */
-  insertOpportunity(opportunity: AIOpportunity): void {
-    if (!opportunity.hotelId) return;
-
-    this.aiService.insertOpportunity({
-      hotelId: opportunity.hotelId,
-      checkIn: opportunity.checkIn || '',
-      checkOut: opportunity.checkOut || '',
-      buyPrice: opportunity.buyPrice || 0,
-      sellPrice: opportunity.estimatedSellPrice || 0,
-      profit: this.calculateProfit(opportunity),
-      margin: this.calculateMargin(opportunity),
-      confidence: opportunity.confidence || 0,
-      source: 'AI_PREDICTION'
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (response) => {
-        if (response.success) {
-          alert('ההזדמנות נוספה בהצלחה!');
-          this.loadOpportunities();
-        } else {
-          alert(`שגיאה: ${response.error}`);
-        }
-      },
-      error: (err) => {
-        alert(`שגיאה בהוספת הזדמנות: ${err.message}`);
-      }
-    });
-  }
-
-  /**
-   * Start auto-refresh timer (every hour)
-   */
-  private startAutoRefresh(): void {
-    this.lastRefreshTime = new Date();
-    
-    // Update countdown every second
-    setInterval(() => {
-      if (this.lastRefreshTime) {
-        const elapsed = Math.floor((Date.now() - this.lastRefreshTime.getTime()) / 1000);
-        this.nextRefreshIn = Math.max(0, 3600 - elapsed);
-      }
-    }, 1000);
-
-    // Refresh every hour
-    this.autoRefreshTimer = setInterval(() => {
-      console.log('Auto-refreshing opportunities...');
-      this.loadOpportunities();
-      this.lastRefreshTime = new Date();
-    }, 3600000); // 60 minutes
-  }
-
-  /**
-   * Format seconds to MM:SS
-   */
-  formatTimeRemaining(): string {
-    const minutes = Math.floor(this.nextRefreshIn / 60);
-    const seconds = this.nextRefreshIn % 60;
-    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-  }
-
-  /**
-   * Manual refresh with timer reset
-   */
-  manualRefresh(): void {
-    this.loadOpportunities();
-    this.lastRefreshTime = new Date();
   }
 }

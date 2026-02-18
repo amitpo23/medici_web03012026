@@ -70,7 +70,7 @@ router.get('/', async (req, res) => {
             WHEN IsActive = 1 THEN 'info'
             ELSE 'muted'
           END as status
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE DateCreate >= DATEADD(HOUR, -24, GETDATE())
         ORDER BY DateCreate DESC
       `),
@@ -140,13 +140,13 @@ router.get('/stats', async (req, res) => {
       pool.request().query(`
         SELECT
           (SELECT COUNT(*) FROM MED_Book WHERE DateInsert >= CAST(GETDATE() AS DATE)) as TodayBookings,
-          (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE DateCreate >= CAST(GETDATE() AS DATE)) as TodayOpportunities,
+          (SELECT COUNT(*) FROM [MED_Opportunities] WHERE DateCreate >= CAST(GETDATE() AS DATE)) as TodayOpportunities,
           (SELECT SUM(price) FROM MED_Book WHERE DateInsert >= CAST(GETDATE() AS DATE) AND IsSold = 1) as TodayRevenue
       `),
       pool.request().query(`
         SELECT
           (SELECT COUNT(*) FROM MED_Book WHERE DateInsert >= DATEADD(DAY, -7, GETDATE())) as WeekBookings,
-          (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE DateCreate >= DATEADD(DAY, -7, GETDATE())) as WeekOpportunities
+          (SELECT COUNT(*) FROM [MED_Opportunities] WHERE DateCreate >= DATEADD(DAY, -7, GETDATE())) as WeekOpportunities
       `)
     ]);
 

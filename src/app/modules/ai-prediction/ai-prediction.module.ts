@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
 
 // Angular Material
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -18,7 +19,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 // Components
 import { AIPredictionComponent } from './ai-prediction.component';
@@ -47,6 +50,7 @@ const routes: Routes = [
     ReactiveFormsModule,
     RouterModule.forChild(routes),
     // Material
+    MatAutocompleteModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -61,7 +65,9 @@ const routes: Routes = [
     MatExpansionModule,
     MatSliderModule,
     MatButtonToggleModule,
-    MatDialogModule
+    MatCheckboxModule,
+    MatDialogModule,
+    MatSnackBarModule
   ],
   exports: [
     AIPredictionComponent

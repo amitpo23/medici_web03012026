@@ -8,9 +8,24 @@
   </div>
 
   <div class="tracker-controls">
+    <mat-form-field appearance="outline" class="city-select">
+      <mat-label>City</mat-label>
+      <mat-select (selectionChange)="onCityChange($event.value)">
+        <mat-option [value]="null">All Cities</mat-option>
+        <mat-option *ngFor="let city of cities" [value]="city.cityName">
+          {{ city.cityName }}
+        </mat-option>
+      </mat-select>
+      <mat-icon matPrefix>location_city</mat-icon>
+    </mat-form-field>
+
     <mat-form-field appearance="outline" class="hotel-select">
-      <mat-label>Hotel ID</mat-label>
-      <input matInput type="number" [(ngModel)]="selectedHotelId" placeholder="Enter hotel ID">
+      <mat-label>Hotel</mat-label>
+      <mat-select (selectionChange)="onHotelChange($event.value)">
+        <mat-option *ngFor="let hotel of filteredHotels" [value]="hotel.hotelId">
+          {{ hotel.hotelName }}
+        </mat-option>
+      </mat-select>
       <mat-icon matPrefix>hotel</mat-icon>
     </mat-form-field>
 

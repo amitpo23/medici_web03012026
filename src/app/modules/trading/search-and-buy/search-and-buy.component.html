@@ -1,4 +1,69 @@
 <div class="search-and-buy-container">
+  <!-- Top Opportunities - Auto Discovery -->
+  <div class="opportunities-section" *ngIf="(aiSignals.length > 0 || hotDeals.length > 0) && !loading">
+    <h3 class="section-title">
+      <mat-icon>auto_awesome</mat-icon>
+      הזדמנויות מובילות
+    </h3>
+
+    <!-- AI Signals -->
+    <div class="signals-grid" *ngIf="aiSignals.length > 0">
+      <div class="signal-card" *ngFor="let signal of aiSignals">
+        <div class="signal-header">
+          <span class="signal-badge" [style.background-color]="getSignalColor(signal.type)">
+            {{ signal.type }}
+          </span>
+          <span class="signal-confidence">{{ signal.confidence }}%</span>
+        </div>
+        <div class="signal-hotel">{{ signal.asset?.hotelName || 'Hotel' }}</div>
+        <div class="signal-dates">
+          {{ formatShortDate(signal.asset?.checkIn) }} - {{ formatShortDate(signal.asset?.checkOut) }}
+        </div>
+        <div class="signal-metrics">
+          <div class="signal-metric">
+            <span class="metric-label">מחיר</span>
+            <span class="metric-value">{{ formatCurrency(signal.pricing?.buyPrice) }}</span>
+          </div>
+          <div class="signal-metric">
+            <span class="metric-label">רווח צפוי</span>
+            <span class="metric-value profit">{{ formatCurrency(signal.pricing?.expectedProfit) }}</span>
+          </div>
+          <div class="signal-metric">
+            <span class="metric-label">מרווח</span>
+            <span class="metric-value">{{ signal.pricing?.expectedMargin?.toFixed(1) }}%</span>
+          </div>
+        </div>
+        <div class="signal-risk" *ngIf="signal.riskLevel">
+          <span class="risk-tag" [class.low]="signal.riskLevel === 'LOW'"
+                [class.medium]="signal.riskLevel === 'MEDIUM'"
+                [class.high]="signal.riskLevel === 'HIGH'">
+            {{ signal.riskLevel }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hot Deals -->
+    <div class="deals-row" *ngIf="hotDeals.length > 0">
+      <h4 class="deals-title">
+        <mat-icon>local_fire_department</mat-icon>
+        Hot Deals
+      </h4>
+      <div class="deals-grid">
+        <div class="deal-chip" *ngFor="let deal of hotDeals">
+          <span class="deal-name">{{ deal.hotelName }}</span>
+          <span class="deal-price">{{ formatCurrency(deal.price) }}</span>
+          <span class="deal-discount" *ngIf="deal.discount > 0">-{{ deal.discount?.toFixed(0) }}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signals-loading" *ngIf="loadingSignals && !loading">
+    <mat-spinner diameter="30"></mat-spinner>
+    <span>טוען הזדמנויות...</span>
+  </div>
+
   <!-- Search Form Card -->
   <mat-card class="search-card">
     <mat-card-header>
@@ -7,21 +72,35 @@
         חיפוש חדרים עם ניתוח AI
       </mat-card-title>
       <mat-card-subtitle>
-        חפש חדרים זמינים וקבל המלצות קנייה חכמות
+        בחר עיר לחיפוש רחב, או עיר + מלון לחיפוש ממוקד עם המלצות AI
       </mat-card-subtitle>
     </mat-card-header>
 
     <mat-card-content>
       <form [formGroup]="searchForm" (ngSubmit)="onSearch()">
         <div class="search-form-grid">
-          <!-- Hotel ID -->
+          <!-- City -->
           <mat-form-field appearance="outline">
-            <mat-label>מספר מלון</mat-label>
-            <input matInput type="number" formControlName="hotelId" placeholder="12345">
+            <mat-label>עיר</mat-label>
+            <mat-select (selectionChange)="onCityChange($event.value)">
+              <mat-option [value]="null">כל הערים</mat-option>
+              <mat-option *ngFor="let city of cities" [value]="city.cityName">
+                {{ city.cityName }}
+              </mat-option>
+            </mat-select>
+            <mat-icon matPrefix>location_city</mat-icon>
+          </mat-form-field>
+
+          <!-- Hotel -->
+          <mat-form-field appearance="outline">
+            <mat-label>מלון (אופציונלי)</mat-label>
+            <mat-select (selectionChange)="onHotelChange($event.value)">
+              <mat-option [value]="''">כל המלונות בעיר</mat-option>
+              <mat-option *ngFor="let hotel of filteredHotels" [value]="hotel.hotelId">
+                {{ hotel.hotelName }}
+              </mat-option>
+            </mat-select>
             <mat-icon matPrefix>hotel</mat-icon>
-            <mat-error *ngIf="searchForm.get('hotelId')?.hasError('required')">
-              שדה חובה
-            </mat-error>
           </mat-form-field>
 
           <!-- Check-in Date -->
@@ -30,9 +109,6 @@
             <input matInput [matDatepicker]="checkInPicker" formControlName="checkIn">
             <mat-datepicker-toggle matSuffix [for]="checkInPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkInPicker></mat-datepicker>
-            <mat-error *ngIf="searchForm.get('checkIn')?.hasError('required')">
-              שדה חובה
-            </mat-error>
           </mat-form-field>
 
           <!-- Check-out Date -->
@@ -41,9 +117,6 @@
             <input matInput [matDatepicker]="checkOutPicker" formControlName="checkOut">
             <mat-datepicker-toggle matSuffix [for]="checkOutPicker"></mat-datepicker-toggle>
             <mat-datepicker #checkOutPicker></mat-datepicker>
-            <mat-error *ngIf="searchForm.get('checkOut')?.hasError('required')">
-              שדה חובה
-            </mat-error>
           </mat-form-field>
 
           <!-- Adults -->
@@ -62,9 +135,9 @@
         </div>
 
         <div class="search-actions">
-          <button mat-raised-button color="primary" type="submit" [disabled]="loading || searchForm.invalid">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!canSearch()">
             <mat-icon>search</mat-icon>
-            חפש
+            {{ searchForm.value.hotelId ? 'חפש מלון' : selectedCity ? 'חפש עיר' : 'חפש' }}
           </button>
           <button mat-button type="button" (click)="clearSearch()" [disabled]="loading">
             <mat-icon>clear</mat-icon>
@@ -115,8 +188,44 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- Search Results -->
-  <mat-card class="results-card" *ngIf="searchResults.length > 0 && !loading">
+  <!-- City Search Results -->
+  <mat-card class="results-card" *ngIf="citySearchMode && cityResults.length > 0 && !loading">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>location_city</mat-icon>
+        תוצאות חיפוש ב-{{ selectedCity }} ({{ cityResults.length }} תוצאות)
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <div class="results-table-container">
+        <table class="city-results-table">
+          <thead>
+            <tr>
+              <th>מלון</th>
+              <th>סוג חדר</th>
+              <th>מחיר</th>
+              <th>ספק</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let result of cityResults">
+              <td>
+                <strong>{{ result.hotelName || result.HotelName || 'N/A' }}</strong>
+              </td>
+              <td>{{ result.roomName || result.RoomName || result.roomType || '-' }}</td>
+              <td>
+                <span class="price-badge">{{ formatCurrency(result.price || result.Price || result.totalPrice || 0) }}</span>
+              </td>
+              <td>{{ result.supplier || result.source || 'Innstant' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Hotel Search Results (existing) -->
+  <mat-card class="results-card" *ngIf="!citySearchMode && searchResults.length > 0 && !loading">
     <mat-card-header>
       <mat-card-title>
         <mat-icon>list</mat-icon>
@@ -130,8 +239,6 @@
     <mat-card-content>
       <div class="results-table-container">
         <table mat-table [dataSource]="searchResults" class="results-table">
-          
-          <!-- Room Name Column -->
           <ng-container matColumnDef="roomName">
             <th mat-header-cell *matHeaderCellDef>סוג חדר</th>
             <td mat-cell *matCellDef="let room">
@@ -140,7 +247,6 @@
             </td>
           </ng-container>
 
-          <!-- Price Column -->
           <ng-container matColumnDef="price">
             <th mat-header-cell *matHeaderCellDef>מחיר קנייה</th>
             <td mat-cell *matCellDef="let room">
@@ -148,7 +254,6 @@
             </td>
           </ng-container>
 
-          <!-- Confidence Column -->
           <ng-container matColumnDef="confidence">
             <th mat-header-cell *matHeaderCellDef>רמת ביטחון AI</th>
             <td mat-cell *matCellDef="let room">
@@ -158,7 +263,6 @@
             </td>
           </ng-container>
 
-          <!-- Profit Column -->
           <ng-container matColumnDef="profit">
             <th mat-header-cell *matHeaderCellDef>רווח צפוי</th>
             <td mat-cell *matCellDef="let room">
@@ -166,7 +270,6 @@
             </td>
           </ng-container>
 
-          <!-- Margin Column -->
           <ng-container matColumnDef="margin">
             <th mat-header-cell *matHeaderCellDef>מרווח</th>
             <td mat-cell *matCellDef="let room">
@@ -174,7 +277,6 @@
             </td>
           </ng-container>
 
-          <!-- Recommendation Column -->
           <ng-container matColumnDef="recommendation">
             <th mat-header-cell *matHeaderCellDef>המלצה</th>
             <td mat-cell *matCellDef="let room">
@@ -185,7 +287,6 @@
             </td>
           </ng-container>
 
-          <!-- Actions Column -->
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>פעולות</th>
             <td mat-cell *matCellDef="let room">
@@ -203,8 +304,8 @@
     </mat-card-content>
   </mat-card>
 
-  <!-- No Results Message -->
-  <div class="no-results" *ngIf="!loading && searchResults.length === 0 && searchForm.touched">
+  <!-- No Results -->
+  <div class="no-results" *ngIf="!loading && searchResults.length === 0 && cityResults.length === 0 && searchForm.touched && (selectedCity || searchForm.value.hotelId)">
     <mat-icon>info</mat-icon>
     <p>לא נמצאו תוצאות. נסה לשנות את פרמטרי החיפוש.</p>
   </div>

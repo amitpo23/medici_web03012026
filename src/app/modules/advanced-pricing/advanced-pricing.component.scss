@@ -1,0 +1,578 @@
+// ========================================
+// Advanced Pricing Component Styles
+// ========================================
+
+.advanced-pricing-container {
+  padding: 24px;
+  background: var(--bg-secondary, #f5f7fa);
+  min-height: calc(100vh - 64px);
+}
+
+// ----------------------------------------
+// Header
+// ----------------------------------------
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+
+  .header-content {
+    h1 {
+      margin: 0 0 8px 0;
+      color: var(--text-primary, #1e293b);
+      font-size: 28px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+        color: #8b5cf6;
+      }
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--text-secondary, #64748b);
+      font-size: 15px;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .days-field {
+      width: 140px;
+
+      ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+  }
+}
+
+// ----------------------------------------
+// Tab styling
+// ----------------------------------------
+::ng-deep .mat-mdc-tab .mdc-tab__text-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tab-panel {
+  padding: 24px 0;
+}
+
+// ----------------------------------------
+// Section cards
+// ----------------------------------------
+.section-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+
+  mat-card-header {
+    padding: 20px 24px 0;
+
+    mat-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary, #1e293b);
+    }
+
+    mat-card-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary, #64748b);
+    }
+  }
+
+  mat-card-content {
+    padding: 16px 24px 24px;
+  }
+}
+
+// ----------------------------------------
+// Filter rows
+// ----------------------------------------
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    min-width: 160px;
+    max-width: 220px;
+
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+
+  button {
+    height: 56px;
+  }
+}
+
+// ----------------------------------------
+// Form grids
+// ----------------------------------------
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+      display: none;
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  button {
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+.full-width-field {
+  grid-column: 1 / -1;
+}
+
+// ----------------------------------------
+// Summary cards
+// ----------------------------------------
+.summary-cards {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.summary-item {
+  flex: 1;
+  min-width: 150px;
+  max-width: 240px;
+  padding: 16px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .summary-label {
+    font-size: 12px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary, #64748b);
+  }
+
+  .summary-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary, #1e293b);
+  }
+
+  &.highlight {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-color: #86efac;
+  }
+}
+
+// ----------------------------------------
+// Recommendation banner
+// ----------------------------------------
+.recommendation-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border: 1px solid #93c5fd;
+  border-radius: 8px;
+  color: #1e40af;
+  font-size: 15px;
+
+  mat-icon {
+    color: #3b82f6;
+  }
+
+  strong {
+    text-transform: capitalize;
+  }
+}
+
+// ----------------------------------------
+// Section titles
+// ----------------------------------------
+.section-title {
+  margin: 24px 0 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1e293b);
+}
+
+// ----------------------------------------
+// Loading
+// ----------------------------------------
+.loading-inline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  color: var(--text-secondary, #64748b);
+  font-size: 14px;
+}
+
+// ----------------------------------------
+// Tables
+// ----------------------------------------
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+
+  th.mat-mdc-header-cell {
+    background: var(--bg-secondary, #f8fafc);
+    color: var(--text-primary, #1e293b);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 12px 14px;
+    border-bottom: 2px solid var(--border-color, #e2e8f0);
+    white-space: nowrap;
+  }
+
+  td.mat-mdc-cell {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text-primary, #334155);
+    border-bottom: 1px solid var(--border-color, #f1f5f9);
+    white-space: nowrap;
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--bg-secondary, #f8fafc);
+  }
+}
+
+// ----------------------------------------
+// Profit/Loss coloring
+// ----------------------------------------
+.profit-positive {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.profit-negative {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+// ----------------------------------------
+// Significance badges
+// ----------------------------------------
+.significance-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.significance-high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.significance-medium {
+  background: #fef9c3;
+  color: #854d0e;
+}
+
+.significance-low {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.significance-none {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+// ----------------------------------------
+// Impact badges
+// ----------------------------------------
+.impact-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.impact-high {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.impact-low {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+// ----------------------------------------
+// Variant chips
+// ----------------------------------------
+.variant-control {
+  background: #e0e7ff !important;
+  color: #3730a3 !important;
+}
+
+.variant-test {
+  background: #fce7f3 !important;
+  color: #9d174d !important;
+}
+
+// ----------------------------------------
+// Result / JSON output
+// ----------------------------------------
+.result-card {
+  margin-top: 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+
+  mat-card-content {
+    padding: 16px;
+  }
+}
+
+.json-output {
+  margin: 0;
+  padding: 16px;
+  background: var(--bg-secondary, #f8fafc);
+  border-radius: 6px;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-primary, #334155);
+  overflow-x: auto;
+  max-height: 400px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// ----------------------------------------
+// Error message
+// ----------------------------------------
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+
+  mat-icon {
+    color: #dc2626;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// ----------------------------------------
+// No data
+// ----------------------------------------
+.no-data {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  color: var(--text-secondary, #94a3b8);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  p {
+    font-size: 14px;
+    margin: 0;
+  }
+}
+
+// ----------------------------------------
+// Metrics section
+// ----------------------------------------
+.metrics-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+// ----------------------------------------
+// Dark mode
+// ----------------------------------------
+:host-context(.dark) {
+  .section-card {
+    background: var(--bg-primary, #1e293b);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .summary-item {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &.highlight {
+      background: rgba(22, 101, 52, 0.15);
+      border-color: rgba(134, 239, 172, 0.3);
+    }
+  }
+
+  .recommendation-banner {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+  }
+
+  .data-table {
+    th.mat-mdc-header-cell {
+      background: rgba(30, 41, 59, 0.6);
+    }
+
+    tr.mat-mdc-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  .json-output {
+    background: rgba(15, 23, 42, 0.6);
+    color: #e2e8f0;
+  }
+
+  .error-message {
+    background: rgba(220, 38, 38, 0.1);
+    border-color: rgba(220, 38, 38, 0.3);
+    color: #fca5a5;
+  }
+
+  .significance-high {
+    background: rgba(22, 101, 52, 0.2);
+    color: #86efac;
+  }
+
+  .significance-medium {
+    background: rgba(133, 77, 14, 0.2);
+    color: #fde047;
+  }
+
+  .significance-low {
+    background: rgba(153, 27, 27, 0.2);
+    color: #fca5a5;
+  }
+
+  .significance-none {
+    background: rgba(100, 116, 139, 0.2);
+    color: #94a3b8;
+  }
+}
+
+// ----------------------------------------
+// Responsive
+// ----------------------------------------
+@media (max-width: 768px) {
+  .advanced-pricing-container {
+    padding: 16px;
+  }
+
+  .page-header {
+    flex-direction: column;
+
+    .header-actions {
+      width: 100%;
+    }
+  }
+
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+
+    mat-form-field {
+      max-width: 100%;
+    }
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-cards {
+    flex-direction: column;
+  }
+
+  .summary-item {
+    max-width: 100%;
+  }
+
+  .tab-panel {
+    padding: 16px 0;
+  }
+
+  .section-card {
+    mat-card-header {
+      padding: 16px 16px 0;
+    }
+
+    mat-card-content {
+      padding: 12px 16px 16px;
+    }
+  }
+}

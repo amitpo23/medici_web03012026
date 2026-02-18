@@ -1,0 +1,232 @@
+<div class="data-sync-container">
+  <div class="page-header">
+    <h1>Data Sync</h1>
+    <p class="subtitle">External data synchronization status and management</p>
+  </div>
+
+  <mat-tab-group (selectedIndexChange)="onTabChange($event)" [selectedIndex]="selectedTabIndex" animationDuration="200ms">
+
+    <!-- Tab 1: Sync Status -->
+    <mat-tab label="Status">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-raised-button color="primary" (click)="triggerSync()" [disabled]="isTriggeringSync" type="button">
+            <mat-icon>sync</mat-icon>
+            {{ isTriggeringSync ? 'Triggering...' : 'Trigger Sync' }}
+          </button>
+          <button mat-stroked-button (click)="loadStatus()" [disabled]="isLoadingStatus" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingStatus" mode="indeterminate"></mat-progress-bar>
+
+        <mat-card *ngIf="syncStatus" class="status-card">
+          <mat-card-header>
+            <mat-card-title>Worker Status</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="status-grid">
+              <div class="status-item">
+                <span class="label">Status</span>
+                <span class="value" [ngClass]="getStatusClass(syncStatus.status)">{{ syncStatus.status }}</span>
+              </div>
+              <div class="status-item" *ngIf="syncStatus.message">
+                <span class="label">Message</span>
+                <span class="value">{{ syncStatus.message }}</span>
+              </div>
+              <div class="status-item" *ngIf="syncStatus.lastSync">
+                <span class="label">Last Sync</span>
+                <span class="value">{{ formatDate(syncStatus.lastSync) }}</span>
+              </div>
+              <div class="status-item" *ngIf="syncStatus.nextSync">
+                <span class="label">Next Sync</span>
+                <span class="value">{{ formatDate(syncStatus.nextSync) }}</span>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card *ngIf="!syncStatus && !isLoadingStatus" class="empty-card">
+          <mat-card-content>
+            <mat-icon>info</mat-icon>
+            <p>No sync status available. The data sync worker may not be initialized.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: History -->
+    <mat-tab label="Sync History">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <mat-form-field appearance="outline" class="limit-field">
+            <mat-label>Limit</mat-label>
+            <mat-select [(value)]="historyLimit" (selectionChange)="loadHistory()">
+              <mat-option [value]="10">10</mat-option>
+              <mat-option [value]="20">20</mat-option>
+              <mat-option [value]="50">50</mat-option>
+              <mat-option [value]="100">100</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <button mat-stroked-button (click)="loadHistory()" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingHistory" mode="indeterminate"></mat-progress-bar>
+
+        <div class="table-container" *ngIf="syncHistory.length > 0">
+          <table mat-table [dataSource]="syncHistory" class="full-width-table">
+            <ng-container matColumnDef="SnapshotDate">
+              <th mat-header-cell *matHeaderCellDef>Snapshot Date</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.SnapshotDate) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="TotalBookings">
+              <th mat-header-cell *matHeaderCellDef>Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.TotalBookings }}</td>
+            </ng-container>
+            <ng-container matColumnDef="TotalRevenue">
+              <th mat-header-cell *matHeaderCellDef>Revenue</th>
+              <td mat-cell *matCellDef="let row">{{ formatCurrency(row.TotalRevenue) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="TotalProfit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row">{{ formatCurrency(row.TotalProfit) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="ActiveRooms">
+              <th mat-header-cell *matHeaderCellDef>Active Rooms</th>
+              <td mat-cell *matCellDef="let row">{{ row.ActiveRooms }}</td>
+            </ng-container>
+            <ng-container matColumnDef="OccupancyRate">
+              <th mat-header-cell *matHeaderCellDef>Occupancy</th>
+              <td mat-cell *matCellDef="let row">{{ formatPercent(row.OccupancyRate) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="historyDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: historyDisplayedColumns;"></tr>
+          </table>
+        </div>
+
+        <mat-card *ngIf="syncHistory.length === 0 && !isLoadingHistory" class="empty-card">
+          <mat-card-content>
+            <mat-icon>history</mat-icon>
+            <p>No sync history available yet.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Active Rooms -->
+    <mat-tab label="Active Rooms">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-stroked-button (click)="loadActiveRooms()" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+          <span class="room-count" *ngIf="activeRooms.length > 0">
+            {{ activeRooms.length }} active rooms
+            <span *ngIf="lastRoomUpdate"> | Last update: {{ formatDate(lastRoomUpdate) }}</span>
+          </span>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingRooms" mode="indeterminate"></mat-progress-bar>
+
+        <div class="table-container" *ngIf="activeRooms.length > 0">
+          <table mat-table [dataSource]="activeRooms" class="full-width-table">
+            <ng-container matColumnDef="HotelName">
+              <th mat-header-cell *matHeaderCellDef>Hotel</th>
+              <td mat-cell *matCellDef="let row">{{ row.HotelName }}</td>
+            </ng-container>
+            <ng-container matColumnDef="RoomType">
+              <th mat-header-cell *matHeaderCellDef>Room Type</th>
+              <td mat-cell *matCellDef="let row">{{ row.RoomType }}</td>
+            </ng-container>
+            <ng-container matColumnDef="Available">
+              <th mat-header-cell *matHeaderCellDef>Available</th>
+              <td mat-cell *matCellDef="let row">{{ row.Available }}</td>
+            </ng-container>
+            <ng-container matColumnDef="Price">
+              <th mat-header-cell *matHeaderCellDef>Price</th>
+              <td mat-cell *matCellDef="let row">{{ formatCurrency(row.Price) }}</td>
+            </ng-container>
+            <ng-container matColumnDef="LastUpdate">
+              <th mat-header-cell *matHeaderCellDef>Last Update</th>
+              <td mat-cell *matCellDef="let row">{{ formatDate(row.LastUpdate) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="roomDisplayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: roomDisplayedColumns;"></tr>
+          </table>
+        </div>
+
+        <mat-card *ngIf="activeRooms.length === 0 && !isLoadingRooms" class="empty-card">
+          <mat-card-content>
+            <mat-icon>hotel</mat-icon>
+            <p>No active rooms found.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+    <!-- Tab 4: Dashboard Snapshot -->
+    <mat-tab label="Dashboard Snapshot">
+      <div class="tab-content">
+        <div class="actions-bar">
+          <button mat-stroked-button (click)="loadDashboardInfo()" type="button">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+        </div>
+
+        <mat-progress-bar *ngIf="isLoadingDashboard" mode="indeterminate"></mat-progress-bar>
+
+        <div class="kpi-grid" *ngIf="dashboardInfo">
+          <mat-card class="kpi-card">
+            <mat-card-content>
+              <div class="kpi-value">{{ dashboardInfo.totalBookings }}</div>
+              <div class="kpi-label">Total Bookings</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="kpi-card">
+            <mat-card-content>
+              <div class="kpi-value">{{ formatCurrency(dashboardInfo.totalRevenue) }}</div>
+              <div class="kpi-label">Total Revenue</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="kpi-card">
+            <mat-card-content>
+              <div class="kpi-value">{{ formatCurrency(dashboardInfo.totalProfit) }}</div>
+              <div class="kpi-label">Total Profit</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="kpi-card">
+            <mat-card-content>
+              <div class="kpi-value">{{ dashboardInfo.activeRooms }}</div>
+              <div class="kpi-label">Active Rooms</div>
+            </mat-card-content>
+          </mat-card>
+          <mat-card class="kpi-card">
+            <mat-card-content>
+              <div class="kpi-value">{{ formatPercent(dashboardInfo.occupancyRate) }}</div>
+              <div class="kpi-label">Occupancy Rate</div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <p class="snapshot-date" *ngIf="dashboardInfo?.snapshotDate">
+          Snapshot from: {{ formatDate(dashboardInfo!.snapshotDate) }}
+        </p>
+
+        <mat-card *ngIf="!dashboardInfo && !isLoadingDashboard" class="empty-card">
+          <mat-card-content>
+            <mat-icon>dashboard</mat-icon>
+            <p>No dashboard snapshot available. Trigger a sync first.</p>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

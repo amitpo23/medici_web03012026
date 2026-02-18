@@ -96,10 +96,19 @@
       </span>
     </div>
     
-    <!-- Insert Opportunity Button -->
-    <button mat-raised-button color="primary" class="w-full" (click)="onInsertClick()">
-      <mat-icon>add_circle</mat-icon>
-      <span class="ml-2">הוסף הזדמנות</span>
-    </button>
+    <!-- Buy / Insert Buttons -->
+    <div class="flex gap-2">
+      <button mat-raised-button color="accent" class="flex-1"
+              (click)="onBuyClick()"
+              [disabled]="isBuying || !opportunity.hotelId">
+        <mat-spinner *ngIf="isBuying" diameter="18" class="inline-block"></mat-spinner>
+        <mat-icon *ngIf="!isBuying">shopping_cart</mat-icon>
+        <span class="ml-1">{{ isBuying ? 'קונה...' : 'קנה' }}</span>
+      </button>
+      <button mat-stroked-button color="primary" class="flex-1" (click)="onInsertClick()">
+        <mat-icon>add_circle</mat-icon>
+        <span class="ml-1">הוסף</span>
+      </button>
+    </div>
   </div>
 </mat-card>

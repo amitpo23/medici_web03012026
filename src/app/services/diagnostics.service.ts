@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from 'src/app/environments/environment';
 
 export interface CancellationError {
   ErrorMessage: string;
@@ -80,7 +81,7 @@ export interface InventoryAnalysis {
   providedIn: 'root'
 })
 export class DiagnosticsService {
-  private apiUrl = '/api/diagnostics';
+  private apiUrl = `${environment.baseUrl}api/diagnostics`;
 
   constructor(private http: HttpClient) { }
 

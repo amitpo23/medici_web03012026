@@ -207,6 +207,8 @@ export class AIPredictionService {
 
   /**
    * Insert opportunity to database
+   * Maps frontend field names to backend InsertOpp expected fields:
+   * startDateStr, endDateStr, boardlId, categorylId, buyPrice, pushPrice
    */
   insertOpportunity(opportunity: {
     hotelId: number;
@@ -219,7 +221,15 @@ export class AIPredictionService {
     confidence: number;
     source: string;
   }): Observable<{ success: boolean; error?: string; opportunityId?: number }> {
-    return this.http.post<any>(`${this.baseUrl}Opportunity/InsertOpp`, opportunity);
+    return this.http.post<any>(`${this.baseUrl}Opportunity/InsertOpp`, {
+      hotelId: opportunity.hotelId,
+      startDateStr: opportunity.checkIn,
+      endDateStr: opportunity.checkOut,
+      boardlId: 1,
+      categorylId: 1,
+      buyPrice: opportunity.buyPrice,
+      pushPrice: opportunity.sellPrice
+    });
   }
 
   /**   * Push opportunities to Zenith
@@ -274,6 +284,45 @@ export class AIPredictionService {
       case 'HOLD': return 'bg-blue-500 text-white';
       default: return 'bg-gray-500 text-white';
     }
+  }
+
+  /**
+   * Search city with forward search - checks DB + runs live supplier search
+   */
+  searchCityWithForwardSearch(cityCode: string, options?: {
+    checkInFrom?: string;
+    checkInTo?: string;
+    nights?: number;
+    minProfit?: number;
+  }): Observable<{
+    success: boolean;
+    opportunities: AIOpportunity[];
+    fromDb: number;
+    fromSearch: number;
+    total: number;
+  }> {
+    return this.http.post<any>(`${this.baseUrl}ai/search-city-forward`, {
+      cityCode,
+      checkInFrom: options?.checkInFrom || new Date().toISOString().split('T')[0],
+      checkInTo: options?.checkInTo || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      nights: options?.nights || 3,
+      minProfit: options?.minProfit || 10
+    });
+  }
+
+  /**
+   * Buy opportunity - Insert to DB via InsertOpp endpoint
+   */
+  buyOpportunity(opportunity: {
+    hotelId: number;
+    startDateStr: string;
+    endDateStr: string;
+    boardlId: number;
+    categorylId: number;
+    buyPrice: number;
+    pushPrice: number;
+  }): Observable<{ success: boolean; opportunityId?: number; id?: number; error?: string }> {
+    return this.http.post<any>(`${this.baseUrl}Opportunity/InsertOpp`, opportunity);
   }
 
   /**

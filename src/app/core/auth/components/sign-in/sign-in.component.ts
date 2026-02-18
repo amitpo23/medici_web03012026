@@ -20,7 +20,8 @@ export class AuthSignInComponent implements OnInit {
     //     message: ''
     // };
     signInForm: FormGroup;
-    showAlert: boolean = false;
+    showAlert = false;
+    showPassword = false;
 
     /**
      * Constructor

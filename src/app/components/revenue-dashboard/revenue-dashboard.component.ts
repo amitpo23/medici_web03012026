@@ -30,7 +30,7 @@ export class RevenueDashboardComponent implements OnInit, OnDestroy {
   constructor(public revenueService: RevenueAnalyticsService, private router: Router) {}
 
   goBack(): void {
-    this.router.navigate(['/system']);
+    this.router.navigate(['/dashboard']);
   }
 
   ngOnInit(): void {

@@ -127,7 +127,7 @@ export class LogsViewerComponent implements OnInit, OnDestroy {
   constructor(public logsService: LogsService, private router: Router) {}
 
   goBack(): void {
-    this.router.navigate(['/system']);
+    this.router.navigate(['/dashboard']);
   }
 
   ngOnInit(): void {

@@ -1,0 +1,473 @@
+<div class="scraper-container p-6 space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+        <mat-icon class="text-indigo-600">travel_explore</mat-icon>
+        Scraper Management
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1">
+        Scrape competitor hotel prices, compare across platforms, and manage browser sessions
+      </p>
+    </div>
+    <div class="flex flex-wrap items-center gap-3">
+      <button mat-stroked-button (click)="loadSessions()" [disabled]="sessionsLoading" type="button">
+        <mat-icon>refresh</mat-icon>
+        Refresh Sessions
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <mat-tab-group [(selectedIndex)]="selectedTabIndex" animationDuration="0ms">
+
+    <!-- Tab 1: Scrape Prices -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">price_check</mat-icon>
+        Scrape Prices
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+
+        <!-- Scrape Form -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-indigo-600">search</mat-icon>
+              Scrape Competitor Prices
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="scrape-form grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Hotel Name</mat-label>
+                <input matInput [(ngModel)]="scrapeHotelName" placeholder="e.g. David Intercontinental Tel Aviv">
+                <mat-icon matSuffix>hotel</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Check-In Date</mat-label>
+                <input matInput [(ngModel)]="scrapeCheckIn" [matDatepicker]="scrapeCheckInPicker" placeholder="YYYY-MM-DD">
+                <mat-datepicker-toggle matSuffix [for]="scrapeCheckInPicker"></mat-datepicker-toggle>
+                <mat-datepicker #scrapeCheckInPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Check-Out Date</mat-label>
+                <input matInput [(ngModel)]="scrapeCheckOut" [matDatepicker]="scrapeCheckOutPicker" placeholder="YYYY-MM-DD">
+                <mat-datepicker-toggle matSuffix [for]="scrapeCheckOutPicker"></mat-datepicker-toggle>
+                <mat-datepicker #scrapeCheckOutPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Guests</mat-label>
+                <input matInput type="number" [(ngModel)]="scrapeGuests" min="1" max="10">
+                <mat-icon matSuffix>people</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Source Selection -->
+            <div class="source-selection mt-4">
+              <span class="font-semibold text-gray-700 dark:text-gray-300 mr-3">Sources (optional):</span>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <button *ngFor="let source of availableSources"
+                        mat-stroked-button
+                        [class.source-selected]="isSourceSelected(source)"
+                        (click)="toggleSource(source)"
+                        type="button">
+                  <mat-icon class="mr-1">language</mat-icon>
+                  {{ source }}
+                </button>
+              </div>
+              <span class="text-xs text-gray-400 mt-1 block">
+                Leave empty to scrape all sources
+              </span>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-6">
+              <button mat-flat-button color="primary"
+                      (click)="onScrapeSubmit()"
+                      [disabled]="scrapeLoading || !scrapeHotelName || !scrapeCheckIn || !scrapeCheckOut"
+                      type="button">
+                <mat-icon>travel_explore</mat-icon>
+                {{ scrapeLoading ? 'Scraping...' : 'Scrape Prices' }}
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Loading -->
+        <div *ngIf="scrapeLoading" class="flex justify-center py-4">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Scrape Results -->
+        <mat-card *ngIf="scrapePrices.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-green-600">receipt_long</mat-icon>
+              Scrape Results ({{ scrapePrices.length }})
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="overflow-x-auto">
+              <table class="scraper-table w-full">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Hotel</th>
+                    <th>Check-In</th>
+                    <th>Check-Out</th>
+                    <th>Price</th>
+                    <th>Currency</th>
+                    <th>Scraped At</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let price of scrapePrices">
+                    <td>
+                      <span class="source-badge" [ngClass]="getSourceClass(price.source)">
+                        {{ price.source }}
+                      </span>
+                    </td>
+                    <td class="font-semibold">{{ price.hotel }}</td>
+                    <td class="whitespace-nowrap">{{ price.checkIn }}</td>
+                    <td class="whitespace-nowrap">{{ price.checkOut }}</td>
+                    <td class="font-bold text-green-700 dark:text-green-400">
+                      {{ formatCurrency(price.price, price.currency) }}
+                    </td>
+                    <td>{{ price.currency }}</td>
+                    <td class="whitespace-nowrap text-sm text-gray-500">{{ price.scrapedAt | date:'short' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- No Results Message -->
+        <mat-card *ngIf="scrapeResult && scrapePrices.length === 0 && !scrapeLoading">
+          <mat-card-content class="text-center py-8 text-gray-500">
+            <mat-icon class="text-gray-400" style="font-size: 48px; width: 48px; height: 48px;">search_off</mat-icon>
+            <p class="mt-4">No prices found for this search. Try a different hotel or date range.</p>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </mat-tab>
+
+    <!-- Tab 2: Compare Prices -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">compare_arrows</mat-icon>
+        Compare Prices
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+
+        <!-- Compare Form -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-blue-600">compare_arrows</mat-icon>
+              Multi-Source Price Comparison
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="compare-form grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Hotel Name</mat-label>
+                <input matInput [(ngModel)]="compareHotelName" placeholder="e.g. David Intercontinental Tel Aviv">
+                <mat-icon matSuffix>hotel</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Check-In Date</mat-label>
+                <input matInput [(ngModel)]="compareCheckIn" [matDatepicker]="compareCheckInPicker" placeholder="YYYY-MM-DD">
+                <mat-datepicker-toggle matSuffix [for]="compareCheckInPicker"></mat-datepicker-toggle>
+                <mat-datepicker #compareCheckInPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Check-Out Date</mat-label>
+                <input matInput [(ngModel)]="compareCheckOut" [matDatepicker]="compareCheckOutPicker" placeholder="YYYY-MM-DD">
+                <mat-datepicker-toggle matSuffix [for]="compareCheckOutPicker"></mat-datepicker-toggle>
+                <mat-datepicker #compareCheckOutPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Guests</mat-label>
+                <input matInput type="number" [(ngModel)]="compareGuests" min="1" max="10">
+                <mat-icon matSuffix>people</mat-icon>
+              </mat-form-field>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="mt-6">
+              <button mat-flat-button color="primary"
+                      (click)="onCompareSubmit()"
+                      [disabled]="compareLoading || !compareHotelName || !compareCheckIn || !compareCheckOut"
+                      type="button">
+                <mat-icon>compare_arrows</mat-icon>
+                {{ compareLoading ? 'Comparing...' : 'Compare Prices' }}
+              </button>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Loading -->
+        <div *ngIf="compareLoading" class="flex justify-center py-4">
+          <mat-spinner diameter="40"></mat-spinner>
+        </div>
+
+        <!-- Cheapest Banner -->
+        <mat-card *ngIf="compareCheapest" class="cheapest-banner">
+          <mat-card-content>
+            <div class="flex items-center gap-4">
+              <mat-icon class="text-green-600 cheapest-icon">emoji_events</mat-icon>
+              <div>
+                <div class="text-lg font-bold text-green-700 dark:text-green-400">
+                  Best Price: {{ formatCurrency(compareCheapest.price, compareCheapest.currency) }}
+                </div>
+                <div class="text-sm text-gray-500">
+                  Found on <span class="font-semibold">{{ compareCheapest.source }}</span>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Comparison Cards -->
+        <div class="comparison-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" *ngIf="comparePrices.length > 0">
+          <mat-card *ngFor="let price of comparePrices"
+                    class="comparison-card"
+                    [class.comparison-card-cheapest]="isCheapest(price)">
+            <mat-card-header>
+              <mat-card-title>
+                <span class="source-badge" [ngClass]="getSourceClass(price.source)">
+                  {{ price.source }}
+                </span>
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content class="text-center mt-4">
+              <div class="comparison-price text-3xl font-bold"
+                   [class.text-green-700]="isCheapest(price)"
+                   [class.text-gray-900]="!isCheapest(price)">
+                {{ formatCurrency(price.price, price.currency) }}
+              </div>
+              <div class="text-sm text-gray-500 mt-2">
+                {{ price.checkIn }} - {{ price.checkOut }}
+              </div>
+              <div *ngIf="isCheapest(price)" class="cheapest-label mt-2">
+                <mat-icon class="text-green-600">check_circle</mat-icon>
+                <span class="text-green-600 font-semibold ml-1">Best Price</span>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Comparison Table -->
+        <mat-card *ngIf="comparePrices.length > 0">
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-blue-600">table_chart</mat-icon>
+              Detailed Comparison
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="overflow-x-auto">
+              <table class="scraper-table w-full">
+                <thead>
+                  <tr>
+                    <th>Source</th>
+                    <th>Price</th>
+                    <th>Currency</th>
+                    <th>Check-In</th>
+                    <th>Check-Out</th>
+                    <th>Scraped At</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let price of comparePrices" [class.cheapest-row]="isCheapest(price)">
+                    <td>
+                      <span class="source-badge" [ngClass]="getSourceClass(price.source)">
+                        {{ price.source }}
+                      </span>
+                    </td>
+                    <td class="font-bold">{{ formatCurrency(price.price, price.currency) }}</td>
+                    <td>{{ price.currency }}</td>
+                    <td class="whitespace-nowrap">{{ price.checkIn }}</td>
+                    <td class="whitespace-nowrap">{{ price.checkOut }}</td>
+                    <td class="whitespace-nowrap text-sm text-gray-500">{{ price.scrapedAt | date:'short' }}</td>
+                    <td>
+                      <span *ngIf="isCheapest(price)" class="cheapest-badge">Best</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- No Results Message -->
+        <mat-card *ngIf="compareResult && comparePrices.length === 0 && !compareLoading">
+          <mat-card-content class="text-center py-8 text-gray-500">
+            <mat-icon class="text-gray-400" style="font-size: 48px; width: 48px; height: 48px;">search_off</mat-icon>
+            <p class="mt-4">No comparison results found. Try a different hotel or date range.</p>
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </mat-tab>
+
+    <!-- Tab 3: Sessions & Test -->
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <mat-icon class="mr-2">dns</mat-icon>
+        Sessions & Test
+      </ng-template>
+
+      <div class="tab-content space-y-6 mt-4">
+
+        <!-- Active Sessions -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-purple-600">dns</mat-icon>
+              Active Browser Sessions
+            </mat-card-title>
+            <div class="ml-auto">
+              <button mat-icon-button (click)="loadSessions()" [disabled]="sessionsLoading" matTooltip="Refresh sessions" type="button">
+                <mat-icon>refresh</mat-icon>
+              </button>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+
+            <!-- Sessions Loading -->
+            <div *ngIf="sessionsLoading" class="flex justify-center py-4">
+              <mat-spinner diameter="32"></mat-spinner>
+            </div>
+
+            <!-- No Sessions -->
+            <div *ngIf="!sessionsLoading && sessions.length === 0" class="text-center py-8 text-gray-500">
+              <mat-icon class="text-gray-400" style="font-size: 48px; width: 48px; height: 48px;">cloud_off</mat-icon>
+              <p class="mt-4">No active browser sessions</p>
+            </div>
+
+            <!-- Sessions List -->
+            <div *ngIf="sessions.length > 0" class="overflow-x-auto">
+              <table class="scraper-table w-full">
+                <thead>
+                  <tr>
+                    <th>Session ID</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                    <th>Last Activity</th>
+                    <th>URL</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let session of sessions">
+                    <td class="font-mono text-sm">{{ session.id }}</td>
+                    <td>
+                      <span class="session-status-badge" [ngClass]="getSessionStatusClass(session.status)">
+                        {{ session.status }}
+                      </span>
+                    </td>
+                    <td class="whitespace-nowrap">{{ session.createdAt | date:'short' }}</td>
+                    <td class="whitespace-nowrap">{{ session.lastActivity ? (session.lastActivity | date:'short') : '-' }}</td>
+                    <td class="text-sm text-gray-500 truncate max-w-xs">{{ session.url || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Test Scraper -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title class="flex items-center gap-2">
+              <mat-icon class="text-orange-600">science</mat-icon>
+              Test Scraper
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <p class="text-gray-500 dark:text-gray-400 mb-4">
+              Run a test scrape against a known hotel (David Intercontinental Tel Aviv) to verify the scraper is working correctly.
+            </p>
+
+            <button mat-flat-button color="accent"
+                    (click)="runTest()"
+                    [disabled]="testLoading"
+                    type="button">
+              <mat-icon>science</mat-icon>
+              {{ testLoading ? 'Running Test...' : 'Run Test Scrape' }}
+            </button>
+
+            <!-- Test Loading -->
+            <div *ngIf="testLoading" class="flex justify-center py-4">
+              <mat-spinner diameter="32"></mat-spinner>
+            </div>
+
+            <!-- Test Result -->
+            <div *ngIf="testResult" class="test-result mt-4">
+              <mat-card [class.test-success]="testResult.test === 'completed'"
+                        [class.test-failure]="testResult.test === 'failed'"
+                        class="test-result-card">
+                <mat-card-content>
+                  <div class="flex items-center gap-3">
+                    <mat-icon *ngIf="testResult.test === 'completed'" class="text-green-600">check_circle</mat-icon>
+                    <mat-icon *ngIf="testResult.test === 'failed'" class="text-red-600">cancel</mat-icon>
+                    <div>
+                      <div class="font-bold text-lg">
+                        Test {{ testResult.test === 'completed' ? 'Passed' : 'Failed' }}
+                      </div>
+                      <div *ngIf="testResult.timestamp" class="text-sm text-gray-500">
+                        {{ testResult.timestamp | date:'medium' }}
+                      </div>
+                      <div *ngIf="testResult.error" class="text-sm text-red-600 mt-1">
+                        Error: {{ testResult.error }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Test Result Details -->
+                  <div *ngIf="testResult.result" class="mt-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                      <div class="text-gray-500">Hotel:</div>
+                      <div class="font-semibold">{{ testResult.result.hotel || 'David Intercontinental Tel Aviv' }}</div>
+                      <div class="text-gray-500">Source:</div>
+                      <div class="font-semibold">{{ testResult.result.source || '-' }}</div>
+                      <div class="text-gray-500">Price:</div>
+                      <div class="font-bold text-green-700 dark:text-green-400">
+                        {{ testResult.result.price ? formatCurrency(testResult.result.price, testResult.result.currency || 'EUR') : '-' }}
+                      </div>
+                      <div class="text-gray-500">Success:</div>
+                      <div>
+                        <span class="font-semibold" [class.text-green-600]="testResult.result.success" [class.text-red-600]="!testResult.result.success">
+                          {{ testResult.result.success ? 'Yes' : 'No' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+          </mat-card-content>
+        </mat-card>
+
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+
+</div>

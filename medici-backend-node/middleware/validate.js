@@ -126,6 +126,71 @@ const schemas = {
     source: Joi.string().max(50)
   }),
 
+  // Sign-in
+  signIn: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(1).max(200).required()
+  }),
+
+  // Insert opportunity (InsertOpp body)
+  insertOpp: Joi.object({
+    hotelId: Joi.number().integer().positive().required(),
+    startDateStr: Joi.string().required(),
+    endDateStr: Joi.string().required(),
+    boardlId: Joi.number().integer().positive(),
+    categorylId: Joi.number().integer().positive(),
+    buyPrice: Joi.number().positive().required(),
+    pushPrice: Joi.number().positive().required(),
+    maxRooms: Joi.number().integer().min(1).default(1)
+  }),
+
+  // PreBook body
+  preBook: Joi.object({
+    hotelId: Joi.number().integer().positive().required(),
+    dateFrom: Joi.string().required(),
+    dateTo: Joi.string().required(),
+    opportunityId: Joi.number().integer().positive().allow(null),
+    roomCode: Joi.string().allow(null, ''),
+    boardId: Joi.number().integer().positive().allow(null),
+    categoryId: Joi.number().integer().positive().allow(null),
+    adults: Joi.number().integer().min(1).max(10).default(2),
+    paxChildren: Joi.array().items(Joi.number().integer().min(0).max(17)).default([]),
+    searchToken: Joi.string().allow(null, ''),
+    roomId: Joi.any(),
+    rateId: Joi.any()
+  }),
+
+  // Confirm booking body
+  confirmBooking: Joi.object({
+    preBookId: Joi.number().integer().positive().required(),
+    guestName: Joi.string().max(200),
+    guestEmail: Joi.string().email().allow(null, ''),
+    guestPhone: Joi.string().max(30).allow(null, ''),
+    specialRequests: Joi.string().max(500).allow(null, '')
+  }),
+
+  // Update price body
+  updatePrice: Joi.object({
+    id: Joi.number().integer().positive().required(),
+    newPrice: Joi.number().min(0).required()
+  }),
+
+  // Cancel booking body
+  cancelBooking: Joi.object({
+    bookId: Joi.number().integer().positive().required(),
+    reason: Joi.string().max(500).default('User requested cancellation'),
+    cancelWithSupplier: Joi.boolean().default(true)
+  }),
+
+  // Scraper request body
+  scraperRequest: Joi.object({
+    hotelName: Joi.string().min(2).max(200).required(),
+    checkIn: Joi.string().required(),
+    checkOut: Joi.string().required(),
+    guests: Joi.number().integer().min(1).max(10).default(2),
+    sources: Joi.array().items(Joi.string())
+  }),
+
   // Zenith push
   zenithPush: Joi.object({
     opportunityIds: Joi.array().items(Joi.number().integer().positive()).min(1).required(),

@@ -37,41 +37,153 @@
       ></app-market-analysis-panel>
     </div>
 
-    <!-- Center Panel - Charts & Order Book -->
+    <!-- Center Panel -->
     <div class="center-panel">
-      <!-- Trade Table Header -->
+      <!-- City/Hotel Selector Bar -->
+      <div class="selector-bar">
+        <mat-form-field appearance="outline" class="selector-field">
+          <mat-label>City</mat-label>
+          <mat-select [(value)]="selectedCity" (selectionChange)="onCityChange($event.value)">
+            <mat-option value="">All Cities</mat-option>
+            <mat-option *ngFor="let city of cities" [value]="city.cityName">
+              {{ city.cityName }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>location_city</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="selector-field">
+          <mat-label>Hotel</mat-label>
+          <mat-select [(value)]="selectedHotelDropdownId" (selectionChange)="onHotelDropdownChange($event.value)">
+            <mat-option [value]="0">All Hotels</mat-option>
+            <mat-option *ngFor="let hotel of hotels" [value]="hotel.hotelId">
+              {{ hotel.hotelName }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>hotel</mat-icon>
+        </mat-form-field>
+      </div>
+
+      <!-- Demand Forecast Indicator -->
+      <div class="demand-forecast-bar" *ngIf="demandForecast?.success && demandForecast?.analysis">
+        <div class="forecast-header">
+          <mat-icon>trending_up</mat-icon>
+          <span class="forecast-title">Demand Forecast</span>
+          <span class="forecast-city" *ngIf="selectedCity">{{ selectedCity }}</span>
+        </div>
+        <div class="forecast-metrics">
+          <div class="forecast-metric" *ngIf="demandForecast.analysis.bookingVelocity">
+            <span class="metric-label">Velocity</span>
+            <span class="metric-value">
+              {{ demandForecast.analysis.bookingVelocity.daily || '0' }}/day
+            </span>
+          </div>
+          <div class="forecast-metric" *ngIf="demandForecast.analysis.bookingVelocity">
+            <span class="metric-label">Trend</span>
+            <span class="metric-value trend"
+                  [class.up]="demandForecast.analysis.bookingVelocity.trend === 'accelerating'"
+                  [class.down]="demandForecast.analysis.bookingVelocity.trend === 'decelerating'">
+              {{ demandForecast.analysis.bookingVelocity.trend || 'stable' }}
+            </span>
+          </div>
+          <div class="forecast-metric" *ngIf="demandForecast.analysis.hotPeriods?.length">
+            <span class="metric-label">Hot Period</span>
+            <span class="metric-value hot">
+              {{ demandForecast.analysis.hotPeriods[0]?.month || 'N/A' }}
+            </span>
+          </div>
+          <div class="forecast-metric" *ngIf="demandForecast.analysis.searchVelocity">
+            <span class="metric-label">Search Activity</span>
+            <span class="metric-value">
+              {{ demandForecast.analysis.searchVelocity.daily || '0' }}/day
+            </span>
+          </div>
+        </div>
+        <div class="forecast-recommendation" *ngIf="demandForecast.analysis.recommendation">
+          <mat-icon>lightbulb</mat-icon>
+          <span>{{ demandForecast.analysis.recommendation }}</span>
+        </div>
+      </div>
+      <div class="forecast-loading" *ngIf="demandLoading">
+        <mat-spinner diameter="24"></mat-spinner>
+        <span>Loading forecast...</span>
+      </div>
+
+      <!-- Trade Table Section -->
       <div class="trade-table-section">
+        <!-- Filter Row -->
+        <div class="table-filters">
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Min Profit ($)</mat-label>
+            <input matInput type="number" [(ngModel)]="minProfit"
+                   (ngModelChange)="onMinProfitChange($event)" placeholder="0">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Period</mat-label>
+            <mat-select [(value)]="periodFilter" (selectionChange)="onPeriodFilterChange($event.value)">
+              <mat-option value="all">All Periods</mat-option>
+              <mat-option value="0-7">Short-term (0-7d)</mat-option>
+              <mat-option value="7-30">Medium (7-30d)</mat-option>
+              <mat-option value="30-60">Long (30-60d)</mat-option>
+              <mat-option value="60+">Extended (60+d)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <span class="filter-count">{{ filteredOpportunities.length }} opportunities</span>
+        </div>
+
+        <!-- Enhanced Table -->
         <table class="trade-table">
           <thead>
             <tr>
               <th>Hotel</th>
-              <th>Location</th>
+              <th>City</th>
               <th>Check-in</th>
-              <th>Check-out</th>
+              <th>Days</th>
               <th>Room</th>
               <th>Buy</th>
-              <th>
-                <div class="pagination-dots">
-                  <span class="dot active"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                  <span class="dot"></span>
-                </div>
-              </th>
+              <th>Sell</th>
+              <th>Profit</th>
+              <th>Margin</th>
+              <th>Confidence</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of opportunities; let i = index"
+            <tr *ngFor="let item of filteredOpportunities; let i = index"
                 [class.selected]="selectedIndex === i"
                 (click)="selectOpportunity(i, item)">
               <td>{{ item.hotelName }}</td>
               <td>{{ item.city }}</td>
-              <td>{{ item.checkIn | date:'dd/MM/yyyy' }}</td>
-              <td>{{ item.checkOut | date:'dd/MM/yyyy' }}</td>
+              <td>{{ item.checkIn | date:'dd/MM' }}</td>
+              <td>
+                <span class="days-badge"
+                      [class.urgent]="item.daysToCheckIn <= 7"
+                      [class.soon]="item.daysToCheckIn > 7 && item.daysToCheckIn <= 30">
+                  {{ item.daysToCheckIn }}d
+                </span>
+              </td>
               <td>{{ item.roomType }}</td>
-              <td>{{ item.price }}$</td>
+              <td>{{ item.price | number:'1.0-0' }}$</td>
+              <td class="sell-price">{{ item.originalPrice | number:'1.0-0' }}$</td>
+              <td [class.positive]="item.expectedProfit > 0"
+                  [class.negative]="item.expectedProfit <= 0">
+                {{ item.expectedProfit > 0 ? '+' : '' }}{{ item.expectedProfit | number:'1.0-0' }}$
+              </td>
+              <td>
+                <span class="margin-badge"
+                      [class.good]="item.marginPercent >= 15"
+                      [class.ok]="item.marginPercent >= 5 && item.marginPercent < 15">
+                  {{ item.marginPercent }}%
+                </span>
+              </td>
+              <td>
+                <div class="confidence-pill"
+                     [style.background]="getConfidenceColor(item.confidence)">
+                  {{ item.confidence }}%
+                </div>
+              </td>
               <td>
                 <button class="btn-gold" (click)="onBuyOpportunity(item); $event.stopPropagation()">
                   <mat-icon>shopping_cart</mat-icon>
@@ -79,20 +191,31 @@
                 </button>
               </td>
             </tr>
+            <tr *ngIf="filteredOpportunities.length === 0">
+              <td colspan="11" class="empty-row">
+                No opportunities match your filters
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
 
+      <!-- AI Trading Signals -->
+      <div class="trading-signals-section">
+        <app-trading-signals
+          (signalSelected)="onSignalSelected($event)"
+          (buyClicked)="onBuySignal($event)"
+        ></app-trading-signals>
+      </div>
+
       <!-- Insights Section with Charts -->
       <div class="insights-section">
-        <!-- ML Insights Chart - Price vs DaysBeforeArrival -->
         <app-insights-chart
           [hotelId]="selectedHotelId"
-          [city]="selectedHotelName ? '' : 'TLV'"
+          [city]="selectedCity || (selectedHotelName ? '' : 'TLV')"
           [height]="220"
         ></app-insights-chart>
 
-        <!-- Original Price Chart -->
         <app-price-chart
           #priceChart
           [hotelId]="selectedHotelId"
@@ -103,6 +226,7 @@
       <!-- ML Analysis Panel -->
       <div class="ml-analysis-section">
         <app-ml-analysis-panel
+          [initialCity]="selectedCity"
           [initialHotelId]="selectedHotelId"
           (hotelSelected)="onHotelSelected($event)"
         ></app-ml-analysis-panel>
@@ -125,7 +249,7 @@
     ></app-hot-sale-sidebar>
   </div>
 
-  <!-- Bottom Panel - Portfolio Dashboard Link -->
+  <!-- Bottom Panel -->
   <div class="bottom-actions">
     <a mat-stroked-button routerLink="portfolio" class="action-btn portfolio-btn">
       <mat-icon>account_balance_wallet</mat-icon>

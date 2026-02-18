@@ -4,6 +4,7 @@ const { getPool } = require('../config/database');
 const logger = require('../config/logger');
 const InnstantClient = require('../services/innstant-client');
 const socketService = require('../services/socket-service');
+const { validate, schemas } = require('../middleware/validate');
 
 const innstantClient = new InnstantClient();
 
@@ -44,7 +45,7 @@ router.get('/Bookings', async (req, res) => {
         LEFT JOIN MED_PreBook pb ON b.PreBookId = pb.PreBookId
         LEFT JOIN MED_Board bd ON pb.BoardId = bd.BoardId
         LEFT JOIN MED_RoomCategory rc ON pb.CategoryId = rc.CategoryId
-        LEFT JOIN [MED_ֹOֹֹpportunities] o ON b.OpportunityId = o.OpportunityId
+        LEFT JOIN [MED_Opportunities] o ON b.OpportunityId = o.OpportunityId
         WHERE b.IsActive = 1
         ORDER BY b.DateInsert DESC
         OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
@@ -135,13 +136,9 @@ router.delete('/CancelBooking', async (req, res) => {
 });
 
 // Update price
-router.post('/UpdatePrice', async (req, res) => {
+router.post('/UpdatePrice', validate({ body: schemas.updatePrice }), async (req, res) => {
   try {
     const { id, newPrice } = req.body;
-
-    if (!id || newPrice == null || newPrice < 0) {
-      return res.status(400).json({ error: 'Valid id and non-negative newPrice are required' });
-    }
 
     const pool = await getPool();
     const result = await pool.request()
@@ -232,51 +229,9 @@ router.get('/Archive', async (req, res) => {
   }
 });
 
-// Confirm booking via Innstant
-router.post('/Confirm', async (req, res) => {
-  try {
-    const { preBookToken, guest, paymentInfo, opportunityId } = req.body;
-
-    if (!preBookToken || !guest || !guest.firstName || !guest.lastName) {
-      return res.status(400).json({
-        error: 'Required fields: preBookToken, guest (firstName, lastName)'
-      });
-    }
-
-    const result = await innstantClient.book({ preBookToken, guest, paymentInfo });
-
-    if (!result.success) {
-      // Log booking error
-      const pool = await getPool();
-      await pool.request()
-        .input('error', result.error)
-        .input('opportunityId', opportunityId || null)
-        .execute('MED_InsertBookError').catch(() => {});
-
-      return res.status(502).json({ error: 'Booking failed', details: result.error });
-    }
-
-    // Insert confirmed booking into database
-    const pool = await getPool();
-    await pool.request()
-      .input('bookingId', result.bookingId)
-      .input('confirmationNumber', result.confirmationNumber)
-      .input('supplierReference', result.supplierReference)
-      .input('opportunityId', opportunityId || null)
-      .execute('MED_InsertBook');
-
-    res.json({
-      success: true,
-      bookingId: result.bookingId,
-      confirmationNumber: result.confirmationNumber,
-      supplierReference: result.supplierReference,
-      status: result.status
-    });
-  } catch (err) {
-    logger.error('Error confirming booking', { error: err.message });
-    res.status(500).json({ error: 'Booking error' });
-  }
-});
+// Note: Old /Confirm endpoint removed - was shadowing the GPT implementation below (line ~411)
+// The newer implementation uses preBookId (matching frontend contract) and includes
+// Zenith push queuing + Slack notifications
 
 /**
  * POST /Book/PreBook
@@ -285,7 +240,7 @@ router.post('/Confirm', async (req, res) => {
  * - Saves to MED_PreBook table
  * - Returns prebookId + token for later confirmation
  */
-router.post('/PreBook', async (req, res) => {
+router.post('/PreBook', validate({ body: schemas.preBook }), async (req, res) => {
   try {
     const {
       opportunityId,    // Optional: link to existing opportunity
@@ -408,7 +363,7 @@ router.post('/PreBook', async (req, res) => {
  * - Queues for Zenith push
  * - Sends Slack notification
  */
-router.post('/Confirm', async (req, res) => {
+router.post('/Confirm', validate({ body: schemas.confirmBooking }), async (req, res) => {
   try {
     const {
       preBookId,
@@ -698,7 +653,7 @@ router.post('/ManualBook', async (req, res) => {
  * - Updates MED_Book (IsActive=0)
  * - Sends Slack notification
  */
-router.delete('/CancelDirect', async (req, res) => {
+router.delete('/CancelDirect', validate({ body: schemas.cancelBooking }), async (req, res) => {
   try {
     const {
       bookId,

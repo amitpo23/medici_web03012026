@@ -281,7 +281,7 @@ router.post('/OTA_HotelResNotifRQ', parseXML, async (req, res) => {
           await pool.request()
             .input('bookId', bookId)
             .query(`
-              UPDATE [MED_ֹOֹֹpportunities]
+              UPDATE [MED_Opportunities]
               SET IsSale = 1,
                   Lastupdate = GETDATE()
               WHERE OpportunityId IN (
@@ -468,7 +468,7 @@ router.post('/push-batch', async (req, res) => {
         h.InvTypeCode as DefaultInvTypeCode,
         h.Name as HotelName,
         b.BoardCode as MealPlan
-      FROM [MED_ֹOֹֹpportunities] o
+      FROM [MED_Opportunities] o
       LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
       LEFT JOIN MED_Board b ON o.BoardId = b.BoardId
       WHERE o.OpportunityId IN (${placeholders})
@@ -529,7 +529,7 @@ router.post('/push-batch', async (req, res) => {
             .input('oppId', opp.OpportunityId)
             .input('datePush', new Date())
             .query(`
-              UPDATE [MED_ֹOֹֹpportunities]
+              UPDATE [MED_Opportunities]
               SET IsPush = 1, Lastupdate = @datePush
               WHERE OpportunityId = @oppId
             `);
@@ -783,7 +783,7 @@ router.get('/push-history', async (req, res) => {
         pl.ProcessingTimeMs,
         h.Name as HotelName
       FROM MED_PushLog pl
-      LEFT JOIN [MED_ֹOֹֹpportunities] o ON pl.OpportunityId = o.OpportunityId
+      LEFT JOIN [MED_Opportunities] o ON pl.OpportunityId = o.OpportunityId
       LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
       ${where}
       ORDER BY pl.PushDate DESC
@@ -1047,7 +1047,7 @@ router.post('/direct-push', async (req, res) => {
               .input('hid', sql.Int, hotelId)
               .input('df', sql.NVarChar, startDate)
               .input('dt', sql.NVarChar, endDate)
-              .query(`SELECT TOP 1 OpportunityId FROM [MED_ֹOֹֹpportunities]
+              .query(`SELECT TOP 1 OpportunityId FROM [MED_Opportunities]
                       WHERE DestinationsId = @hid AND DateForm = @df AND DateTo = @dt
                       ORDER BY DateCreate DESC`);
             opportunityId = idResult.recordset[0]?.OpportunityId;
@@ -1085,7 +1085,7 @@ router.post('/direct-push', async (req, res) => {
             await pool.request()
               .input('oppId', sql.Int, opportunityId)
               .query(`
-                UPDATE [MED_ֹOֹֹpportunities]
+                UPDATE [MED_Opportunities]
                 SET IsPush = 1, Lastupdate = GETDATE()
                 WHERE OpportunityId = @oppId
               `);
@@ -1379,13 +1379,16 @@ router.post('/approve-reservation', async (req, res) => {
         WHERE id = @bookId
       `);
 
-    // Log the activity
+    // Log the activity with full context
     await pool.request()
       .input('reservationId', reservationId)
       .input('bookId', bookId)
       .query(`
-        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, BookId, DateInsert, Details)
-        VALUES ('APPROVE_RESERVATION', @reservationId, @bookId, GETDATE(), 'Reservation matched and approved')
+        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, BookId, HotelId, OpportunityId, Details, UserName, DateInsert)
+        SELECT 'APPROVE_RESERVATION', @reservationId, @bookId, b.HotelId, b.OpportunityId,
+               'Reservation matched and approved to booking ' + CAST(@bookId AS VARCHAR), 'System',
+               GETDATE()
+        FROM MED_Book b WHERE b.id = @bookId
       `);
 
     logger.info('[Zenith] Reservation approved', { reservationId, bookId });
@@ -1720,15 +1723,18 @@ router.post('/process-cancellation', async (req, res) => {
         `);
     }
 
-    // Log the activity
+    // Log the activity with full context
     await pool.request()
       .input('cancellationId', cancellationId)
       .input('reservationId', ReservationId)
       .input('refundAmount', refundAmount || 0)
       .query(`
-        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, Details, DateInsert)
-        VALUES ('PROCESS_CANCELLATION', @reservationId,
-                'Cancellation processed. Refund: ' + CAST(@refundAmount as VARCHAR), GETDATE())
+        INSERT INTO [SalesOffice].[Log] (Action, ReservationId, BookId, HotelId, Details, UserName, DateInsert)
+        SELECT 'PROCESS_CANCELLATION', @reservationId, r.MatchedBookId,
+               (SELECT TOP 1 h.HotelId FROM Med_Hotels h WHERE h.Innstant_ZenithId = r.HotelCode),
+               'Cancellation #' + CAST(@cancellationId AS VARCHAR) + ' processed. Refund: ' + CAST(@refundAmount AS VARCHAR),
+               'System', GETDATE()
+        FROM Med_Reservation r WHERE r.Id = @reservationId
       `);
 
     logger.info('[Zenith] Cancellation processed', { cancellationId, refundAmount });
@@ -1743,6 +1749,111 @@ router.post('/process-cancellation', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to process cancellation',
+      message: error.message
+    });
+  }
+});
+
+// ==================== QUEUE MANAGEMENT ====================
+
+/**
+ * POST /zenith/retry-failed
+ * Reset failed queue items for retry
+ */
+router.post('/retry-failed', async (req, res) => {
+  try {
+    const pool = await getPool();
+
+    const result = await pool.request().query(`
+      UPDATE Med_HotelsToPush
+      SET Error = NULL,
+          RetryCount = ISNULL(RetryCount, 0) + 1
+      WHERE IsActive = 1
+        AND DatePush IS NULL
+        AND Error IS NOT NULL
+    `);
+
+    const retried = result.rowsAffected[0] || 0;
+    logger.info('[Zenith] Retried failed queue items', { count: retried });
+
+    res.json({
+      success: true,
+      message: `${retried} failed items reset for retry`,
+      count: retried
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Retry failed error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retry failed items',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/clear-completed
+ * Remove completed (pushed) items from queue
+ */
+router.post('/clear-completed', async (req, res) => {
+  try {
+    const pool = await getPool();
+
+    const result = await pool.request().query(`
+      DELETE FROM Med_HotelsToPush
+      WHERE DatePush IS NOT NULL
+        OR IsActive = 0
+    `);
+
+    const cleared = result.rowsAffected[0] || 0;
+    logger.info('[Zenith] Cleared completed queue items', { count: cleared });
+
+    res.json({
+      success: true,
+      message: `${cleared} completed items cleared from queue`,
+      count: cleared
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Clear completed error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear completed items',
+      message: error.message
+    });
+  }
+});
+
+/**
+ * POST /zenith/clear-pending
+ * Remove all pending items from queue (destructive)
+ */
+router.post('/clear-pending', async (req, res) => {
+  try {
+    const pool = await getPool();
+
+    const result = await pool.request().query(`
+      UPDATE Med_HotelsToPush
+      SET IsActive = 0
+      WHERE IsActive = 1
+        AND DatePush IS NULL
+    `);
+
+    const cleared = result.rowsAffected[0] || 0;
+    logger.info('[Zenith] Cleared pending queue items', { count: cleared });
+
+    res.json({
+      success: true,
+      message: `${cleared} pending items cleared from queue`,
+      count: cleared
+    });
+
+  } catch (error) {
+    logger.error('[Zenith] Clear pending error', { error: error.message });
+    res.status(500).json({
+      success: false,
+      error: 'Failed to clear pending items',
       message: error.message
     });
   }

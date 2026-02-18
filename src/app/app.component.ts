@@ -24,7 +24,6 @@ export class AppComponent implements OnInit, OnDestroy {
   title = 'Medici Booking Engine';
   isDarkMode = false;
   quickStats: QuickStats | null = null;
-  activeAlertsCount = 0; // For monitoring menu badge
   private _destroy$ = new Subject<void>();
   private _statsIntervalId: ReturnType<typeof setInterval> | null = null;
 
@@ -67,18 +66,15 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this._destroy$))
       .subscribe(() => {
         this.loadQuickStats();
-        this.loadActiveAlertsCount();
       });
   }
 
   ngOnInit(): void {
     if (this.isActive()) {
       this.loadQuickStats();
-      this.loadActiveAlertsCount(); // Load alerts count
       // Refresh stats every 5 minutes
       this._statsIntervalId = setInterval(() => {
         this.loadQuickStats();
-        this.loadActiveAlertsCount();
       }, 300000);
     }
   }
@@ -116,16 +112,4 @@ export class AppComponent implements OnInit, OnDestroy {
       });
   }
 
-  loadActiveAlertsCount(): void {
-    // Simulate API call - replace with actual alert service when available
-    // For now, check if there are any system issues
-    fetch(`${window.location.origin}/api/alert-management/active`)
-      .then(res => res.json())
-      .then(data => {
-        this.activeAlertsCount = data.length || 0;
-      })
-      .catch(() => {
-        this.activeAlertsCount = 0;
-      });
-  }
 }

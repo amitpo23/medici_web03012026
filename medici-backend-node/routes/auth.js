@@ -4,20 +4,17 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { getPool } = require('../config/database');
 const logger = require('../config/logger');
+const { validate, schemas } = require('../middleware/validate');
 
 // Sign-in endpoint
-router.post('/', async (req, res) => {
+router.post('/', validate({ body: schemas.signIn }), async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
 
     const pool = await getPool();
     const result = await pool.request()
       .input('email', email)
-      .query('SELECT * FROM Users WHERE Email = @email');
+      .query('SELECT * FROM Med_Users WHERE Email = @email');
 
     if (result.recordset.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });

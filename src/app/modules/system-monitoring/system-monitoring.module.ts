@@ -6,11 +6,16 @@ import { MaterialModule } from '../material/material.module';
 
 // Import standalone components
 import { SystemMonitoringOverviewComponent } from './overview/overview.component';
+import { LogsViewerComponent } from '../../components/logs-viewer/logs-viewer.component';
 
 const routes: Routes = [
   {
     path: '',
     component: SystemMonitoringOverviewComponent
+  },
+  {
+    path: 'logs',
+    component: LogsViewerComponent
   }
 ];
 
@@ -22,6 +27,7 @@ const routes: Routes = [
     ReactiveFormsModule,
     MaterialModule,
     SystemMonitoringOverviewComponent,
+    LogsViewerComponent,
     RouterModule.forChild(routes)
   ]
 })

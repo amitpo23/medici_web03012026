@@ -16,64 +16,53 @@
   </div>
 
   <div class="analytics-nav">
-    <button mat-flat-button 
-            [class.active]="selectedTab === 0" 
+    <button mat-flat-button
+            [class.active]="selectedTab === 0"
             (click)="selectedTab = 0">
-      <mat-icon>trending_up</mat-icon>
-      Price Predictions
-    </button>
-    <button mat-flat-button 
-            [class.active]="selectedTab === 1" 
-            (click)="selectedTab = 1">
-      <mat-icon>notifications_active</mat-icon>
-      Alerts & Recommendations
-    </button>
-    <button mat-flat-button 
-            [class.active]="selectedTab === 2" 
-            (click)="selectedTab = 2">
-      <mat-icon>calculate</mat-icon>
-      ROI Calculator
-    </button>
-    <!-- Week 6 ML Tabs -->
-    <button mat-flat-button 
-            [class.active]="selectedTab === 3" 
-            (click)="selectedTab = 3">
       <mat-icon>psychology</mat-icon>
       ML Pricing
     </button>
-    <button mat-flat-button 
-            [class.active]="selectedTab === 4" 
-            (click)="selectedTab = 4">
+    <button mat-flat-button
+            [class.active]="selectedTab === 1"
+            (click)="selectedTab = 1">
+      <mat-icon>calculate</mat-icon>
+      ROI Calculator
+    </button>
+    <button mat-flat-button
+            [class.active]="selectedTab === 2"
+            (click)="selectedTab = 2">
       <mat-icon>visibility</mat-icon>
       Competitor Tracking
     </button>
-    <button mat-flat-button 
-            [class.active]="selectedTab === 5" 
-            (click)="selectedTab = 5">
+    <button mat-flat-button
+            [class.active]="selectedTab === 3"
+            (click)="selectedTab = 3">
       <mat-icon>attach_money</mat-icon>
       Revenue Optimizer
+    </button>
+    <button mat-flat-button
+            [class.active]="selectedTab === 4"
+            (click)="selectedTab = 4">
+      <mat-icon>notifications_active</mat-icon>
+      Buy/Sell Alerts
     </button>
   </div>
 
   <div class="tab-content" [ngSwitch]="selectedTab">
     <div *ngSwitchCase="0" class="tab-panel" @fadeIn>
-      <app-price-predictor></app-price-predictor>
-    </div>
-    <div *ngSwitchCase="1" class="tab-panel" @fadeIn>
-      <app-buy-sell-alerts></app-buy-sell-alerts>
-    </div>
-    <div *ngSwitchCase="2" class="tab-panel" @fadeIn>
-      <app-roi-calculator></app-roi-calculator>
-    </div>
-    <!-- Week 6 ML Tabs -->
-    <div *ngSwitchCase="3" class="tab-panel" @fadeIn>
       <app-ml-price-predictor></app-ml-price-predictor>
     </div>
-    <div *ngSwitchCase="4" class="tab-panel" @fadeIn>
+    <div *ngSwitchCase="1" class="tab-panel" @fadeIn>
+      <app-roi-calculator></app-roi-calculator>
+    </div>
+    <div *ngSwitchCase="2" class="tab-panel" @fadeIn>
       <app-competitor-tracker></app-competitor-tracker>
     </div>
-    <div *ngSwitchCase="5" class="tab-panel" @fadeIn>
+    <div *ngSwitchCase="3" class="tab-panel" @fadeIn>
       <app-revenue-optimizer></app-revenue-optimizer>
+    </div>
+    <div *ngSwitchCase="4" class="tab-panel" @fadeIn>
+      <app-buy-sell-alerts></app-buy-sell-alerts>
     </div>
   </div>
 </div>

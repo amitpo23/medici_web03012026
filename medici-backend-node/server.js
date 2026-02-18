@@ -94,6 +94,7 @@ const documentsRoutes = require('./routes/documents');
 const mlPredictionsRoutes = require('./routes/ml-predictions');
 const opportunityFinderRoutes = require('./routes/opportunity-finder');
 const alertManagementRoutes = require('./routes/alert-management');
+const azureInfraRoutes = require('./routes/azure-infrastructure');
 
 app.use('/sign-in', authRoutes);
 app.use('/Opportunity', opportunityRoutes);
@@ -137,6 +138,7 @@ app.use('/Documents', documentsRoutes);
 app.use('/ml', mlPredictionsRoutes);
 app.use('/opportunity-finder', opportunityFinderRoutes);
 app.use('/alert-management', alertManagementRoutes);
+app.use('/Azure', azureInfraRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -178,7 +180,8 @@ app.get('/', (req, res) => {
       dataExplorer: '/data-explorer',
       documents: '/Documents',
       mlPredictions: '/ml',
-      alertManagement: '/alert-management'
+      alertManagement: '/alert-management',
+      azureInfrastructure: '/Azure'
     }
   });
 });
@@ -196,20 +199,64 @@ app.get('/api', (req, res) => {
 // Error handling middleware
 app.use(errorLogger);
 app.use((err, req, res, next) => {
-  logger.error('Server error', {
-    error: err.message,
-    stack: err.stack,
-    url: req.url
-  });
-  
-  res.status(500).json({
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? err.message : undefined
+  const statusCode = err.statusCode || 500;
+
+  if (statusCode >= 500) {
+    logger.error('Server error', {
+      error: err.message,
+      stack: err.stack,
+      url: req.url
+    });
+  }
+
+  res.status(statusCode).json({
+    success: false,
+    error: err.code || 'Internal server error',
+    message: err.isOperational ? err.message : (process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'),
+    ...(err.details && { details: err.details })
   });
 });
 
+// Graceful shutdown handler
+function gracefulShutdown(signal) {
+  logger.info(`${signal} received. Starting graceful shutdown...`);
+
+  // Stop accepting new connections
+  if (server) {
+    server.close(() => {
+      logger.info('HTTP server closed');
+    });
+  }
+
+  // Stop alerts agent
+  try {
+    alertsAgent.stop();
+    logger.info('Alerts agent stopped');
+  } catch (err) {
+    // Agent may not have a stop method
+  }
+
+  // Close database pool
+  const { getPool } = require('./config/database');
+  getPool().then(pool => {
+    pool.close().then(() => {
+      logger.info('Database pool closed');
+      process.exit(0);
+    }).catch(() => process.exit(0));
+  }).catch(() => process.exit(0));
+
+  // Force exit after 10 seconds
+  setTimeout(() => {
+    logger.warn('Graceful shutdown timed out, forcing exit');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   logger.info('🚀 Medici Hotels Server Started', {
     port: PORT,
     environment: process.env.NODE_ENV || 'development',

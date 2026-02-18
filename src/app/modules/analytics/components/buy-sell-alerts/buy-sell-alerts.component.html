@@ -99,9 +99,10 @@
         </div>
 
         <div class="alert-actions">
-          <button mat-flat-button *ngIf="alert.type === 'buy'" class="action-btn buy">
+          <button mat-flat-button *ngIf="alert.type === 'buy'" class="action-btn buy"
+                  [disabled]="buying" (click)="buyNow(alert)">
             <mat-icon>shopping_cart</mat-icon>
-            Buy Now
+            {{ buying ? 'Processing...' : 'Buy Now' }}
           </button>
           <button mat-flat-button *ngIf="alert.type === 'sell'" class="action-btn sell">
             <mat-icon>sell</mat-icon>

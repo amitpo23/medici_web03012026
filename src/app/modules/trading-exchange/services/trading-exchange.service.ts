@@ -17,7 +17,7 @@ import {
 })
 export class TradingExchangeService {
   private baseUrl = environment.apiUrl || 'http://localhost:8080';
-  private apiUrl = `${this.baseUrl}/api/trading-exchange`;
+  private apiUrl = `${this.baseUrl}api/trading-exchange`;
 
   // Observable for real-time updates
   private refreshTrigger$ = new BehaviorSubject<boolean>(false);
@@ -117,7 +117,7 @@ export class TradingExchangeService {
   getOpportunities(limit: number = 20): Observable<{ data: Record<string, unknown>[] }> {
     const params = new HttpParams().set('limit', limit.toString());
     return this.http.get<{ data: Record<string, unknown>[] }>(
-      `${this.baseUrl}/Opportunity/Opportunities`,
+      `${this.baseUrl}Opportunity/Opportunities`,
       { params }
     );
   }

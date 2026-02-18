@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const { getPool } = require('../config/database');
 const zenithPushService = require('../services/zenith-push-service');
+const logger = require('../config/logger');
+const { validate, schemas } = require('../middleware/validate');
 
 // Get all opportunities (with pagination)
 router.get('/Opportunities', async (req, res) => {
@@ -21,13 +23,13 @@ router.get('/Opportunities', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching opportunities:', err);
+    logger.error('Error fetching opportunities', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
 
 // Insert opportunity (with Zenith Push integration)
-router.post('/InsertOpp', async (req, res) => {
+router.post('/InsertOpp', validate({ body: schemas.insertOpp }), async (req, res) => {
   try {
     const {
       hotelId, startDateStr, endDateStr,
@@ -88,10 +90,10 @@ router.post('/InsertOpp', async (req, res) => {
             currency: 'EUR'
           });
 
-          console.log(`✅ Pushed opportunity ${opportunityId} to Zenith`);
+          logger.info('Pushed opportunity to Zenith', { opportunityId });
         }
       } catch (zenithError) {
-        console.error('Zenith push error:', zenithError.message);
+        logger.error('Zenith push error', { error: zenithError.message });
         // Continue even if Zenith push fails
       }
     }
@@ -102,7 +104,7 @@ router.post('/InsertOpp', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('Error inserting opportunity:', err);
+    logger.error('Error inserting opportunity', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -116,7 +118,7 @@ router.get('/Hotels', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching hotels:', err);
+    logger.error('Error fetching hotels', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -130,7 +132,7 @@ router.get('/Boards', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching boards:', err);
+    logger.error('Error fetching boards', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -144,7 +146,7 @@ router.get('/Categories', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching categories:', err);
+    logger.error('Error fetching categories', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -154,11 +156,11 @@ router.get('/ReservationFullName', async (req, res) => {
   try {
     const pool = await getPool();
     const result = await pool.request()
-      .query('SELECT id, FullName FROM MED_Reservations WHERE IsActive = 1');
+      .query('SELECT Id, GuestName as FullName FROM Med_Reservation WHERE IsCanceled = 0');
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching reservation names:', err);
+    logger.error('Error fetching reservation names', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -182,7 +184,7 @@ router.get('/CatAndBoards', async (req, res) => {
       boards: boards.recordset
     });
   } catch (err) {
-    console.error('Error fetching categories and boards:', err);
+    logger.error('Error fetching categories and boards', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -199,7 +201,7 @@ router.get('/CancelOpp', async (req, res) => {
 
     res.json({ success: true, message: 'Opportunity cancelled' });
   } catch (err) {
-    console.error('Error cancelling opportunity:', err);
+    logger.error('Error cancelling opportunity', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -216,7 +218,7 @@ router.get('/Log', async (req, res) => {
 
     res.json(result.recordset);
   } catch (err) {
-    console.error('Error fetching opportunity log:', err);
+    logger.error('Error fetching opportunity log', { error: err.message });
     res.status(500).json({ error: 'Database error' });
   }
 });

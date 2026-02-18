@@ -130,7 +130,7 @@
           <div *ngIf="message.role === 'assistant'" class="message assistant">
             <mat-icon class="message-avatar">smart_toy</mat-icon>
             <div class="message-bubble">
-              <div class="message-content markdown-content" [innerHTML]="message.content | safeHtml"></div>
+              <div class="message-content markdown-content" [innerHTML]="message.content"></div>
               
               <!-- SQL Query (if available and showSqlQuery is true) -->
               <div *ngIf="showSqlQuery && message.sqlQuery" class="sql-query-box mt-3">

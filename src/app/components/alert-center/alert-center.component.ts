@@ -33,7 +33,7 @@ export class AlertCenterComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
-    this.router.navigate(['/system']);
+    this.router.navigate(['/dashboard']);
   }
 
   /**

@@ -161,7 +161,7 @@ router.get('/MarginByDate', async (req, res) => {
 
 /**
  * Get opportunities performance
- * Uses the actual MED_ֹOֹֹpportunities table (has Hebrew diacriticals)
+ * Uses the actual MED_Opportunities table (has Hebrew diacriticals)
  */
 router.get('/OpportunitiesPerformance', async (req, res) => {
   try {
@@ -298,6 +298,207 @@ router.get('/LossReport', async (req, res) => {
   } catch (err) {
     logger.error('Error fetching loss report', { error: err.message });
     res.status(500).json({ error: 'Database error' });
+  }
+});
+
+/**
+ * Export bookings as CSV
+ */
+router.get('/bookings/export', async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const pool = await getPool();
+
+    let query = `
+      SELECT
+        b.id as BookingId,
+        b.contentBookingID as SupplierRef,
+        h.name as HotelName,
+        b.GuestName,
+        CONVERT(VARCHAR, b.startDate, 23) as CheckIn,
+        CONVERT(VARCHAR, b.endDate, 23) as CheckOut,
+        b.price as BuyPrice,
+        b.lastPrice as SellPrice,
+        ISNULL(b.lastPrice, 0) - b.price as Profit,
+        CASE WHEN b.IsSold = 1 THEN 'Sold' WHEN b.IsActive = 0 THEN 'Cancelled' ELSE 'Active' END as Status,
+        CONVERT(VARCHAR, b.DateInsert, 120) as DateCreated
+      FROM MED_Book b
+      LEFT JOIN Med_Hotels h ON b.HotelId = h.HotelId
+      WHERE 1=1
+    `;
+
+    const request = pool.request();
+    if (startDate) {
+      query += ' AND b.startDate >= @startDate';
+      request.input('startDate', startDate);
+    }
+    if (endDate) {
+      query += ' AND b.endDate <= @endDate';
+      request.input('endDate', endDate);
+    }
+    query += ' ORDER BY b.DateInsert DESC';
+
+    const result = await request.query(query);
+    const rows = result.recordset;
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No data to export' });
+    }
+
+    const headers = Object.keys(rows[0]);
+    let csv = headers.join(',') + '\n';
+    for (const row of rows) {
+      const values = headers.map(h => {
+        const val = row[h];
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+      });
+      csv += values.join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=bookings_export.csv');
+    res.send(csv);
+
+  } catch (err) {
+    logger.error('Error exporting bookings', { error: err.message });
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+/**
+ * Export opportunities as CSV
+ */
+router.get('/opportunities/export', async (req, res) => {
+  try {
+    const { status } = req.query;
+    const pool = await getPool();
+
+    let query = `
+      SELECT
+        o.id as OpportunityId,
+        h.name as HotelName,
+        CONVERT(VARCHAR, o.startDate, 23) as CheckIn,
+        CONVERT(VARCHAR, o.endDate, 23) as CheckOut,
+        o.price as BuyPrice,
+        o.pushPrice as SellPrice,
+        o.pushPrice - o.price as Profit,
+        o.maxRooms as MaxRooms,
+        CASE WHEN o.IsActive = 1 THEN 'Active' ELSE 'Cancelled' END as Status,
+        CONVERT(VARCHAR, o.DateInsert, 120) as DateCreated
+      FROM [MED_Opportunities] o
+      LEFT JOIN Med_Hotels h ON o.HotelId = h.HotelId
+      WHERE 1=1
+    `;
+
+    const request = pool.request();
+    if (status === 'active') {
+      query += ' AND o.IsActive = 1';
+    } else if (status === 'cancelled') {
+      query += ' AND o.IsActive = 0';
+    }
+    query += ' ORDER BY o.DateInsert DESC';
+
+    const result = await request.query(query);
+    const rows = result.recordset;
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No data to export' });
+    }
+
+    const headers = Object.keys(rows[0]);
+    let csv = headers.join(',') + '\n';
+    for (const row of rows) {
+      const values = headers.map(h => {
+        const val = row[h];
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+      });
+      csv += values.join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=opportunities_export.csv');
+    res.send(csv);
+
+  } catch (err) {
+    logger.error('Error exporting opportunities', { error: err.message });
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+/**
+ * Export data to Excel format (CSV with proper headers)
+ */
+router.post('/export/excel', async (req, res) => {
+  try {
+    const { data, options = {} } = req.body;
+
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ error: 'No data provided' });
+    }
+
+    const columns = options.columns || Object.keys(data[0]);
+    let csv = columns.join(',') + '\n';
+    for (const row of data) {
+      const values = columns.map(col => {
+        const val = row[col];
+        if (val === null || val === undefined) return '';
+        const str = String(val);
+        return str.includes(',') || str.includes('"') ? `"${str.replace(/"/g, '""')}"` : str;
+      });
+      csv += values.join(',') + '\n';
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.ms-excel');
+    res.setHeader('Content-Disposition', `attachment; filename=${options.filename || 'export.csv'}`);
+    res.send(Buffer.from(csv));
+
+  } catch (err) {
+    logger.error('Error exporting to Excel', { error: err.message });
+    res.status(500).json({ error: 'Export failed' });
+  }
+});
+
+/**
+ * Export to PDF (returns HTML for client-side rendering)
+ */
+router.post('/export/pdf', async (req, res) => {
+  try {
+    const { html, title, options = {} } = req.body;
+
+    if (!html) {
+      return res.status(400).json({ error: 'No HTML content provided' });
+    }
+
+    const fullHtml = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${title || 'Report'}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            table { border-collapse: collapse; width: 100%; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          ${title ? `<h1>${title}</h1>` : ''}
+          ${html}
+        </body>
+      </html>
+    `;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename=${options.filename || 'report.html'}`);
+    res.send(Buffer.from(fullHtml));
+
+  } catch (err) {
+    logger.error('Error exporting to PDF', { error: err.message });
+    res.status(500).json({ error: 'Export failed' });
   }
 });
 

@@ -1,0 +1,395 @@
+.data-explorer-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// --- Tab Content ---
+
+.tab-content {
+  padding-bottom: 2rem;
+}
+
+// --- Metric Cards ---
+
+.metric-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  mat-card-content {
+    padding: 0.75rem !important;
+  }
+}
+
+// --- Tables Grid ---
+
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.table-card {
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    border-color: #334155;
+  }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #6366f1;
+  }
+}
+
+.table-action-btn {
+  font-size: 0.75rem;
+  height: 32px;
+  line-height: 32px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+  }
+}
+
+// --- Schema Panel ---
+
+.schema-panel {
+  border-top: 4px solid #6366f1;
+}
+
+.schema-table {
+  th.mat-mdc-header-cell {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.data-type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  :host-context(.dark) & {
+    background: #312e81;
+    color: #a5b4fc;
+  }
+}
+
+.default-value {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.75rem;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    color: #94a3b8;
+  }
+}
+
+// --- Query Tab ---
+
+.query-btn {
+  height: 56px;
+}
+
+.column-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    color: #cbd5e1;
+    border-color: #334155;
+  }
+}
+
+.column-chip-type {
+  color: #6366f1;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.error-card {
+  border-left: 4px solid #ef4444;
+  background: #fef2f2;
+
+  :host-context(.dark) & {
+    background: #450a0a;
+  }
+}
+
+.query-results-card {
+  border-top: 3px solid #6366f1;
+}
+
+.query-table-wrapper {
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    border-color: #334155;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+
+    :host-context(.dark) & {
+      background: #1e293b;
+    }
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #94a3b8;
+    border-radius: 4px;
+
+    &:hover {
+      background: #64748b;
+    }
+  }
+}
+
+.query-results-table {
+  th.mat-mdc-header-cell {
+    font-weight: 700;
+    font-size: 0.75rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    background: #f8fafc;
+
+    :host-context(.dark) & {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+  }
+}
+
+.query-cell {
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+// --- Operations Tab ---
+
+.ops-stat {
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    background: #1e293b;
+    border-color: #334155;
+  }
+}
+
+.ops-stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
+
+  :host-context(.dark) & {
+    color: #f1f5f9;
+  }
+}
+
+.ops-stat-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+// --- Queue Status Badges ---
+
+.queue-status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &.status-completed {
+    background: #dcfce7;
+    color: #166534;
+
+    :host-context(.dark) & {
+      background: #14532d;
+      color: #86efac;
+    }
+  }
+
+  &.status-processing {
+    background: #dbeafe;
+    color: #1e40af;
+
+    :host-context(.dark) & {
+      background: #1e3a5f;
+      color: #93c5fd;
+    }
+  }
+
+  &.status-pending {
+    background: #fef9c3;
+    color: #854d0e;
+
+    :host-context(.dark) & {
+      background: #713f12;
+      color: #fde047;
+    }
+  }
+
+  &.status-failed {
+    background: #fee2e2;
+    color: #991b1b;
+
+    :host-context(.dark) & {
+      background: #7f1d1d;
+      color: #fca5a5;
+    }
+  }
+
+  &.status-unknown {
+    background: #f1f5f9;
+    color: #64748b;
+
+    :host-context(.dark) & {
+      background: #334155;
+      color: #94a3b8;
+    }
+  }
+}
+
+.log-message-cell {
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+// --- Lookups Tab ---
+
+.lookup-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+
+  :host-context(.dark) & {
+    border-color: #334155;
+  }
+
+  table {
+    th.mat-mdc-header-cell {
+      font-weight: 700;
+      font-size: 0.8rem;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+.lookup-code-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+
+  :host-context(.dark) & {
+    background: #1e3a5f;
+    color: #93c5fd;
+  }
+}
+
+// --- Comprehensive Stats Tab ---
+
+.stat-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  mat-card-content {
+    padding: 0.5rem !important;
+  }
+}
+
+// --- Responsive ---
+
+@media (max-width: 768px) {
+  .tables-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .query-cell {
+    max-width: 150px;
+  }
+
+  .log-message-cell {
+    max-width: 200px;
+  }
+
+  .ops-stat-value {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .data-explorer-container {
+    padding: 0.75rem;
+  }
+}

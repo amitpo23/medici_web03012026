@@ -146,7 +146,7 @@ router.get('/order-book/:hotelId', async (req, res) => {
           ROUND(Price, 0) as price,
           COUNT(*) as quantity,
           SUM(Price) as totalValue
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE DestinationsId = @hotelId
           AND IsActive = 1
           AND IsSale = 0
@@ -471,7 +471,7 @@ router.get('/ai-signals', async (req, res) => {
             DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
             o.DateCreate as signalDate,
             o.IsActive
-          FROM [MED_ֹOֹֹpportunities] o
+          FROM [MED_Opportunities] o
           JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
           WHERE o.IsActive = 1
             AND o.IsSale = 0
@@ -500,7 +500,7 @@ router.get('/ai-signals', async (req, res) => {
             DATEDIFF(day, GETDATE(), o.DateForm) as daysToCheckIn,
             o.DateCreate as signalDate,
             o.IsActive
-          FROM [MED_ֹOֹֹpportunities] o
+          FROM [MED_Opportunities] o
           JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
           WHERE o.IsActive = 1
             AND o.IsSale = 0
@@ -733,8 +733,8 @@ router.get('/market-overview', async (req, res) => {
       SELECT
         (SELECT COUNT(*) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE()) as activeInventory,
         (SELECT ISNULL(SUM(lastPrice - price), 0) FROM MED_Book WHERE IsActive = 1 AND IsSold = 0 AND startDate >= GETDATE() AND lastPrice IS NOT NULL) as unrealizedValue,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1 AND IsSale = 0) as openOpportunities,
-        (SELECT COUNT(*) FROM [MED_ֹOֹֹpportunities] WHERE IsActive = 1) as totalOpportunities,
+        (SELECT COUNT(*) FROM [MED_Opportunities] WHERE IsActive = 1 AND IsSale = 0) as openOpportunities,
+        (SELECT COUNT(*) FROM [MED_Opportunities] WHERE IsActive = 1) as totalOpportunities,
         (SELECT ISNULL(SUM(lastPrice - price), 0) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE()) AND lastPrice IS NOT NULL) as weeklyProfit,
         (SELECT COUNT(*) FROM MED_Book WHERE IsSold = 1 AND DateInsert >= DATEADD(day, -7, GETDATE())) as weeklySales
     `);
@@ -892,7 +892,7 @@ router.get('/HotDeals', async (req, res) => {
           CAST(((o.PushPrice - o.Price) / NULLIF(o.PushPrice, 0) * 100) as INT) as discount,
           o.DateForm as checkIn,
           o.DateTo as checkOut
-        FROM [MED_ֹOֹֹpportunities] o
+        FROM [MED_Opportunities] o
         JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
         WHERE o.IsActive = 1
           AND o.DateForm >= GETDATE()

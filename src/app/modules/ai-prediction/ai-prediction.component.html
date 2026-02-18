@@ -66,26 +66,38 @@
   <mat-card class="filters-card">
     <mat-card-content>
       <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-end">
-        <!-- City Select -->
+        <!-- City Autocomplete -->
         <mat-form-field appearance="outline" class="w-full lg:w-48">
-          <mat-label>עיר</mat-label>
-          <mat-select [formControl]="filtersForm.controls.city">
-            <mat-option [value]="null">כל הערים</mat-option>
-            <mat-option *ngFor="let city of cities" [value]="city.cityName">
+          <mat-label>עיר (הקלד לחיפוש)</mat-label>
+          <input matInput [formControl]="citySearchCtrl" [matAutocomplete]="cityAutoAI"
+                 placeholder="הקלד שם עיר...">
+          <mat-autocomplete #cityAutoAI="matAutocomplete" (optionSelected)="onCitySelected($event.option.value)"
+                            [displayWith]="displayCityFn">
+            <mat-option [value]="''">כל הערים</mat-option>
+            <mat-option *ngFor="let city of filteredCities" [value]="city.cityName">
               {{ city.cityName }}
             </mat-option>
-          </mat-select>
+          </mat-autocomplete>
+          <button mat-icon-button matSuffix *ngIf="citySearchCtrl.value" (click)="clearCityFilter()" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
         </mat-form-field>
 
-        <!-- Hotel Select -->
+        <!-- Hotel Autocomplete -->
         <mat-form-field appearance="outline" class="w-full lg:w-64">
-          <mat-label>מלון</mat-label>
-          <mat-select [formControl]="filtersForm.controls.hotelId">
+          <mat-label>מלון (הקלד לחיפוש)</mat-label>
+          <input matInput [formControl]="hotelSearchCtrl" [matAutocomplete]="hotelAutoAI"
+                 placeholder="הקלד שם מלון...">
+          <mat-autocomplete #hotelAutoAI="matAutocomplete" (optionSelected)="onHotelSelectedAutocomplete($event.option.value)"
+                            [displayWith]="displayHotelFn">
             <mat-option [value]="null">כל המלונות</mat-option>
-            <mat-option *ngFor="let hotel of filteredHotels" [value]="hotel.hotelId">
+            <mat-option *ngFor="let hotel of displayedHotels" [value]="hotel.hotelId">
               {{ hotel.hotelName }}
             </mat-option>
-          </mat-select>
+          </mat-autocomplete>
+          <button mat-icon-button matSuffix *ngIf="hotelSearchCtrl.value" (click)="clearHotelFilter()" type="button">
+            <mat-icon>close</mat-icon>
+          </button>
         </mat-form-field>
 
         <!-- Risk Tolerance -->
@@ -228,21 +240,37 @@
           </div>
           
           <div class="flex items-center gap-2">
-            <button mat-flat-button 
-                    color="accent" 
+            <button mat-flat-button
+                    color="primary"
+                    [disabled]="isSearchingCity || !filtersForm.controls.city.value"
+                    (click)="searchByCity()">
+              <mat-spinner *ngIf="isSearchingCity" diameter="18" class="inline-block"></mat-spinner>
+              <mat-icon *ngIf="!isSearchingCity">travel_explore</mat-icon>
+              <span class="ml-2">{{ isSearchingCity ? 'מחפש...' : 'חפש הזדמנויות בעיר' }}</span>
+            </button>
+            <button mat-flat-button
+                    color="accent"
                     [disabled]="selectedOpportunitiesCount === 0 || isPushingToZenith"
                     (click)="openZenithPushDialog()">
               <mat-icon>cloud_upload</mat-icon>
               <span class="ml-2">דחוף ל-Zenith ({{ selectedOpportunitiesCount }})</span>
             </button>
-            <button mat-stroked-button 
-                    color="warn" 
+            <button mat-stroked-button
+                    color="warn"
                     [disabled]="selectedOpportunitiesCount === 0"
                     (click)="clearSelection()">
               <mat-icon>clear</mat-icon>
               נקה בחירה
             </button>
           </div>
+        </div>
+
+        <!-- Search Stats -->
+        <div *ngIf="searchStats.total > 0" class="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center gap-4 text-sm">
+          <mat-icon class="text-blue-500">info</mat-icon>
+          <span>נמצאו <strong>{{ searchStats.total }}</strong> הזדמנויות:</span>
+          <span class="text-gray-600 dark:text-gray-400">{{ searchStats.fromDb }} מ-DB</span>
+          <span class="text-gray-600 dark:text-gray-400">{{ searchStats.fromSearch }} מחיפוש ספקים</span>
         </div>
 
         <div *ngIf="isLoadingOpportunities" class="flex justify-center items-center py-12">
@@ -256,10 +284,12 @@
         </div>
 
         <div *ngIf="!isLoadingOpportunities && opportunities.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <app-opportunity-card 
-            *ngFor="let opp of opportunities" 
+          <app-opportunity-card
+            *ngFor="let opp of opportunities"
             [opportunity]="opp"
-            (insertOpportunity)="insertOpportunity($event)">
+            [isBuying]="isBuying && buyingOppId === opp.hotelId"
+            (insertOpportunity)="insertOpportunity($event)"
+            (buy)="buyOpportunity($event)">
           </app-opportunity-card>
         </div>
       </div>

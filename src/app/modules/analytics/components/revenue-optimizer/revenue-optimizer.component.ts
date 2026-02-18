@@ -152,7 +152,7 @@ export class RevenueOptimizerComponent implements OnInit, AfterViewInit, OnDestr
       currentDemand: 'MEDIUM'
     };
 
-    this.http.post<any>(`${this.baseUrl}/pricing/v2/revenue/maximize`, payload)
+    this.http.post<any>(`${this.baseUrl}advanced-pricing/v2/revenue/maximize`, payload)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

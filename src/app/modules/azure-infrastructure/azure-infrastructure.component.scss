@@ -1,0 +1,316 @@
+.azure-infra-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// --- Status Cards ---
+
+.status-card {
+  transition: all 0.3s ease;
+  cursor: default;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  mat-icon.text-4xl {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+}
+
+// --- Config Table ---
+
+.config-table {
+  border-collapse: collapse;
+
+  th, td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  }
+
+  th {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6b7280;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+}
+
+:host-context(.dark) .config-table {
+  th, td {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+  th {
+    color: #9ca3af;
+  }
+  tr:hover {
+    background-color: rgba(255, 255, 255, 0.02);
+  }
+}
+
+// --- Severity Badges ---
+
+.severity-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.severity-high {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.severity-medium {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.severity-low {
+  background-color: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.severity-ok {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+:host-context(.dark) {
+  .severity-high {
+    background-color: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+  .severity-medium {
+    background-color: rgba(217, 119, 6, 0.15);
+    border-color: rgba(217, 119, 6, 0.3);
+  }
+  .severity-low {
+    background-color: rgba(22, 163, 74, 0.15);
+    border-color: rgba(22, 163, 74, 0.3);
+  }
+  .severity-ok {
+    background-color: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+}
+
+// --- Finding Rows ---
+
+.finding-row {
+  &.severity-high {
+    background-color: #fef2f2;
+  }
+  &.severity-medium {
+    background-color: #fffbeb;
+  }
+  &.severity-low {
+    background-color: #f0fdf4;
+  }
+}
+
+:host-context(.dark) .finding-row {
+  &.severity-high {
+    background-color: rgba(220, 38, 38, 0.08);
+  }
+  &.severity-medium {
+    background-color: rgba(217, 119, 6, 0.08);
+  }
+  &.severity-low {
+    background-color: rgba(22, 163, 74, 0.08);
+  }
+}
+
+// --- Chart Container ---
+
+.chart-card {
+  .chart-container {
+    height: 200px;
+    position: relative;
+  }
+}
+
+// --- Health Cards ---
+
+.health-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .health-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.health-healthy {
+  border-left: 4px solid #22c55e;
+}
+.health-degraded {
+  border-left: 4px solid #eab308;
+}
+.health-unhealthy {
+  border-left: 4px solid #ef4444;
+}
+.health-unknown {
+  border-left: 4px solid #9ca3af;
+}
+
+.health-icon-healthy { color: #22c55e; }
+.health-icon-degraded { color: #eab308; }
+.health-icon-unhealthy { color: #ef4444; }
+.health-icon-unknown { color: #9ca3af; }
+
+.health-text-healthy { color: #22c55e; }
+.health-text-degraded { color: #eab308; }
+.health-text-unhealthy { color: #ef4444; }
+.health-text-unknown { color: #9ca3af; }
+
+// --- Advisor ---
+
+.advisor-summary-card {
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.advisor-icon-security { color: #ef4444; }
+.advisor-icon-highavailability { color: #3b82f6; }
+.advisor-icon-cost { color: #22c55e; }
+.advisor-icon-performance { color: #f59e0b; }
+.advisor-icon-operationalexcellence { color: #8b5cf6; }
+
+.impact-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 55px;
+  text-align: center;
+}
+
+.impact-high {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+.impact-medium {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+.impact-low {
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+:host-context(.dark) {
+  .impact-high {
+    background-color: rgba(220, 38, 38, 0.15);
+    border-color: rgba(220, 38, 38, 0.3);
+  }
+  .impact-medium {
+    background-color: rgba(217, 119, 6, 0.15);
+    border-color: rgba(217, 119, 6, 0.3);
+  }
+  .impact-low {
+    background-color: rgba(37, 99, 235, 0.15);
+    border-color: rgba(37, 99, 235, 0.3);
+  }
+}
+
+// --- Architecture ---
+
+.mermaid-code {
+  font-family: 'Fira Code', 'Consolas', monospace;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.tier-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  background-color: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #bfdbfe;
+}
+
+:host-context(.dark) .tier-badge {
+  background-color: rgba(37, 99, 235, 0.15);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+// --- Time Range Select ---
+
+.time-range-select {
+  width: 160px;
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+// --- Tab Content ---
+
+.tab-content {
+  min-height: 300px;
+}
+
+// --- Firewall Form ---
+
+.add-firewall-form {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+
+  ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+:host-context(.dark) .add-firewall-form {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+// --- Snackbar ---
+
+::ng-deep .snackbar-error {
+  --mdc-snackbar-container-color: #dc2626;
+  --mdc-snackbar-supporting-text-color: white;
+}
+
+::ng-deep .snackbar-success {
+  --mdc-snackbar-container-color: #16a34a;
+  --mdc-snackbar-supporting-text-color: white;
+}

@@ -1,0 +1,724 @@
+<div class="revenue-analytics-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>analytics</mat-icon>
+        Revenue Analytics
+      </h1>
+      <p class="subtitle">Comprehensive revenue and profit analysis</p>
+    </div>
+    <div class="header-actions">
+      <mat-form-field appearance="outline" class="period-field">
+        <mat-label>Period</mat-label>
+        <mat-select [(ngModel)]="selectedPeriod" (selectionChange)="onPeriodChange()">
+          <mat-option *ngFor="let option of periodOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <button mat-stroked-button class="refresh-btn" (click)="refreshData()" type="button">
+        <mat-icon>refresh</mat-icon>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <p>Loading revenue analytics...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div class="error-banner" *ngIf="errorMessage">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Tab Group -->
+  <mat-tab-group
+    (selectedIndexChange)="onTabChange($event)"
+    [selectedIndex]="selectedTabIndex"
+    *ngIf="!loading">
+
+    <!-- ========================================== -->
+    <!-- Tab 1: KPIs Dashboard                      -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>dashboard</mat-icon>
+        <span>KPIs</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div *ngIf="kpis; else noKpis">
+          <!-- Current Period KPI Cards -->
+          <h3 class="section-title">Current Period ({{ selectedPeriod }} days)</h3>
+          <div class="kpi-grid">
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap blue">
+                  <mat-icon>receipt_long</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Total Bookings</span>
+                  <span class="kpi-value">{{ formatNumber(kpis.current.bookings) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap green">
+                  <mat-icon>payments</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Total Revenue</span>
+                  <span class="kpi-value">{{ formatCurrency(kpis.current.revenue) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap orange">
+                  <mat-icon>shopping_cart</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Total Cost</span>
+                  <span class="kpi-value">{{ formatCurrency(kpis.current.cost) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap" [ngClass]="kpis.current.profit >= 0 ? 'green' : 'red'">
+                  <mat-icon>account_balance_wallet</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Total Profit</span>
+                  <span class="kpi-value" [ngClass]="getProfitClass(kpis.current.profit)">
+                    {{ formatCurrency(kpis.current.profit) }}
+                  </span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap purple">
+                  <mat-icon>price_check</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Avg Booking Value</span>
+                  <span class="kpi-value">{{ formatCurrency(kpis.current.avg_booking_value) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap teal">
+                  <mat-icon>savings</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Avg Profit / Booking</span>
+                  <span class="kpi-value" [ngClass]="getProfitClass(kpis.current.avg_profit_per_booking)">
+                    {{ formatCurrency(kpis.current.avg_profit_per_booking) }}
+                  </span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="kpi-card">
+              <mat-card-content>
+                <div class="kpi-icon-wrap" [ngClass]="kpis.current.profit_margin >= 0 ? 'green' : 'red'">
+                  <mat-icon>percent</mat-icon>
+                </div>
+                <div class="kpi-info">
+                  <span class="kpi-label">Profit Margin</span>
+                  <span class="kpi-value" [ngClass]="getProfitClass(kpis.current.profit_margin)">
+                    {{ formatPercentage(kpis.current.profit_margin) }}
+                  </span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Growth Comparison -->
+          <h3 class="section-title">Growth vs Previous Period</h3>
+          <div class="growth-grid">
+            <mat-card class="growth-card">
+              <mat-card-content>
+                <span class="growth-label">Bookings Growth</span>
+                <div class="growth-value-row">
+                  <mat-icon [ngClass]="getGrowthClass(kpis.growth.bookings)">
+                    {{ getGrowthIcon(kpis.growth.bookings) }}
+                  </mat-icon>
+                  <span class="growth-value" [ngClass]="getGrowthClass(kpis.growth.bookings)">
+                    {{ formatPercentage(kpis.growth.bookings) }}
+                  </span>
+                </div>
+                <div class="growth-detail">
+                  Previous: {{ formatNumber(kpis.previous.bookings) }}
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="growth-card">
+              <mat-card-content>
+                <span class="growth-label">Revenue Growth</span>
+                <div class="growth-value-row">
+                  <mat-icon [ngClass]="getGrowthClass(kpis.growth.revenue)">
+                    {{ getGrowthIcon(kpis.growth.revenue) }}
+                  </mat-icon>
+                  <span class="growth-value" [ngClass]="getGrowthClass(kpis.growth.revenue)">
+                    {{ formatPercentage(kpis.growth.revenue) }}
+                  </span>
+                </div>
+                <div class="growth-detail">
+                  Previous: {{ formatCurrency(kpis.previous.revenue) }}
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="growth-card">
+              <mat-card-content>
+                <span class="growth-label">Profit Growth</span>
+                <div class="growth-value-row">
+                  <mat-icon [ngClass]="getGrowthClass(kpis.growth.profit)">
+                    {{ getGrowthIcon(kpis.growth.profit) }}
+                  </mat-icon>
+                  <span class="growth-value" [ngClass]="getGrowthClass(kpis.growth.profit)">
+                    {{ formatPercentage(kpis.growth.profit) }}
+                  </span>
+                </div>
+                <div class="growth-detail">
+                  Previous: {{ formatCurrency(kpis.previous.profit) }}
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+        <ng-template #noKpis>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No KPI data available for the selected period.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 2: Daily P&L                           -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>calendar_today</mat-icon>
+        <span>Daily P&L</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="table-container" *ngIf="dailySummaryData.length > 0; else noDailyData">
+          <div class="table-info">
+            <span>{{ dailySummaryData.length }} days of data</span>
+          </div>
+          <table mat-table [dataSource]="dailySummaryData" class="mat-elevation-z2 data-table">
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>Date</th>
+              <td mat-cell *matCellDef="let row">{{ row.date | date:'yyyy-MM-dd' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="bookings_count">
+              <th mat-header-cell *matHeaderCellDef>Bookings</th>
+              <td mat-cell *matCellDef="let row">{{ row.bookings_count }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="total_revenue">
+              <th mat-header-cell *matHeaderCellDef>Revenue</th>
+              <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_revenue) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="total_cost">
+              <th mat-header-cell *matHeaderCellDef>Cost</th>
+              <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_cost) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="total_profit">
+              <th mat-header-cell *matHeaderCellDef>Profit</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.total_profit)">
+                {{ formatCurrency(row.total_profit) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="avg_profit_per_booking">
+              <th mat-header-cell *matHeaderCellDef>Avg Profit / Booking</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avg_profit_per_booking)">
+                {{ formatCurrency(row.avg_profit_per_booking) }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="profit_margin_percent">
+              <th mat-header-cell *matHeaderCellDef>Margin %</th>
+              <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.profit_margin_percent)">
+                {{ formatPercentage(row.profit_margin_percent) }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="dailyColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: dailyColumns;"></tr>
+          </table>
+        </div>
+        <ng-template #noDailyData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No daily P&L data available for the selected period.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 3: By City                             -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>location_city</mat-icon>
+        <span>By City</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div *ngIf="cityData.length > 0; else noCityData">
+          <!-- City Bar Visualization -->
+          <div class="bar-chart-section">
+            <h3 class="section-title">Revenue by City (Top {{ cityData.length }})</h3>
+            <div class="bar-chart-list">
+              <div class="bar-chart-row" *ngFor="let city of cityData">
+                <div class="bar-label">{{ city.city }}</div>
+                <div class="bar-track">
+                  <div class="bar-fill revenue-bar"
+                       [style.width.%]="getBarWidth(city.total_revenue, getMaxRevenue(cityData))">
+                  </div>
+                </div>
+                <div class="bar-value">{{ formatCurrency(city.total_revenue) }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- City Table -->
+          <div class="table-container">
+            <table mat-table [dataSource]="cityData" class="mat-elevation-z2 data-table">
+              <ng-container matColumnDef="city">
+                <th mat-header-cell *matHeaderCellDef>City</th>
+                <td mat-cell *matCellDef="let row">{{ row.city }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="bookings_count">
+                <th mat-header-cell *matHeaderCellDef>Bookings</th>
+                <td mat-cell *matCellDef="let row">{{ row.bookings_count }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_revenue">
+                <th mat-header-cell *matHeaderCellDef>Revenue</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_revenue) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_cost">
+                <th mat-header-cell *matHeaderCellDef>Cost</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_cost) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_profit">
+                <th mat-header-cell *matHeaderCellDef>Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.total_profit)">
+                  {{ formatCurrency(row.total_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="avg_profit">
+                <th mat-header-cell *matHeaderCellDef>Avg Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avg_profit)">
+                  {{ formatCurrency(row.avg_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="profit_margin">
+                <th mat-header-cell *matHeaderCellDef>Margin %</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.profit_margin)">
+                  {{ formatPercentage(row.profit_margin) }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="cityColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: cityColumns;"></tr>
+            </table>
+          </div>
+        </div>
+        <ng-template #noCityData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No city revenue data available for the selected period.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 4: By Hotel                            -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>hotel</mat-icon>
+        <span>By Hotel</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div *ngIf="hotelData.length > 0; else noHotelData">
+          <div class="table-info">
+            <span>Top {{ hotelData.length }} hotels by revenue</span>
+          </div>
+          <div class="table-container">
+            <table mat-table [dataSource]="hotelData" class="mat-elevation-z2 data-table">
+              <ng-container matColumnDef="hotel">
+                <th mat-header-cell *matHeaderCellDef>Hotel</th>
+                <td mat-cell *matCellDef="let row">{{ row.hotel }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="bookings_count">
+                <th mat-header-cell *matHeaderCellDef>Bookings</th>
+                <td mat-cell *matCellDef="let row">{{ row.bookings_count }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_revenue">
+                <th mat-header-cell *matHeaderCellDef>Revenue</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_revenue) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_cost">
+                <th mat-header-cell *matHeaderCellDef>Cost</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_cost) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_profit">
+                <th mat-header-cell *matHeaderCellDef>Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.total_profit)">
+                  {{ formatCurrency(row.total_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="avg_profit">
+                <th mat-header-cell *matHeaderCellDef>Avg Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avg_profit)">
+                  {{ formatCurrency(row.avg_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="profit_margin">
+                <th mat-header-cell *matHeaderCellDef>Margin %</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.profit_margin)">
+                  {{ formatPercentage(row.profit_margin) }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="hotelColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: hotelColumns;"></tr>
+            </table>
+          </div>
+        </div>
+        <ng-template #noHotelData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No hotel revenue data available for the selected period.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 5: By Supplier                         -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>business</mat-icon>
+        <span>By Supplier</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div *ngIf="supplierData.length > 0; else noSupplierData">
+          <!-- Supplier Comparison Cards -->
+          <div class="supplier-cards">
+            <mat-card class="supplier-card" *ngFor="let supplier of supplierData">
+              <mat-card-header>
+                <mat-card-title>{{ supplier.supplier }}</mat-card-title>
+                <mat-card-subtitle>{{ supplier.bookings_count }} bookings</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="supplier-stats">
+                  <div class="supplier-stat">
+                    <span class="stat-label">Revenue</span>
+                    <span class="stat-value">{{ formatCurrency(supplier.total_revenue) }}</span>
+                  </div>
+                  <div class="supplier-stat">
+                    <span class="stat-label">Cost</span>
+                    <span class="stat-value">{{ formatCurrency(supplier.total_cost) }}</span>
+                  </div>
+                  <div class="supplier-stat">
+                    <span class="stat-label">Profit</span>
+                    <span class="stat-value" [ngClass]="getProfitClass(supplier.total_profit)">
+                      {{ formatCurrency(supplier.total_profit) }}
+                    </span>
+                  </div>
+                  <div class="supplier-stat">
+                    <span class="stat-label">Margin</span>
+                    <span class="stat-value" [ngClass]="getProfitClass(supplier.profit_margin)">
+                      {{ formatPercentage(supplier.profit_margin) }}
+                    </span>
+                  </div>
+                  <div class="supplier-stat">
+                    <span class="stat-label">Avg Profit</span>
+                    <span class="stat-value" [ngClass]="getProfitClass(supplier.avg_profit)">
+                      {{ formatCurrency(supplier.avg_profit) }}
+                    </span>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Supplier Table -->
+          <div class="table-container">
+            <table mat-table [dataSource]="supplierData" class="mat-elevation-z2 data-table">
+              <ng-container matColumnDef="supplier">
+                <th mat-header-cell *matHeaderCellDef>Supplier</th>
+                <td mat-cell *matCellDef="let row">{{ row.supplier }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="bookings_count">
+                <th mat-header-cell *matHeaderCellDef>Bookings</th>
+                <td mat-cell *matCellDef="let row">{{ row.bookings_count }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_revenue">
+                <th mat-header-cell *matHeaderCellDef>Revenue</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_revenue) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_cost">
+                <th mat-header-cell *matHeaderCellDef>Cost</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.total_cost) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="total_profit">
+                <th mat-header-cell *matHeaderCellDef>Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.total_profit)">
+                  {{ formatCurrency(row.total_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="avg_profit">
+                <th mat-header-cell *matHeaderCellDef>Avg Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.avg_profit)">
+                  {{ formatCurrency(row.avg_profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="profit_margin">
+                <th mat-header-cell *matHeaderCellDef>Margin %</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.profit_margin)">
+                  {{ formatPercentage(row.profit_margin) }}
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="supplierColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: supplierColumns;"></tr>
+            </table>
+          </div>
+        </div>
+        <ng-template #noSupplierData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No supplier revenue data available for the selected period.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 6: Forecast                            -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>auto_graph</mat-icon>
+        <span>Forecast</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="forecast-controls">
+          <mat-form-field appearance="outline" class="forecast-field">
+            <mat-label>Forecast Days</mat-label>
+            <mat-select [(ngModel)]="forecastDays" (selectionChange)="onForecastDaysChange()">
+              <mat-option [value]="3">3 Days</mat-option>
+              <mat-option [value]="7">7 Days</mat-option>
+              <mat-option [value]="14">14 Days</mat-option>
+              <mat-option [value]="30">30 Days</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="forecastData; else noForecastData">
+          <div class="forecast-grid">
+            <mat-card class="forecast-card">
+              <mat-card-content>
+                <div class="forecast-icon blue">
+                  <mat-icon>trending_up</mat-icon>
+                </div>
+                <div class="forecast-info">
+                  <span class="forecast-label">Forecasted Revenue</span>
+                  <span class="forecast-value">{{ formatCurrency(forecastData.forecasted_revenue) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="forecast-card">
+              <mat-card-content>
+                <div class="forecast-icon green">
+                  <mat-icon>savings</mat-icon>
+                </div>
+                <div class="forecast-info">
+                  <span class="forecast-label">Forecasted Profit</span>
+                  <span class="forecast-value" [ngClass]="getProfitClass(forecastData.forecasted_profit)">
+                    {{ formatCurrency(forecastData.forecasted_profit) }}
+                  </span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="forecast-card">
+              <mat-card-content>
+                <div class="forecast-icon purple">
+                  <mat-icon>receipt_long</mat-icon>
+                </div>
+                <div class="forecast-info">
+                  <span class="forecast-label">Forecasted Bookings</span>
+                  <span class="forecast-value">{{ formatNumber(forecastData.forecasted_bookings) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="forecast-card">
+              <mat-card-content>
+                <div class="forecast-icon" [ngClass]="getConfidenceClass(forecastData.confidence)">
+                  <mat-icon>verified</mat-icon>
+                </div>
+                <div class="forecast-info">
+                  <span class="forecast-label">Confidence</span>
+                  <span class="forecast-value">{{ getConfidenceLabel(forecastData.confidence) }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <!-- Forecast Details -->
+          <mat-card class="forecast-details-card">
+            <mat-card-header>
+              <mat-card-title>Forecast Details</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="forecast-detail-grid">
+                <div class="detail-item">
+                  <span class="detail-label">Forecast Period</span>
+                  <span class="detail-value">{{ forecastData.forecast_days }} days</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Based On</span>
+                  <span class="detail-value">{{ forecastData.based_on_days }} days of historical data</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Daily Avg Revenue</span>
+                  <span class="detail-value">{{ formatCurrency(forecastData.daily_averages.revenue) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Daily Avg Profit</span>
+                  <span class="detail-value" [ngClass]="getProfitClass(forecastData.daily_averages.profit)">
+                    {{ formatCurrency(forecastData.daily_averages.profit) }}
+                  </span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Daily Avg Bookings</span>
+                  <span class="detail-value">{{ forecastData.daily_averages.bookings | number:'1.1-1' }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <ng-template #noForecastData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No forecast data available. Insufficient historical data for projections.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+    <!-- ========================================== -->
+    <!-- Tab 7: Trends                              -->
+    <!-- ========================================== -->
+    <mat-tab>
+      <ng-template matTabLabel>
+        <mat-icon>show_chart</mat-icon>
+        <span>Trends</span>
+      </ng-template>
+      <div class="tab-panel">
+        <div class="trend-controls">
+          <mat-button-toggle-group [(ngModel)]="selectedGranularity" (change)="onGranularityChange()">
+            <mat-button-toggle value="daily">Daily</mat-button-toggle>
+            <mat-button-toggle value="hourly">Hourly</mat-button-toggle>
+          </mat-button-toggle-group>
+        </div>
+
+        <div *ngIf="trendsData.length > 0; else noTrendsData">
+          <div class="table-info">
+            <span>{{ trendsData.length }} data points ({{ selectedGranularity }})</span>
+          </div>
+          <div class="table-container">
+            <table mat-table [dataSource]="trendsData" class="mat-elevation-z2 data-table">
+              <ng-container matColumnDef="period">
+                <th mat-header-cell *matHeaderCellDef>Period</th>
+                <td mat-cell *matCellDef="let row">{{ row.period }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="revenue">
+                <th mat-header-cell *matHeaderCellDef>Revenue</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.revenue) }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="profit">
+                <th mat-header-cell *matHeaderCellDef>Profit</th>
+                <td mat-cell *matCellDef="let row" [ngClass]="getProfitClass(row.profit)">
+                  {{ formatCurrency(row.profit) }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="bookings">
+                <th mat-header-cell *matHeaderCellDef>Bookings</th>
+                <td mat-cell *matCellDef="let row">{{ row.bookings }}</td>
+              </ng-container>
+
+              <ng-container matColumnDef="avg_booking_value">
+                <th mat-header-cell *matHeaderCellDef>Avg Booking Value</th>
+                <td mat-cell *matCellDef="let row">{{ formatCurrency(row.avg_booking_value) }}</td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="trendsColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: trendsColumns;"></tr>
+            </table>
+          </div>
+        </div>
+        <ng-template #noTrendsData>
+          <div class="no-data">
+            <mat-icon>info</mat-icon>
+            <p>No trend data available for the selected period and granularity.</p>
+          </div>
+        </ng-template>
+      </div>
+    </mat-tab>
+
+  </mat-tab-group>
+</div>

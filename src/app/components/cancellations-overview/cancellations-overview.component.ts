@@ -49,7 +49,7 @@ export class CancellationsOverviewComponent implements OnInit {
   constructor(private cancellationsService: CancellationsService, private router: Router) {}
 
   goBack(): void {
-    this.router.navigate(['/system']);
+    this.router.navigate(['/dashboard']);
   }
 
   ngOnInit(): void {

@@ -138,13 +138,12 @@
                 <span class="nav-text">Reports</span>
             </a>
 
-            <!-- Trading & Distribution Section - NEW -->
+            <!-- Trading & Distribution Section -->
             <mat-expansion-panel class="nav-panel trading-panel" hideToggle>
                 <mat-expansion-panel-header>
                     <mat-panel-title class="nav-item">
                         <mat-icon class="nav-icon">swap_horiz</mat-icon>
                         <span class="nav-text">Trading & Distribution</span>
-                        <span class="new-badge" style="margin-right: 8px;">NEW</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
                 <mat-nav-list class="sub-nav">
@@ -160,43 +159,45 @@
                         <mat-icon class="sub-nav-icon">cloud_upload</mat-icon>
                         Zenith Channel
                     </a>
+                    <a mat-list-item [routerLink]="['/scraper']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">compare_arrows</mat-icon>
+                        Price Scraper
+                    </a>
+                    <a mat-list-item [routerLink]="['/workflows']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">account_tree</mat-icon>
+                        Workflows
+                    </a>
+                    <a mat-list-item [routerLink]="['/documents']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">description</mat-icon>
+                        Documents
+                    </a>
                 </mat-nav-list>
             </mat-expansion-panel>
 
-            <!-- System Monitoring Section - NEW -->
-            <mat-expansion-panel class="nav-panel monitoring-panel" hideToggle>
+            <!-- Analytics & Intelligence Section -->
+            <mat-expansion-panel class="nav-panel" hideToggle>
                 <mat-expansion-panel-header>
                     <mat-panel-title class="nav-item">
-                        <mat-icon class="nav-icon">monitoring</mat-icon>
-                        <span class="nav-text">System Monitoring</span>
-                        <span class="new-badge" style="margin-right: 8px;">NEW</span>
+                        <mat-icon class="nav-icon">insights</mat-icon>
+                        <span class="nav-text">Analytics & Intelligence</span>
                     </mat-panel-title>
                 </mat-expansion-panel-header>
                 <mat-nav-list class="sub-nav">
-                    <a mat-list-item [routerLink]="['/system']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">dashboard</mat-icon>
-                        Overview
-                    </a>
-                    <a mat-list-item [routerLink]="['/system/monitoring']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">bar_chart</mat-icon>
-                        Real-time Monitoring
-                    </a>
-                    <a mat-list-item [routerLink]="['/system/alerts']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">notification_important</mat-icon>
-                        Alert Center
-                        <span *ngIf="activeAlertsCount > 0" class="alert-badge">{{ activeAlertsCount }}</span>
-                    </a>
-                    <a mat-list-item [routerLink]="['/system/revenue']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">attach_money</mat-icon>
+                    <a mat-list-item [routerLink]="['/revenue-analytics']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">monetization_on</mat-icon>
                         Revenue Analytics
                     </a>
-                    <a mat-list-item [routerLink]="['/system/logs']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">article</mat-icon>
-                        Logs Viewer
+                    <a mat-list-item [routerLink]="['/advanced-pricing']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">price_change</mat-icon>
+                        Advanced Pricing
                     </a>
-                    <a mat-list-item [routerLink]="['/system/cancellations']" routerLinkActive="active-link">
-                        <mat-icon class="sub-nav-icon">cancel</mat-icon>
-                        Cancellations
+                    <a mat-list-item [routerLink]="['/search-intelligence']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">travel_explore</mat-icon>
+                        Search Intelligence
+                    </a>
+                    <a mat-list-item [routerLink]="['/ai-command']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">smart_toy</mat-icon>
+                        AI Command Center
                     </a>
                 </mat-nav-list>
             </mat-expansion-panel>
@@ -217,6 +218,26 @@
                     <a mat-list-item [routerLink]="['/system-admin']" routerLinkActive="active-link">
                         <mat-icon class="sub-nav-icon">settings</mat-icon>
                         Admin Panel
+                    </a>
+                    <a mat-list-item [routerLink]="['/azure-infra']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">cloud</mat-icon>
+                        Azure Infrastructure
+                    </a>
+                    <a mat-list-item [routerLink]="['/logs-diagnostics']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">bug_report</mat-icon>
+                        Logs & Diagnostics
+                    </a>
+                    <a mat-list-item [routerLink]="['/data-explorer']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">storage</mat-icon>
+                        Data Explorer
+                    </a>
+                    <a mat-list-item [routerLink]="['/db-catalog']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">dataset</mat-icon>
+                        Database Catalog
+                    </a>
+                    <a mat-list-item [routerLink]="['/data-sync']" routerLinkActive="active-link">
+                        <mat-icon class="sub-nav-icon">sync</mat-icon>
+                        Data Sync
                     </a>
                 </mat-nav-list>
             </mat-expansion-panel>

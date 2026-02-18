@@ -8,7 +8,9 @@ import { AIOpportunity, AIPredictionService } from '../../../../services/ai-pred
 })
 export class OpportunityCardComponent {
   @Input() opportunity!: AIOpportunity;
+  @Input() isBuying = false;
   @Output() insertOpportunity = new EventEmitter<AIOpportunity>();
+  @Output() buy = new EventEmitter<AIOpportunity>();
 
   constructor(private aiService: AIPredictionService) {}
 
@@ -34,6 +36,10 @@ export class OpportunityCardComponent {
 
   onInsertClick(): void {
     this.insertOpportunity.emit(this.opportunity);
+  }
+
+  onBuyClick(): void {
+    this.buy.emit(this.opportunity);
   }
 
   get typeClass(): string {

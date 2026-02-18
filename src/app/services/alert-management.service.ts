@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { interval, Observable, Subject } from 'rxjs';
 import { shareReplay, startWith, switchMap } from 'rxjs/operators';
+import { environment } from 'src/app/environments/environment';
 
 export interface Alert {
   id: string;
@@ -59,7 +60,7 @@ export interface AlertSummary {
   providedIn: 'root'
 })
 export class AlertManagementService {
-  private apiUrl = '/alert-management';
+  private apiUrl = `${environment.baseUrl}alert-management`;
   
   // Auto-refresh active alerts every 30 seconds
   public activeAlerts$: Observable<Alert[]>;

@@ -207,7 +207,7 @@ router.get('/recommendation/:opportunityId', async (req, res) => {
           o.CategoryId as RoomCategoryId,
           o.BoardId,
           h.Name as HotelName
-        FROM [MED_ֹOֹֹpportunities] o
+        FROM [MED_Opportunities] o
         LEFT JOIN Med_Hotels h ON o.DestinationsId = h.HotelId
         WHERE o.OpportunityId = @opportunityId
       `);
@@ -276,7 +276,7 @@ router.put('/update/:opportunityId', async (req, res) => {
           PushPrice as CurrentSellPrice,
           CategoryId as RoomCategoryId,
           BoardId
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE OpportunityId = @opportunityId
       `);
 
@@ -311,7 +311,7 @@ router.put('/update/:opportunityId', async (req, res) => {
         .input('opportunityId', opportunityId)
         .input('newSellPrice', pricing.recommendedSellPrice)
         .query(`
-          UPDATE [MED_ֹOֹֹpportunities]
+          UPDATE [MED_Opportunities]
           SET PushPrice = @newSellPrice,
               Lastupdate = GETDATE()
           WHERE OpportunityId = @opportunityId
@@ -374,7 +374,7 @@ router.get('/performance', async (req, res) => {
         -- Analyze pricing performance
         WITH PricedOpportunities AS (
           SELECT DISTINCT o.OpportunityId
-          FROM [MED_ֹOֹֹpportunities] o
+          FROM [MED_Opportunities] o
           INNER JOIN MED_OpportunityLogs l ON o.OpportunityId = l.OpportunityId
           WHERE l.Action IN ('PRICE_UPDATED', 'AI_CREATED')
           AND l.CreatedAt >= DATEADD(DAY, -@days, GETDATE())
@@ -388,7 +388,7 @@ router.get('/performance', async (req, res) => {
           SUM(CASE WHEN IsSale = 1 THEN (PushPrice - Price) ELSE 0 END) as TotalProfit,
           AVG(AIConfidence) as AvgConfidence,
           AVG(AIPriorityScore) as AvgPriorityScore
-        FROM [MED_ֹOֹֹpportunities] o
+        FROM [MED_Opportunities] o
         WHERE o.OpportunityId IN (SELECT OpportunityId FROM PricedOpportunities)
       `);
 
@@ -400,7 +400,7 @@ router.get('/performance', async (req, res) => {
       .query(`
         WITH PricedOpportunities AS (
           SELECT DISTINCT o.OpportunityId
-          FROM [MED_ֹOֹֹpportunities] o
+          FROM [MED_Opportunities] o
           INNER JOIN MED_OpportunityLogs l ON o.OpportunityId = l.OpportunityId
           WHERE l.Action IN ('PRICE_UPDATED', 'AI_CREATED')
           AND l.CreatedAt >= DATEADD(DAY, -@days, GETDATE())
@@ -412,7 +412,7 @@ router.get('/performance', async (req, res) => {
           SUM(CASE WHEN IsSale = 1 THEN 1 ELSE 0 END) as Sold,
           AVG(AIConfidence) as AvgConfidence,
           AVG((PushPrice - Price) / PushPrice) as AvgMargin
-        FROM [MED_ֹOֹֹpportunities]
+        FROM [MED_Opportunities]
         WHERE OpportunityId IN (SELECT OpportunityId FROM PricedOpportunities)
         AND AIRiskLevel IS NOT NULL
         GROUP BY AIRiskLevel
