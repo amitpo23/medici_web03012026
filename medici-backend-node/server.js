@@ -9,6 +9,7 @@ const { requestLogger, errorLogger } = require('./middleware/request-logger');
 const { apiLimiter } = require('./middleware/rate-limiter');
 const alertsAgent = require('./services/alerts-agent');
 const healthMonitor = require('./services/health-monitor');
+const workerManager = require('./services/workers/worker-manager');
 const { setupSwagger } = require('./config/swagger');
 
 const app = express();
@@ -95,6 +96,7 @@ const mlPredictionsRoutes = require('./routes/ml-predictions');
 const opportunityFinderRoutes = require('./routes/opportunity-finder');
 const alertManagementRoutes = require('./routes/alert-management');
 const azureInfraRoutes = require('./routes/azure-infrastructure');
+const workersRoutes = require('./routes/workers');
 
 app.use('/sign-in', authRoutes);
 app.use('/Opportunity', opportunityRoutes);
@@ -139,6 +141,7 @@ app.use('/ml', mlPredictionsRoutes);
 app.use('/opportunity-finder', opportunityFinderRoutes);
 app.use('/alert-management', alertManagementRoutes);
 app.use('/Azure', azureInfraRoutes);
+app.use('/workers', workersRoutes);
 
 // Health check
 app.get('/', (req, res) => {
@@ -181,7 +184,8 @@ app.get('/', (req, res) => {
       documents: '/Documents',
       mlPredictions: '/ml',
       alertManagement: '/alert-management',
-      azureInfrastructure: '/Azure'
+      azureInfrastructure: '/Azure',
+      workers: '/workers'
     }
   });
 });
@@ -236,6 +240,14 @@ function gracefulShutdown(signal) {
     // Agent may not have a stop method
   }
 
+  // Stop all background workers
+  try {
+    workerManager.stopAll();
+    logger.info('All workers stopped');
+  } catch (err) {
+    logger.error('Error stopping workers', { error: err.message });
+  }
+
   // Close database pool
   const { getPool } = require('./config/database');
   getPool().then(pool => {
@@ -267,6 +279,10 @@ const server = app.listen(PORT, () => {
   // Start Alerts Agent
   logger.info('Starting Alerts Agent...');
   alertsAgent.start(5); // Scan every 5 minutes
+
+  // Initialize and start background workers
+  workerManager.initialize();
+  workerManager.startAll();
   
   console.log(`\n╔═══════════════════════════════════════════════════════════╗`);
   console.log(`║  🚀 MEDICI HOTELS API - RUNNING                          ║`);
